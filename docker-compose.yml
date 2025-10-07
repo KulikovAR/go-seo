@@ -16,8 +16,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
       # Инициализация базы данных
       - ./init-db:/docker-entrypoint-initdb.d
-    ports:
-      - "5432:5432"
+    # Порт PostgreSQL доступен только внутри Docker сети
+    # ports:
+    #   - "5432:5432"
     networks:
       - go-seo-network
     healthcheck:
@@ -50,8 +51,9 @@ services:
       XMLRIVER_USER_ID: ""
       XMLRIVER_API_KEY: ""
       XMLRIVER_BASE_URL: "https://xmlriver.com"
-    ports:
-      - "8080:8080"
+    # Порт приложения доступен только внутри Docker сети
+    # ports:
+    #   - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,14 +63,15 @@ services:
       # Логи приложения
       - ./logs:/root/logs
 
-  # Nginx для проксирования (опционально)
+  # Nginx для проксирования - доступен только внутри VDS
   nginx:
     image: nginx:alpine
     container_name: go-seo-nginx
     restart: unless-stopped
+    # Порты доступны только внутри VDS (127.0.0.1)
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
