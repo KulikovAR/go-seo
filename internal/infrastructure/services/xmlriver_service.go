@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/xml"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -15,7 +16,6 @@ type XMLRiverService struct {
 	userID  string
 	apiKey  string
 	client  *http.Client
-	logger  *XMLRiverLogger
 }
 
 type SearchRequest struct {
@@ -61,11 +61,6 @@ type Doc struct {
 }
 
 func NewXMLRiverService(baseURL, userID, apiKey string) (*XMLRiverService, error) {
-	logger, err := NewXMLRiverLogger()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create XMLRiver logger: %w", err)
-	}
-
 	return &XMLRiverService{
 		baseURL: baseURL,
 		userID:  userID,
@@ -73,7 +68,6 @@ func NewXMLRiverService(baseURL, userID, apiKey string) (*XMLRiverService, error
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		logger: logger,
 	}, nil
 }
 
@@ -106,42 +100,31 @@ func (s *XMLRiverService) Search(req SearchRequest) (*SearchResponse, error) {
 
 	requestURL := fmt.Sprintf("%s/search/xml?%s", s.baseURL, params.Encode())
 
-	// Логируем запрос
-	paramsMap := make(map[string]string)
-	for key, values := range params {
-		if len(values) > 0 {
-			paramsMap[key] = values[0]
-		}
-	}
-	s.logger.LogRequest(requestURL, paramsMap)
-
 	resp, err := s.client.Get(requestURL)
 	if err != nil {
-		s.logger.LogError(err, "failed to make request")
 		return nil, fmt.Errorf("failed to make request to XMLRiver: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		s.logger.LogError(fmt.Errorf("status code %d", resp.StatusCode), "unexpected status code")
 		return nil, fmt.Errorf("XMLRiver API returned status %d", resp.StatusCode)
 	}
 
-	// Парсим XML ответ с логированием
-	searchResp, err := parseXMLResponseWithLogging(resp.Body, s.logger)
+	// Парсим XML ответ
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	return searchResp, nil
+	var searchResp SearchResponse
+	if err := xml.Unmarshal(bodyBytes, &searchResp); err != nil {
+		return nil, fmt.Errorf("failed to parse XML response: %w", err)
+	}
+
+	return &searchResp, nil
 }
 
 func (s *XMLRiverService) FindSitePosition(req SearchRequest, siteDomain string) (int, string, string, error) {
-	s.logger.LogRequest(fmt.Sprintf("SEARCHING FOR SITE: %s", siteDomain), map[string]string{
-		"keyword": req.Query,
-		"site":    siteDomain,
-	})
-
 	for page := 1; page <= 10; page++ {
 		req.Page = page
 
@@ -155,11 +138,6 @@ func (s *XMLRiverService) FindSitePosition(req SearchRequest, siteDomain string)
 			for _, doc := range group.Docs {
 				if doc.ContentType == "organic" && s.isSiteMatch(doc.URL, siteDomain) {
 					absolutePosition := (page-1)*10 + position
-					s.logger.LogRequest(fmt.Sprintf("FOUND SITE: %s at position %d", siteDomain, absolutePosition), map[string]string{
-						"url":      doc.URL,
-						"title":    doc.Title,
-						"position": fmt.Sprintf("%d", absolutePosition),
-					})
 					return absolutePosition, doc.URL, doc.Title, nil
 				}
 				position++
@@ -167,10 +145,6 @@ func (s *XMLRiverService) FindSitePosition(req SearchRequest, siteDomain string)
 		}
 	}
 
-	s.logger.LogRequest(fmt.Sprintf("SITE NOT FOUND: %s", siteDomain), map[string]string{
-		"keyword": req.Query,
-		"site":    siteDomain,
-	})
 	return 0, "", "", nil
 }
 
@@ -198,8 +172,5 @@ func (s *XMLRiverService) extractDomain(urlStr string) string {
 }
 
 func (s *XMLRiverService) Close() error {
-	if s.logger != nil {
-		return s.logger.Close()
-	}
 	return nil
 }
