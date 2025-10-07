@@ -1,0 +1,1791 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>migrate: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">go-seo/cmd/migrate/main.go (0.0%)</option>
+				
+				<option value="file1">go-seo/cmd/server/main.go (0.0%)</option>
+				
+				<option value="file2">go-seo/docs/docs.go (0.0%)</option>
+				
+				<option value="file3">go-seo/internal/delivery/http/handlers/keyword_handler.go (0.0%)</option>
+				
+				<option value="file4">go-seo/internal/delivery/http/handlers/site_handler.go (0.0%)</option>
+				
+				<option value="file5">go-seo/internal/delivery/http/routes.go (0.0%)</option>
+				
+				<option value="file6">go-seo/internal/infrastructure/config/config.go (0.0%)</option>
+				
+				<option value="file7">go-seo/internal/infrastructure/database/migrations/migrations.go (0.0%)</option>
+				
+				<option value="file8">go-seo/internal/infrastructure/database/postgres/connection.go (0.0%)</option>
+				
+				<option value="file9">go-seo/internal/infrastructure/database/postgres/repositories/container.go (0.0%)</option>
+				
+				<option value="file10">go-seo/internal/infrastructure/database/postgres/repositories/keyword_repository.go (0.0%)</option>
+				
+				<option value="file11">go-seo/internal/infrastructure/database/postgres/repositories/position_repository.go (0.0%)</option>
+				
+				<option value="file12">go-seo/internal/infrastructure/database/postgres/repositories/site_repository.go (0.0%)</option>
+				
+				<option value="file13">go-seo/internal/repositories/container.go (0.0%)</option>
+				
+				<option value="file14">go-seo/internal/usecases/container.go (0.0%)</option>
+				
+				<option value="file15">go-seo/internal/usecases/domain_error.go (0.0%)</option>
+				
+				<option value="file16">go-seo/internal/usecases/keyword_usecase.go (0.0%)</option>
+				
+				<option value="file17">go-seo/internal/usecases/site_usecase.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "log"
+
+        "go-seo/internal/infrastructure/config"
+        "go-seo/internal/infrastructure/database/postgres"
+)
+
+func main() <span class="cov0" title="0">{
+        cfg, err := config.Load()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to load config:", err)
+        }</span>
+
+        <span class="cov0" title="0">db, err := postgres.NewDatabaseWithMigration(postgres.Config{
+                Host:     cfg.Database.Host,
+                Port:     cfg.Database.Port,
+                User:     cfg.Database.User,
+                Password: cfg.Database.Password,
+                DBName:   cfg.Database.DBName,
+                SSLMode:  cfg.Database.SSLMode,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to connect to database:", err)
+        }</span>
+        <span class="cov0" title="0">defer db.Close()
+
+        log.Println("Database migration completed successfully!")</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package main
+
+import (
+        "log"
+
+        _ "go-seo/docs"
+
+        "go-seo/internal/delivery/http"
+        "go-seo/internal/infrastructure/config"
+        "go-seo/internal/infrastructure/database/postgres"
+        "go-seo/internal/repositories"
+        "go-seo/internal/usecases"
+
+        "github.com/gin-gonic/gin"
+)
+
+func main() <span class="cov0" title="0">{
+        cfg, err := config.Load()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to load config:", err)
+        }</span>
+
+        <span class="cov0" title="0">db, err := postgres.NewDatabase(postgres.Config{
+                Host:     cfg.Database.Host,
+                Port:     cfg.Database.Port,
+                User:     cfg.Database.User,
+                Password: cfg.Database.Password,
+                DBName:   cfg.Database.DBName,
+                SSLMode:  cfg.Database.SSLMode,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to connect to database:", err)
+        }</span>
+        <span class="cov0" title="0">defer db.Close()
+
+        repos := repositories.NewContainer(db.DB)
+        useCases := usecases.NewContainer(repos)
+
+        r := gin.Default()
+
+        if len(cfg.Server.TrustedProxies) &gt; 0 </span><span class="cov0" title="0">{
+                r.SetTrustedProxies(cfg.Server.TrustedProxies)
+        }</span>
+
+        <span class="cov0" title="0">r.Use(gin.Logger())
+        r.Use(gin.Recovery())
+
+        http.SetupRoutes(r, useCases)
+
+        log.Printf("Server starting on port %s", cfg.Server.Port)
+        if err := r.Run(":" + cfg.Server.Port); err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to start server:", err)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
+package docs
+
+import "github.com/swaggo/swag"
+
+const docTemplate = `{
+    "schemes": {{ marshal .Schemes }},
+    "swagger": "2.0",
+    "info": {
+        "description": "{{escape .Description}}",
+        "title": "{{.Title}}",
+        "contact": {},
+        "version": "{{.Version}}"
+    },
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
+    "paths": {
+        "/api/keywords": {
+            "get": {
+                "description": "Get list of keywords for a specific site",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keywords"
+                ],
+                "summary": "Get keywords by site",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Site ID",
+                        "name": "site_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.KeywordResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new keyword for tracking",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keywords"
+                ],
+                "summary": "Create a new keyword",
+                "parameters": [
+                    {
+                        "description": "Keyword data",
+                        "name": "keyword",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateKeywordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.KeywordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/keywords/{id}": {
+            "delete": {
+                "description": "Delete a keyword and all its tracking data",
+                "tags": [
+                    "keywords"
+                ],
+                "summary": "Delete a keyword",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Keyword ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DeleteKeywordResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sites": {
+            "get": {
+                "description": "Get list of all tracked sites",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sites"
+                ],
+                "summary": "Get all sites",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.SiteResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new site for tracking",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sites"
+                ],
+                "summary": "Create a new site",
+                "parameters": [
+                    {
+                        "description": "Site data",
+                        "name": "site",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateSiteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SiteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sites/{id}": {
+            "delete": {
+                "description": "Delete a site and all its tracking data",
+                "tags": [
+                    "sites"
+                ],
+                "summary": "Delete a site",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Site ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DeleteSiteResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.CreateKeywordRequest": {
+            "type": "object",
+            "required": [
+                "site_id",
+                "value"
+            ],
+            "properties": {
+                "site_id": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CreateSiteRequest": {
+            "type": "object",
+            "required": [
+                "domain",
+                "name"
+            ],
+            "properties": {
+                "domain": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.DeleteKeywordResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.DeleteSiteResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.KeywordResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "site_id": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SiteResponse": {
+            "type": "object",
+            "properties": {
+                "domain": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+
+// SwaggerInfo holds exported Swagger Info so clients can modify it
+var SwaggerInfo = &amp;swag.Spec{
+        Version:          "",
+        Host:             "",
+        BasePath:         "",
+        Schemes:          []string{},
+        Title:            "",
+        Description:      "",
+        InfoInstanceName: "swagger",
+        SwaggerTemplate:  docTemplate,
+        LeftDelim:        "{{",
+        RightDelim:       "}}",
+}
+
+func init() <span class="cov0" title="0">{
+        swag.Register(SwaggerInfo.InstanceName(), SwaggerInfo)
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package handlers
+
+import (
+        "net/http"
+        "strconv"
+
+        "go-seo/internal/delivery/http/dto"
+        "go-seo/internal/usecases"
+
+        "github.com/gin-gonic/gin"
+)
+
+type KeywordHandler struct {
+        keywordUseCase usecases.KeywordUseCaseInterface
+}
+
+func NewKeywordHandler(keywordUseCase usecases.KeywordUseCaseInterface) *KeywordHandler <span class="cov0" title="0">{
+        return &amp;KeywordHandler{
+                keywordUseCase: keywordUseCase,
+        }
+}</span>
+
+// CreateKeyword godoc
+// @Summary Create a new keyword
+// @Description Create a new keyword for tracking
+// @Tags keywords
+// @Accept json
+// @Produce json
+// @Param keyword body dto.CreateKeywordRequest true "Keyword data"
+// @Success 201 {object} dto.KeywordResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/keywords [post]
+func (h *KeywordHandler) CreateKeyword(c *gin.Context) <span class="cov0" title="0">{
+        var req dto.CreateKeywordRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+                        Error:   "validation_error",
+                        Message: err.Error(),
+                })
+                return
+        }</span>
+
+        <span class="cov0" title="0">keyword, err := h.keywordUseCase.CreateKeyword(req.Value, req.SiteID)
+        if err != nil </span><span class="cov0" title="0">{
+                if usecases.IsDomainError(err) </span><span class="cov0" title="0">{
+                        code := usecases.GetDomainErrorCode(err)
+                        status := http.StatusInternalServerError
+
+                        switch code </span>{
+                        case usecases.ErrorKeywordExists:<span class="cov0" title="0">
+                                status = http.StatusConflict</span>
+                        case usecases.ErrorKeywordCreation:<span class="cov0" title="0">
+                                status = http.StatusInternalServerError</span>
+                        }
+
+                        <span class="cov0" title="0">c.JSON(status, dto.ErrorResponse{
+                                Error:   code,
+                                Message: err.Error(),
+                        })
+                        return</span>
+                }
+
+                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+                        Error:   "internal_error",
+                        Message: "Internal server error",
+                })
+                return</span>
+        }
+
+        <span class="cov0" title="0">c.JSON(http.StatusCreated, dto.KeywordResponse{
+                ID:     keyword.ID,
+                Value:  keyword.Value,
+                SiteID: keyword.SiteID,
+        })</span>
+}
+
+// DeleteKeyword godoc
+// @Summary Delete a keyword
+// @Description Delete a keyword and all its tracking data
+// @Tags keywords
+// @Param id path int true "Keyword ID"
+// @Success 200 {object} dto.DeleteKeywordResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/keywords/{id} [delete]
+func (h *KeywordHandler) DeleteKeyword(c *gin.Context) <span class="cov0" title="0">{
+        idStr := c.Param("id")
+        id, err := strconv.Atoi(idStr)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+                        Error:   "invalid_id",
+                        Message: "Invalid keyword ID",
+                })
+                return
+        }</span>
+
+        <span class="cov0" title="0">err = h.keywordUseCase.DeleteKeyword(id)
+        if err != nil </span><span class="cov0" title="0">{
+                if usecases.IsDomainError(err) </span><span class="cov0" title="0">{
+                        code := usecases.GetDomainErrorCode(err)
+                        status := http.StatusInternalServerError
+
+                        switch code </span>{
+                        case usecases.ErrorKeywordNotFound:<span class="cov0" title="0">
+                                status = http.StatusNotFound</span>
+                        case usecases.ErrorKeywordDeletion, usecases.ErrorPositionDeletion:<span class="cov0" title="0">
+                                status = http.StatusInternalServerError</span>
+                        }
+
+                        <span class="cov0" title="0">c.JSON(status, dto.ErrorResponse{
+                                Error:   code,
+                                Message: err.Error(),
+                        })
+                        return</span>
+                }
+
+                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+                        Error:   "internal_error",
+                        Message: "Internal server error",
+                })
+                return</span>
+        }
+
+        <span class="cov0" title="0">c.JSON(http.StatusOK, dto.DeleteKeywordResponse{
+                Message: "Keyword and all tracking data deleted successfully",
+        })</span>
+}
+
+// GetKeywords godoc
+// @Summary Get keywords by site
+// @Description Get list of keywords for a specific site
+// @Tags keywords
+// @Produce json
+// @Param site_id query int true "Site ID"
+// @Success 200 {array} dto.KeywordResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/keywords [get]
+func (h *KeywordHandler) GetKeywords(c *gin.Context) <span class="cov0" title="0">{
+        siteIDStr := c.Query("site_id")
+        if siteIDStr == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+                        Error:   "validation_error",
+                        Message: "site_id parameter is required",
+                })
+                return
+        }</span>
+
+        <span class="cov0" title="0">siteID, err := strconv.Atoi(siteIDStr)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+                        Error:   "validation_error",
+                        Message: "Invalid site_id parameter",
+                })
+                return
+        }</span>
+
+        <span class="cov0" title="0">keywords, err := h.keywordUseCase.GetKeywordsBySite(siteID)
+        if err != nil </span><span class="cov0" title="0">{
+                if usecases.IsDomainError(err) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+                                Error:   usecases.GetDomainErrorCode(err),
+                                Message: err.Error(),
+                        })
+                        return
+                }</span>
+
+                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+                        Error:   "internal_error",
+                        Message: "Internal server error",
+                })
+                return</span>
+        }
+
+        <span class="cov0" title="0">response := make([]dto.KeywordResponse, len(keywords))
+        for i, keyword := range keywords </span><span class="cov0" title="0">{
+                response[i] = dto.KeywordResponse{
+                        ID:     keyword.ID,
+                        Value:  keyword.Value,
+                        SiteID: keyword.SiteID,
+                }
+        }</span>
+
+        <span class="cov0" title="0">c.JSON(http.StatusOK, response)</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package handlers
+
+import (
+        "net/http"
+        "strconv"
+
+        "go-seo/internal/delivery/http/dto"
+        "go-seo/internal/usecases"
+
+        "github.com/gin-gonic/gin"
+)
+
+type SiteHandler struct {
+        siteUseCase usecases.SiteUseCaseInterface
+}
+
+func NewSiteHandler(siteUseCase usecases.SiteUseCaseInterface) *SiteHandler <span class="cov0" title="0">{
+        return &amp;SiteHandler{
+                siteUseCase: siteUseCase,
+        }
+}</span>
+
+// CreateSite godoc
+// @Summary Create a new site
+// @Description Create a new site for tracking
+// @Tags sites
+// @Accept json
+// @Produce json
+// @Param site body dto.CreateSiteRequest true "Site data"
+// @Success 201 {object} dto.SiteResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/sites [post]
+func (h *SiteHandler) CreateSite(c *gin.Context) <span class="cov0" title="0">{
+        var req dto.CreateSiteRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+                        Error:   "validation_error",
+                        Message: err.Error(),
+                })
+                return
+        }</span>
+
+        <span class="cov0" title="0">site, err := h.siteUseCase.CreateSite(req.Name, req.Domain)
+        if err != nil </span><span class="cov0" title="0">{
+                if usecases.IsDomainError(err) </span><span class="cov0" title="0">{
+                        code := usecases.GetDomainErrorCode(err)
+                        status := http.StatusInternalServerError
+
+                        switch code </span>{
+                        case usecases.ErrorSiteExists:<span class="cov0" title="0">
+                                status = http.StatusConflict</span>
+                        case usecases.ErrorSiteCreation:<span class="cov0" title="0">
+                                status = http.StatusInternalServerError</span>
+                        }
+
+                        <span class="cov0" title="0">c.JSON(status, dto.ErrorResponse{
+                                Error:   code,
+                                Message: err.Error(),
+                        })
+                        return</span>
+                }
+
+                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+                        Error:   "internal_error",
+                        Message: "Internal server error",
+                })
+                return</span>
+        }
+
+        <span class="cov0" title="0">c.JSON(http.StatusCreated, dto.SiteResponse{
+                ID:     site.ID,
+                Name:   site.Name,
+                Domain: site.Domain,
+        })</span>
+}
+
+// DeleteSite godoc
+// @Summary Delete a site
+// @Description Delete a site and all its tracking data
+// @Tags sites
+// @Param id path int true "Site ID"
+// @Success 200 {object} dto.DeleteSiteResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/sites/{id} [delete]
+func (h *SiteHandler) DeleteSite(c *gin.Context) <span class="cov0" title="0">{
+        idStr := c.Param("id")
+        id, err := strconv.Atoi(idStr)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+                        Error:   "invalid_id",
+                        Message: "Invalid site ID",
+                })
+                return
+        }</span>
+
+        <span class="cov0" title="0">err = h.siteUseCase.DeleteSite(id)
+        if err != nil </span><span class="cov0" title="0">{
+                if usecases.IsDomainError(err) </span><span class="cov0" title="0">{
+                        code := usecases.GetDomainErrorCode(err)
+                        status := http.StatusInternalServerError
+
+                        switch code </span>{
+                        case usecases.ErrorSiteNotFound:<span class="cov0" title="0">
+                                status = http.StatusNotFound</span>
+                        case usecases.ErrorSiteDeletion, usecases.ErrorPositionDeletion:<span class="cov0" title="0">
+                                status = http.StatusInternalServerError</span>
+                        }
+
+                        <span class="cov0" title="0">c.JSON(status, dto.ErrorResponse{
+                                Error:   code,
+                                Message: err.Error(),
+                        })
+                        return</span>
+                }
+
+                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+                        Error:   "internal_error",
+                        Message: "Internal server error",
+                })
+                return</span>
+        }
+
+        <span class="cov0" title="0">c.JSON(http.StatusOK, dto.DeleteSiteResponse{
+                Message: "Site and all tracking data deleted successfully",
+        })</span>
+}
+
+// GetSites godoc
+// @Summary Get all sites
+// @Description Get list of all tracked sites
+// @Tags sites
+// @Produce json
+// @Success 200 {array} dto.SiteResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/sites [get]
+func (h *SiteHandler) GetSites(c *gin.Context) <span class="cov0" title="0">{
+        sites, err := h.siteUseCase.GetAllSites()
+        if err != nil </span><span class="cov0" title="0">{
+                if usecases.IsDomainError(err) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+                                Error:   usecases.GetDomainErrorCode(err),
+                                Message: err.Error(),
+                        })
+                        return
+                }</span>
+
+                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+                        Error:   "internal_error",
+                        Message: "Internal server error",
+                })
+                return</span>
+        }
+
+        <span class="cov0" title="0">response := make([]dto.SiteResponse, len(sites))
+        for i, site := range sites </span><span class="cov0" title="0">{
+                response[i] = dto.SiteResponse{
+                        ID:     site.ID,
+                        Name:   site.Name,
+                        Domain: site.Domain,
+                }
+        }</span>
+
+        <span class="cov0" title="0">c.JSON(http.StatusOK, response)</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package http
+
+import (
+        "go-seo/internal/delivery/http/handlers"
+        "go-seo/internal/usecases"
+
+        "github.com/gin-gonic/gin"
+        swaggerFiles "github.com/swaggo/files"
+        ginSwagger "github.com/swaggo/gin-swagger"
+)
+
+func SetupRoutes(r *gin.Engine, useCases *usecases.Container) <span class="cov0" title="0">{
+        siteHandler := handlers.NewSiteHandler(useCases.Site)
+        keywordHandler := handlers.NewKeywordHandler(useCases.Keyword)
+
+        api := r.Group("/api")
+        </span><span class="cov0" title="0">{
+                sites := api.Group("/sites")
+                </span><span class="cov0" title="0">{
+                        sites.POST("", siteHandler.CreateSite)
+                        sites.GET("", siteHandler.GetSites)
+                        sites.DELETE("/:id", siteHandler.DeleteSite)
+                }</span>
+
+                <span class="cov0" title="0">keywords := api.Group("/keywords")
+                </span><span class="cov0" title="0">{
+                        keywords.POST("", keywordHandler.CreateKeyword)
+                        keywords.GET("", keywordHandler.GetKeywords)
+                        keywords.DELETE("/:id", keywordHandler.DeleteKeyword)
+                }</span>
+        }
+
+        <span class="cov0" title="0">r.GET("/health", func(c *gin.Context) </span><span class="cov0" title="0">{
+                c.JSON(200, gin.H{"status": "ok"})
+        }</span>)
+
+        <span class="cov0" title="0">r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package config
+
+import (
+        "log"
+        "os"
+        "strconv"
+        "strings"
+
+        "github.com/joho/godotenv"
+)
+
+type Config struct {
+        Database DatabaseConfig
+        Server   ServerConfig
+        XMLRiver XMLRiverConfig
+}
+
+type DatabaseConfig struct {
+        Host     string
+        Port     int
+        User     string
+        Password string
+        DBName   string
+        SSLMode  string
+}
+
+type ServerConfig struct {
+        Port           string
+        TrustedProxies []string
+}
+
+type XMLRiverConfig struct {
+        APIKey  string
+        BaseURL string
+}
+
+func Load() (*Config, error) <span class="cov0" title="0">{
+        if err := godotenv.Load(); err != nil </span><span class="cov0" title="0">{
+                log.Println("No .env file found, using environment variables")
+        }</span>
+
+        <span class="cov0" title="0">return &amp;Config{
+                Database: DatabaseConfig{
+                        Host:     getEnv("DB_HOST", "localhost"),
+                        Port:     getEnvAsInt("DB_PORT", 5432),
+                        User:     getEnv("DB_USER", "postgres"),
+                        Password: getEnv("DB_PASSWORD", "password"),
+                        DBName:   getEnv("DB_NAME", "go_seo"),
+                        SSLMode:  getEnv("DB_SSLMODE", "disable"),
+                },
+                Server: ServerConfig{
+                        Port:           getEnv("SERVER_PORT", "8080"),
+                        TrustedProxies: getEnvAsStringSlice("SERVER_TRUSTED_PROXIES", []string{"127.0.0.1", "::1"}),
+                },
+                XMLRiver: XMLRiverConfig{
+                        APIKey:  getEnv("XMLRIVER_API_KEY", ""),
+                        BaseURL: getEnv("XMLRIVER_BASE_URL", "https://xmlriver.com/api"),
+                },
+        }, nil</span>
+}
+
+func getEnv(key, defaultValue string) string <span class="cov0" title="0">{
+        if value := os.Getenv(key); value != "" </span><span class="cov0" title="0">{
+                return value
+        }</span>
+        <span class="cov0" title="0">return defaultValue</span>
+}
+
+func getEnvAsInt(key string, defaultValue int) int <span class="cov0" title="0">{
+        if value := os.Getenv(key); value != "" </span><span class="cov0" title="0">{
+                if intValue, err := strconv.Atoi(value); err == nil </span><span class="cov0" title="0">{
+                        return intValue
+                }</span>
+        }
+        <span class="cov0" title="0">return defaultValue</span>
+}
+
+func getEnvAsStringSlice(key string, defaultValue []string) []string <span class="cov0" title="0">{
+        if value := os.Getenv(key); value != "" </span><span class="cov0" title="0">{
+                return strings.Split(value, ",")
+        }</span>
+        <span class="cov0" title="0">return defaultValue</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package migrations
+
+import (
+        "go-seo/internal/infrastructure/database/postgres/models"
+
+        "gorm.io/gorm"
+)
+
+func AutoMigrate(db *gorm.DB) error <span class="cov0" title="0">{
+        return db.AutoMigrate(
+                &amp;models.Site{},
+                &amp;models.Keyword{},
+                &amp;models.Position{},
+        )
+}</span>
+
+func CreateTables(db *gorm.DB) error <span class="cov0" title="0">{
+        if err := AutoMigrate(db); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">if err := db.Exec(`
+                CREATE INDEX IF NOT EXISTS idx_positions_keyword_site_date 
+                ON positions (keyword_id, site_id, date DESC);
+        `).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">if err := db.Exec(`
+                CREATE INDEX IF NOT EXISTS idx_positions_site_date 
+                ON positions (site_id, date DESC);
+        `).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package postgres
+
+import (
+        "fmt"
+        "log"
+
+        "go-seo/internal/infrastructure/database/migrations"
+
+        "gorm.io/driver/postgres"
+        "gorm.io/gorm"
+        "gorm.io/gorm/logger"
+)
+
+type Config struct {
+        Host     string
+        Port     int
+        User     string
+        Password string
+        DBName   string
+        SSLMode  string
+}
+
+type Database struct {
+        DB *gorm.DB
+}
+
+func NewDatabaseWithMigration(cfg Config) (*Database, error) <span class="cov0" title="0">{
+        dsn := fmt.Sprintf(
+                "host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+                cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode,
+        )
+
+        db, err := gorm.Open(postgres.Open(dsn), &amp;gorm.Config{
+                Logger: logger.Default.LogMode(logger.Info),
+        })
+
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to connect to database: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if err := migrations.CreateTables(db); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to run migrations: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">log.Println("Database connected and migrated successfully")
+
+        return &amp;Database{DB: db}, nil</span>
+}
+
+func NewDatabase(cfg Config) (*Database, error) <span class="cov0" title="0">{
+        dsn := fmt.Sprintf(
+                "host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+                cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode,
+        )
+
+        db, err := gorm.Open(postgres.Open(dsn), &amp;gorm.Config{
+                Logger: logger.Default.LogMode(logger.Info),
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to connect to database: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">log.Println("Database connected")
+
+        return &amp;Database{DB: db}, nil</span>
+}
+
+func (d *Database) Close() error <span class="cov0" title="0">{
+        sqlDB, err := d.DB.DB()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">return sqlDB.Close()</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package repositories
+
+import (
+        "go-seo/internal/domain/repositories"
+
+        "gorm.io/gorm"
+)
+
+type RepositoryContainer struct {
+        Keyword  repositories.KeywordRepository
+        Site     repositories.SiteRepository
+        Position repositories.PositionRepository
+}
+
+func NewRepositoryContainer(db *gorm.DB) *RepositoryContainer <span class="cov0" title="0">{
+        return &amp;RepositoryContainer{
+                Keyword:  NewKeywordRepository(db),
+                Site:     NewSiteRepository(db),
+                Position: NewPositionRepository(db),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package repositories
+
+import (
+        "go-seo/internal/domain/entities"
+        "go-seo/internal/domain/repositories"
+        "go-seo/internal/infrastructure/database/postgres/models"
+
+        "gorm.io/gorm"
+)
+
+type keywordRepository struct {
+        db *gorm.DB
+}
+
+func NewKeywordRepository(db *gorm.DB) repositories.KeywordRepository <span class="cov0" title="0">{
+        return &amp;keywordRepository{db: db}
+}</span>
+
+func (r *keywordRepository) Create(keyword *entities.Keyword) error <span class="cov0" title="0">{
+        model := &amp;models.Keyword{
+                Value:  keyword.Value,
+                SiteID: keyword.SiteID,
+        }
+
+        if err := r.db.Create(model).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">keyword.ID = model.ID
+        return nil</span>
+}
+
+func (r *keywordRepository) GetByID(id int) (*entities.Keyword, error) <span class="cov0" title="0">{
+        var model models.Keyword
+        if err := r.db.First(&amp;model, id).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return r.toDomain(&amp;model), nil</span>
+}
+
+func (r *keywordRepository) GetByValueAndSite(value string, siteID int) (*entities.Keyword, error) <span class="cov0" title="0">{
+        var model models.Keyword
+        if err := r.db.Where("value = ? AND site_id = ?", value, siteID).First(&amp;model).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return r.toDomain(&amp;model), nil</span>
+}
+
+func (r *keywordRepository) GetBySiteID(siteID int) ([]*entities.Keyword, error) <span class="cov0" title="0">{
+        var models []models.Keyword
+        if err := r.db.Where("site_id = ?", siteID).Find(&amp;models).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">keywords := make([]*entities.Keyword, len(models))
+        for i, model := range models </span><span class="cov0" title="0">{
+                keywords[i] = r.toDomain(&amp;model)
+        }</span>
+
+        <span class="cov0" title="0">return keywords, nil</span>
+}
+
+func (r *keywordRepository) GetAll() ([]*entities.Keyword, error) <span class="cov0" title="0">{
+        var modelKeywords []models.Keyword
+        if err := r.db.Find(&amp;modelKeywords).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">keywords := make([]*entities.Keyword, len(modelKeywords))
+        for i, model := range modelKeywords </span><span class="cov0" title="0">{
+                keywords[i] = r.toDomain(&amp;model)
+        }</span>
+
+        <span class="cov0" title="0">return keywords, nil</span>
+}
+
+func (r *keywordRepository) Update(keyword *entities.Keyword) error <span class="cov0" title="0">{
+        model := &amp;models.Keyword{
+                ID:     keyword.ID,
+                Value:  keyword.Value,
+                SiteID: keyword.SiteID,
+        }
+
+        return r.db.Save(model).Error
+}</span>
+
+func (r *keywordRepository) Delete(id int) error <span class="cov0" title="0">{
+        return r.db.Delete(&amp;models.Keyword{}, id).Error
+}</span>
+
+func (r *keywordRepository) toDomain(model *models.Keyword) *entities.Keyword <span class="cov0" title="0">{
+        return &amp;entities.Keyword{
+                ID:     model.ID,
+                Value:  model.Value,
+                SiteID: model.SiteID,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package repositories
+
+import (
+        "go-seo/internal/domain/entities"
+        "go-seo/internal/domain/repositories"
+        "go-seo/internal/infrastructure/database/postgres/models"
+
+        "gorm.io/gorm"
+)
+
+type positionRepository struct {
+        db *gorm.DB
+}
+
+func NewPositionRepository(db *gorm.DB) repositories.PositionRepository <span class="cov0" title="0">{
+        return &amp;positionRepository{db: db}
+}</span>
+
+func (r *positionRepository) Create(position *entities.Position) error <span class="cov0" title="0">{
+        model := &amp;models.Position{
+                KeywordID: position.KeywordID,
+                SiteID:    position.SiteID,
+                Rank:      position.Rank,
+                URL:       position.URL,
+                Title:     position.Title,
+                Date:      position.Date,
+        }
+
+        if err := r.db.Create(model).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">position.ID = model.ID
+        return nil</span>
+}
+
+func (r *positionRepository) GetByID(id int) (*entities.Position, error) <span class="cov0" title="0">{
+        var model models.Position
+        if err := r.db.Preload("Keyword").Preload("Site").First(&amp;model, id).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return r.toDomain(&amp;model), nil</span>
+}
+
+func (r *positionRepository) GetByKeywordAndSite(keywordID, siteID int) ([]*entities.Position, error) <span class="cov0" title="0">{
+        var models []models.Position
+        if err := r.db.Where("keyword_id = ? AND site_id = ?", keywordID, siteID).
+                Order("date DESC").
+                Find(&amp;models).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">positions := make([]*entities.Position, len(models))
+        for i, model := range models </span><span class="cov0" title="0">{
+                positions[i] = r.toDomain(&amp;model)
+        }</span>
+
+        <span class="cov0" title="0">return positions, nil</span>
+}
+
+func (r *positionRepository) GetLatestByKeywordAndSite(keywordID, siteID int) (*entities.Position, error) <span class="cov0" title="0">{
+        var model models.Position
+        if err := r.db.Where("keyword_id = ? AND site_id = ?", keywordID, siteID).
+                Order("date DESC").
+                First(&amp;model).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return r.toDomain(&amp;model), nil</span>
+}
+
+func (r *positionRepository) GetAll() ([]*entities.Position, error) <span class="cov0" title="0">{
+        var models []models.Position
+        if err := r.db.Preload("Keyword").Preload("Site").
+                Order("date DESC").
+                Find(&amp;models).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">positions := make([]*entities.Position, len(models))
+        for i, model := range models </span><span class="cov0" title="0">{
+                positions[i] = r.toDomain(&amp;model)
+        }</span>
+
+        <span class="cov0" title="0">return positions, nil</span>
+}
+
+func (r *positionRepository) Update(position *entities.Position) error <span class="cov0" title="0">{
+        model := &amp;models.Position{
+                ID:        position.ID,
+                KeywordID: position.KeywordID,
+                SiteID:    position.SiteID,
+                Rank:      position.Rank,
+                URL:       position.URL,
+                Title:     position.Title,
+                Date:      position.Date,
+        }
+
+        return r.db.Save(model).Error
+}</span>
+
+func (r *positionRepository) Delete(id int) error <span class="cov0" title="0">{
+        return r.db.Delete(&amp;models.Position{}, id).Error
+}</span>
+
+func (r *positionRepository) DeleteBySiteID(siteID int) error <span class="cov0" title="0">{
+        return r.db.Where("site_id = ?", siteID).Delete(&amp;models.Position{}).Error
+}</span>
+
+func (r *positionRepository) DeleteByKeywordID(keywordID int) error <span class="cov0" title="0">{
+        return r.db.Where("keyword_id = ?", keywordID).Delete(&amp;models.Position{}).Error
+}</span>
+
+func (r *positionRepository) toDomain(model *models.Position) *entities.Position <span class="cov0" title="0">{
+        position := &amp;entities.Position{
+                ID:        model.ID,
+                KeywordID: model.KeywordID,
+                SiteID:    model.SiteID,
+                Rank:      model.Rank,
+                URL:       model.URL,
+                Title:     model.Title,
+                Date:      model.Date,
+        }
+
+        if model.Keyword.ID != 0 </span><span class="cov0" title="0">{
+                position.Keyword = &amp;entities.Keyword{
+                        ID:    model.Keyword.ID,
+                        Value: model.Keyword.Value,
+                }
+        }</span>
+
+        <span class="cov0" title="0">if model.Site.ID != 0 </span><span class="cov0" title="0">{
+                position.Site = &amp;entities.Site{
+                        ID:     model.Site.ID,
+                        Name:   model.Site.Name,
+                        Domain: model.Site.Domain,
+                }
+        }</span>
+
+        <span class="cov0" title="0">return position</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package repositories
+
+import (
+        "go-seo/internal/domain/entities"
+        "go-seo/internal/domain/repositories"
+        "go-seo/internal/infrastructure/database/postgres/models"
+
+        "gorm.io/gorm"
+)
+
+type siteRepository struct {
+        db *gorm.DB
+}
+
+func NewSiteRepository(db *gorm.DB) repositories.SiteRepository <span class="cov0" title="0">{
+        return &amp;siteRepository{db: db}
+}</span>
+
+func (r *siteRepository) Create(site *entities.Site) error <span class="cov0" title="0">{
+        model := &amp;models.Site{
+                Name:   site.Name,
+                Domain: site.Domain,
+        }
+
+        if err := r.db.Create(model).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">site.ID = model.ID
+        return nil</span>
+}
+
+func (r *siteRepository) GetByID(id int) (*entities.Site, error) <span class="cov0" title="0">{
+        var model models.Site
+        if err := r.db.First(&amp;model, id).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return r.toDomain(&amp;model), nil</span>
+}
+
+func (r *siteRepository) GetByDomain(domain string) (*entities.Site, error) <span class="cov0" title="0">{
+        var model models.Site
+        if err := r.db.Where("domain = ?", domain).First(&amp;model).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return r.toDomain(&amp;model), nil</span>
+}
+
+func (r *siteRepository) GetAll() ([]*entities.Site, error) <span class="cov0" title="0">{
+        var models []models.Site
+        if err := r.db.Find(&amp;models).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">sites := make([]*entities.Site, len(models))
+        for i, model := range models </span><span class="cov0" title="0">{
+                sites[i] = r.toDomain(&amp;model)
+        }</span>
+
+        <span class="cov0" title="0">return sites, nil</span>
+}
+
+func (r *siteRepository) Update(site *entities.Site) error <span class="cov0" title="0">{
+        model := &amp;models.Site{
+                ID:     site.ID,
+                Name:   site.Name,
+                Domain: site.Domain,
+        }
+
+        return r.db.Save(model).Error
+}</span>
+
+func (r *siteRepository) Delete(id int) error <span class="cov0" title="0">{
+        return r.db.Delete(&amp;models.Site{}, id).Error
+}</span>
+
+func (r *siteRepository) toDomain(model *models.Site) *entities.Site <span class="cov0" title="0">{
+        return &amp;entities.Site{
+                ID:     model.ID,
+                Name:   model.Name,
+                Domain: model.Domain,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package repositories
+
+import (
+        "go-seo/internal/domain/repositories"
+        postgresRepos "go-seo/internal/infrastructure/database/postgres/repositories"
+
+        "gorm.io/gorm"
+)
+
+type Container struct {
+        Keyword  repositories.KeywordRepository
+        Site     repositories.SiteRepository
+        Position repositories.PositionRepository
+}
+
+func NewContainer(db *gorm.DB) *Container <span class="cov0" title="0">{
+        postgresRepos := postgresRepos.NewRepositoryContainer(db)
+
+        return &amp;Container{
+                Keyword:  postgresRepos.Keyword,
+                Site:     postgresRepos.Site,
+                Position: postgresRepos.Position,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package usecases
+
+import (
+        "go-seo/internal/repositories"
+)
+
+type Container struct {
+        Site    *SiteUseCase
+        Keyword *KeywordUseCase
+}
+
+func NewContainer(repos *repositories.Container) *Container <span class="cov0" title="0">{
+        return &amp;Container{
+                Site:    NewSiteUseCase(repos.Site, repos.Position),
+                Keyword: NewKeywordUseCase(repos.Keyword, repos.Position),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package usecases
+
+import "errors"
+
+type DomainError struct {
+        Code    string
+        Message string
+        Err     error
+}
+
+func (e *DomainError) Error() string <span class="cov0" title="0">{
+        if e.Err != nil </span><span class="cov0" title="0">{
+                return e.Message + ": " + e.Err.Error()
+        }</span>
+        <span class="cov0" title="0">return e.Message</span>
+}
+
+func (e *DomainError) Unwrap() error <span class="cov0" title="0">{
+        return e.Err
+}</span>
+
+func IsDomainError(err error) bool <span class="cov0" title="0">{
+        var domainErr *DomainError
+        return errors.As(err, &amp;domainErr)
+}</span>
+
+func GetDomainErrorCode(err error) string <span class="cov0" title="0">{
+        var domainErr *DomainError
+        if errors.As(err, &amp;domainErr) </span><span class="cov0" title="0">{
+                return domainErr.Code
+        }</span>
+        <span class="cov0" title="0">return ""</span>
+}
+</pre>
+		
+		<pre class="file" id="file16" style="display: none">package usecases
+
+import (
+        "go-seo/internal/domain/entities"
+        "go-seo/internal/domain/repositories"
+)
+
+type KeywordUseCase struct {
+        keywordRepo  repositories.KeywordRepository
+        positionRepo repositories.PositionRepository
+}
+
+func NewKeywordUseCase(keywordRepo repositories.KeywordRepository, positionRepo repositories.PositionRepository) *KeywordUseCase <span class="cov0" title="0">{
+        return &amp;KeywordUseCase{
+                keywordRepo:  keywordRepo,
+                positionRepo: positionRepo,
+        }
+}</span>
+
+func (uc *KeywordUseCase) CreateKeyword(value string, siteID int) (*entities.Keyword, error) <span class="cov0" title="0">{
+        existingKeyword, err := uc.keywordRepo.GetByValueAndSite(value, siteID)
+        if err == nil &amp;&amp; existingKeyword != nil </span><span class="cov0" title="0">{
+                return nil, &amp;DomainError{
+                        Code:    ErrorKeywordExists,
+                        Message: "Keyword already exists for this site",
+                }
+        }</span>
+
+        <span class="cov0" title="0">keyword := &amp;entities.Keyword{
+                Value:  value,
+                SiteID: siteID,
+        }
+
+        if err := uc.keywordRepo.Create(keyword); err != nil </span><span class="cov0" title="0">{
+                return nil, &amp;DomainError{
+                        Code:    ErrorKeywordCreation,
+                        Message: "Failed to create keyword",
+                        Err:     err,
+                }
+        }</span>
+
+        <span class="cov0" title="0">return keyword, nil</span>
+}
+
+func (uc *KeywordUseCase) DeleteKeyword(id int) error <span class="cov0" title="0">{
+        _, err := uc.keywordRepo.GetByID(id)
+        if err != nil </span><span class="cov0" title="0">{
+                return &amp;DomainError{
+                        Code:    ErrorKeywordNotFound,
+                        Message: "Keyword not found",
+                        Err:     err,
+                }
+        }</span>
+
+        <span class="cov0" title="0">if err := uc.positionRepo.DeleteByKeywordID(id); err != nil </span><span class="cov0" title="0">{
+                return &amp;DomainError{
+                        Code:    ErrorPositionDeletion,
+                        Message: "Failed to delete keyword positions",
+                        Err:     err,
+                }
+        }</span>
+
+        <span class="cov0" title="0">if err := uc.keywordRepo.Delete(id); err != nil </span><span class="cov0" title="0">{
+                return &amp;DomainError{
+                        Code:    ErrorKeywordDeletion,
+                        Message: "Failed to delete keyword",
+                        Err:     err,
+                }
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (uc *KeywordUseCase) GetKeywordsBySite(siteID int) ([]*entities.Keyword, error) <span class="cov0" title="0">{
+        keywords, err := uc.keywordRepo.GetBySiteID(siteID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, &amp;DomainError{
+                        Code:    ErrorKeywordFetch,
+                        Message: "Failed to fetch keywords",
+                        Err:     err,
+                }
+        }</span>
+
+        <span class="cov0" title="0">return keywords, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file17" style="display: none">package usecases
+
+import (
+        "go-seo/internal/domain/entities"
+        "go-seo/internal/domain/repositories"
+)
+
+type SiteUseCase struct {
+        siteRepo     repositories.SiteRepository
+        positionRepo repositories.PositionRepository
+}
+
+func NewSiteUseCase(siteRepo repositories.SiteRepository, positionRepo repositories.PositionRepository) *SiteUseCase <span class="cov0" title="0">{
+        return &amp;SiteUseCase{
+                siteRepo:     siteRepo,
+                positionRepo: positionRepo,
+        }
+}</span>
+
+func (uc *SiteUseCase) CreateSite(name, domain string) (*entities.Site, error) <span class="cov0" title="0">{
+        existingSite, err := uc.siteRepo.GetByDomain(domain)
+        if err == nil &amp;&amp; existingSite != nil </span><span class="cov0" title="0">{
+                return nil, &amp;DomainError{
+                        Code:    ErrorSiteExists,
+                        Message: "Site with this domain already exists",
+                }
+        }</span>
+
+        <span class="cov0" title="0">site := &amp;entities.Site{
+                Name:   name,
+                Domain: domain,
+        }
+
+        if err := uc.siteRepo.Create(site); err != nil </span><span class="cov0" title="0">{
+                return nil, &amp;DomainError{
+                        Code:    ErrorSiteCreation,
+                        Message: "Failed to create site",
+                        Err:     err,
+                }
+        }</span>
+
+        <span class="cov0" title="0">return site, nil</span>
+}
+
+func (uc *SiteUseCase) DeleteSite(id int) error <span class="cov0" title="0">{
+        _, err := uc.siteRepo.GetByID(id)
+        if err != nil </span><span class="cov0" title="0">{
+                return &amp;DomainError{
+                        Code:    ErrorSiteNotFound,
+                        Message: "Site not found",
+                        Err:     err,
+                }
+        }</span>
+
+        <span class="cov0" title="0">if err := uc.positionRepo.DeleteBySiteID(id); err != nil </span><span class="cov0" title="0">{
+                return &amp;DomainError{
+                        Code:    ErrorPositionDeletion,
+                        Message: "Failed to delete site positions",
+                        Err:     err,
+                }
+        }</span>
+
+        <span class="cov0" title="0">if err := uc.siteRepo.Delete(id); err != nil </span><span class="cov0" title="0">{
+                return &amp;DomainError{
+                        Code:    ErrorSiteDeletion,
+                        Message: "Failed to delete site",
+                        Err:     err,
+                }
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (uc *SiteUseCase) GetAllSites() ([]*entities.Site, error) <span class="cov0" title="0">{
+        sites, err := uc.siteRepo.GetAll()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, &amp;DomainError{
+                        Code:    ErrorSiteFetch,
+                        Message: "Failed to fetch sites",
+                        Err:     err,
+                }
+        }</span>
+
+        <span class="cov0" title="0">return sites, nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
