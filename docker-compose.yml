@@ -63,6 +63,23 @@ services:
       # Логи приложения
       - ./logs:/root/logs
 
+  # Nginx для проксирования - доступен только внутри VDS
+  nginx:
+    image: nginx:alpine
+    container_name: go-seo-nginx
+    restart: unless-stopped
+    # Порты доступны только внутри VDS (127.0.0.1)
+    ports:
+      - "127.0.0.1:80:81"
+      - "127.0.0.1:443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - go-seo-network
+
 # Volumes для постоянного хранения данных
 volumes:
   postgres_data:
