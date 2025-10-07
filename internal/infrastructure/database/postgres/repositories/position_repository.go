@@ -59,6 +59,22 @@ func (r *positionRepository) GetByKeywordAndSite(keywordID, siteID int) ([]*enti
 	return positions, nil
 }
 
+func (r *positionRepository) GetBySiteID(siteID int) ([]*entities.Position, error) {
+	var models []models.Position
+	if err := r.db.Where("site_id = ?", siteID).
+		Order("date DESC").
+		Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+
 func (r *positionRepository) GetLatestByKeywordAndSite(keywordID, siteID int) (*entities.Position, error) {
 	var model models.Position
 	if err := r.db.Where("keyword_id = ? AND site_id = ?", keywordID, siteID).

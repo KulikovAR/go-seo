@@ -45,6 +45,27 @@ definitions:
       value:
         type: string
     type: object
+  dto.PositionResponse:
+    properties:
+      date:
+        type: string
+      id:
+        type: integer
+      keyword:
+        type: string
+      keyword_id:
+        type: integer
+      rank:
+        type: integer
+      site:
+        type: string
+      site_id:
+        type: integer
+      title:
+        type: string
+      url:
+        type: string
+    type: object
   dto.SiteResponse:
     properties:
       domain:
@@ -53,6 +74,38 @@ definitions:
         type: integer
       name:
         type: string
+    type: object
+  dto.TrackPositionsResponse:
+    properties:
+      count:
+        type: integer
+      message:
+        type: string
+    type: object
+  dto.TrackSitePositionsRequest:
+    properties:
+      ads:
+        type: boolean
+      country:
+        type: string
+      device:
+        enum:
+        - desktop
+        - tablet
+        - mobile
+        type: string
+      lang:
+        type: string
+      os:
+        enum:
+        - ios
+        - android
+        type: string
+      site_id:
+        type: integer
+    required:
+    - device
+    - site_id
     type: object
 info:
   contact: {}
@@ -140,6 +193,88 @@ paths:
       summary: Delete a keyword
       tags:
       - keywords
+  /api/positions/history:
+    get:
+      description: Get positions history for specific site and optional keyword
+      parameters:
+      - description: Site ID
+        in: query
+        name: site_id
+        required: true
+        type: integer
+      - description: Keyword ID (optional)
+        in: query
+        name: keyword_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.PositionResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get positions history
+      tags:
+      - positions
+  /api/positions/latest:
+    get:
+      description: Get latest positions for all sites and keywords
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.PositionResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get latest positions
+      tags:
+      - positions
+  /api/positions/track-site:
+    post:
+      consumes:
+      - application/json
+      description: Track positions for specific site and its keywords
+      parameters:
+      - description: Site tracking parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TrackSitePositionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TrackPositionsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Track positions for specific site
+      tags:
+      - positions
   /api/sites:
     get:
       description: Get list of all tracked sites

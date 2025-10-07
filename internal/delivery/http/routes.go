@@ -12,6 +12,7 @@ import (
 func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 	siteHandler := handlers.NewSiteHandler(useCases.Site)
 	keywordHandler := handlers.NewKeywordHandler(useCases.Keyword)
+	positionHandler := handlers.NewPositionHandler(useCases.PositionTracking)
 
 	api := r.Group("/api")
 	{
@@ -27,6 +28,13 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 			keywords.POST("", keywordHandler.CreateKeyword)
 			keywords.GET("", keywordHandler.GetKeywords)
 			keywords.DELETE("/:id", keywordHandler.DeleteKeyword)
+		}
+
+		positions := api.Group("/positions")
+		{
+			positions.POST("/track-site", positionHandler.TrackSitePositions)
+			positions.GET("/history", positionHandler.GetPositionsHistory)
+			positions.GET("/latest", positionHandler.GetLatestPositions)
 		}
 	}
 

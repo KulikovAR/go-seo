@@ -141,6 +141,131 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/positions/history": {
+            "get": {
+                "description": "Get positions history for specific site and optional keyword",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "positions"
+                ],
+                "summary": "Get positions history",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Site ID",
+                        "name": "site_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Keyword ID (optional)",
+                        "name": "keyword_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PositionResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/positions/latest": {
+            "get": {
+                "description": "Get latest positions for all sites and keywords",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "positions"
+                ],
+                "summary": "Get latest positions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PositionResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/positions/track-site": {
+            "post": {
+                "description": "Track positions for specific site and its keywords",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "positions"
+                ],
+                "summary": "Track positions for specific site",
+                "parameters": [
+                    {
+                        "description": "Site tracking parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.TrackSitePositionsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TrackPositionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/sites": {
             "get": {
                 "description": "Get list of all tracked sites",
@@ -325,6 +450,38 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PositionResponse": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "keyword": {
+                    "type": "string"
+                },
+                "keyword_id": {
+                    "type": "integer"
+                },
+                "rank": {
+                    "type": "integer"
+                },
+                "site": {
+                    "type": "string"
+                },
+                "site_id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.SiteResponse": {
             "type": "object",
             "properties": {
@@ -336,6 +493,53 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.TrackPositionsResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TrackSitePositionsRequest": {
+            "type": "object",
+            "required": [
+                "device",
+                "site_id"
+            ],
+            "properties": {
+                "ads": {
+                    "type": "boolean"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "device": {
+                    "type": "string",
+                    "enum": [
+                        "desktop",
+                        "tablet",
+                        "mobile"
+                    ]
+                },
+                "lang": {
+                    "type": "string"
+                },
+                "os": {
+                    "type": "string",
+                    "enum": [
+                        "ios",
+                        "android"
+                    ]
+                },
+                "site_id": {
+                    "type": "integer"
                 }
             }
         }

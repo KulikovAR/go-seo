@@ -2,3 +2,5 @@
 /.idea
 coverage.out
 *.out
+logs/
+bin/

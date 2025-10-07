@@ -8,6 +8,7 @@ import (
 	"go-seo/internal/delivery/http"
 	"go-seo/internal/infrastructure/config"
 	"go-seo/internal/infrastructure/database/postgres"
+	"go-seo/internal/infrastructure/services"
 	"go-seo/internal/repositories"
 	"go-seo/internal/usecases"
 
@@ -34,7 +35,18 @@ func main() {
 	defer db.Close()
 
 	repos := repositories.NewContainer(db.DB)
-	useCases := usecases.NewContainer(repos)
+
+	xmlRiverService, err := services.NewXMLRiverService(
+		cfg.XMLRiver.BaseURL,
+		cfg.XMLRiver.UserID,
+		cfg.XMLRiver.APIKey,
+	)
+	if err != nil {
+		log.Fatal("Failed to create XMLRiver service:", err)
+	}
+	defer xmlRiverService.Close()
+
+	useCases := usecases.NewContainer(repos, xmlRiverService)
 
 	r := gin.Default()
 

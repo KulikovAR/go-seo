@@ -30,6 +30,7 @@ type ServerConfig struct {
 }
 
 type XMLRiverConfig struct {
+	UserID  string
 	APIKey  string
 	BaseURL string
 }
@@ -53,8 +54,9 @@ func Load() (*Config, error) {
 			TrustedProxies: getEnvAsStringSlice("SERVER_TRUSTED_PROXIES", []string{"127.0.0.1", "::1"}),
 		},
 		XMLRiver: XMLRiverConfig{
+			UserID:  getEnv("XMLRIVER_USER_ID", ""),
 			APIKey:  getEnv("XMLRIVER_API_KEY", ""),
-			BaseURL: getEnv("XMLRIVER_BASE_URL", "https://xmlriver.com/api"),
+			BaseURL: getEnv("XMLRIVER_BASE_URL", "https://xmlriver.com"),
 		},
 	}, nil
 }
