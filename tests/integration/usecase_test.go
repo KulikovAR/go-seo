@@ -10,14 +10,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Mock репозитории для тестирования Use Cases
 type MockSiteRepository struct {
 	mock.Mock
 }
 
 func (m *MockSiteRepository) Create(site *entities.Site) error {
 	args := m.Called(site)
-	site.ID = 1 // Симулируем создание
+	site.ID = 1
 	return args.Error(0)
 }
 
@@ -151,7 +150,6 @@ func TestSiteUseCase_CreateSite(t *testing.T) {
 
 	useCase := usecases.NewSiteUseCase(mockSiteRepo, mockPositionRepo)
 
-	// Настраиваем мок - сайт с таким доменом не существует
 	mockSiteRepo.On("GetByDomain", "test.com").Return(nil, assert.AnError)
 	mockSiteRepo.On("Create", mock.AnythingOfType("*entities.Site")).Return(nil)
 
@@ -171,7 +169,6 @@ func TestSiteUseCase_CreateSite_AlreadyExists(t *testing.T) {
 
 	useCase := usecases.NewSiteUseCase(mockSiteRepo, mockPositionRepo)
 
-	// Настраиваем мок - сайт с таким доменом уже существует
 	existingSite := &entities.Site{ID: 1, Name: "Existing Site", Domain: "test.com"}
 	mockSiteRepo.On("GetByDomain", "test.com").Return(existingSite, nil)
 
@@ -190,7 +187,6 @@ func TestKeywordUseCase_CreateKeyword(t *testing.T) {
 
 	useCase := usecases.NewKeywordUseCase(mockKeywordRepo, mockPositionRepo)
 
-	// Настраиваем мок - ключевое слово не существует
 	mockKeywordRepo.On("GetByValueAndSite", "купить чай", 1).Return(nil, assert.AnError)
 	mockKeywordRepo.On("Create", mock.AnythingOfType("*entities.Keyword")).Return(nil)
 
@@ -229,7 +225,6 @@ func TestKeywordUseCase_GetKeywordsBySite(t *testing.T) {
 
 	useCase := usecases.NewKeywordUseCase(mockKeywordRepo, mockPositionRepo)
 
-	// Настраиваем мок - возвращаем список ключевых слов
 	keywords := []*entities.Keyword{
 		{ID: 1, Value: "купить чай", SiteID: 1},
 		{ID: 2, Value: "купить кофе", SiteID: 1},

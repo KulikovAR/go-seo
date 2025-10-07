@@ -26,7 +26,6 @@ func TestKeywordRepository_Create(t *testing.T) {
 
 	repo := repositories.NewKeywordRepository(gormDB)
 
-	// Ожидаем INSERT запрос
 	mock.ExpectBegin()
 	mock.ExpectQuery(`INSERT INTO "keywords"`).
 		WithArgs("купить чай", 1, sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -58,7 +57,6 @@ func TestKeywordRepository_GetByValueAndSite(t *testing.T) {
 
 	repo := repositories.NewKeywordRepository(gormDB)
 
-	// Ожидаем SELECT запрос
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{"id", "value", "site_id", "created_at", "updated_at"}).
 		AddRow(1, "купить чай", 1, now, now)
@@ -89,7 +87,6 @@ func TestKeywordRepository_GetBySiteID(t *testing.T) {
 
 	repo := repositories.NewKeywordRepository(gormDB)
 
-	// Ожидаем SELECT запрос
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{"id", "value", "site_id", "created_at", "updated_at"}).
 		AddRow(1, "купить чай", 1, now, now).
@@ -121,7 +118,6 @@ func TestKeywordRepository_Delete(t *testing.T) {
 
 	repo := repositories.NewKeywordRepository(gormDB)
 
-	// Ожидаем DELETE запрос
 	mock.ExpectBegin()
 	mock.ExpectExec(`DELETE FROM "keywords" WHERE "keywords"\."id" = \$1`).
 		WithArgs(1).

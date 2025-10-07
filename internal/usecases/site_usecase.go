@@ -3,6 +3,7 @@ package usecases
 import (
 	"go-seo/internal/domain/entities"
 	"go-seo/internal/domain/repositories"
+	"go-seo/internal/infrastructure/database"
 )
 
 type SiteUseCase struct {
@@ -32,6 +33,23 @@ func (uc *SiteUseCase) CreateSite(name, domain string) (*entities.Site, error) {
 	}
 
 	if err := uc.siteRepo.Create(site); err != nil {
+		// Проверяем тип ошибки
+		if database.IsDatabaseError(err) {
+			switch database.GetDatabaseErrorCode(err) {
+			case "DUPLICATE_ENTRY":
+				return nil, &DomainError{
+					Code:    ErrorSiteExists,
+					Message: "Site with this domain already exists",
+					Err:     err,
+				}
+			default:
+				return nil, &DomainError{
+					Code:    ErrorSiteCreation,
+					Message: "Failed to create site",
+					Err:     err,
+				}
+			}
+		}
 		return nil, &DomainError{
 			Code:    ErrorSiteCreation,
 			Message: "Failed to create site",

@@ -69,27 +69,29 @@
 				
 				<option value="file6">go-seo/internal/infrastructure/config/config.go (0.0%)</option>
 				
-				<option value="file7">go-seo/internal/infrastructure/database/migrations/migrations.go (0.0%)</option>
+				<option value="file7">go-seo/internal/infrastructure/database/errors.go (0.0%)</option>
 				
-				<option value="file8">go-seo/internal/infrastructure/database/postgres/connection.go (0.0%)</option>
+				<option value="file8">go-seo/internal/infrastructure/database/migrations/migrations.go (0.0%)</option>
 				
-				<option value="file9">go-seo/internal/infrastructure/database/postgres/repositories/container.go (0.0%)</option>
+				<option value="file9">go-seo/internal/infrastructure/database/postgres/connection.go (0.0%)</option>
 				
-				<option value="file10">go-seo/internal/infrastructure/database/postgres/repositories/keyword_repository.go (0.0%)</option>
+				<option value="file10">go-seo/internal/infrastructure/database/postgres/repositories/container.go (0.0%)</option>
 				
-				<option value="file11">go-seo/internal/infrastructure/database/postgres/repositories/position_repository.go (0.0%)</option>
+				<option value="file11">go-seo/internal/infrastructure/database/postgres/repositories/keyword_repository.go (0.0%)</option>
 				
-				<option value="file12">go-seo/internal/infrastructure/database/postgres/repositories/site_repository.go (0.0%)</option>
+				<option value="file12">go-seo/internal/infrastructure/database/postgres/repositories/position_repository.go (0.0%)</option>
 				
-				<option value="file13">go-seo/internal/repositories/container.go (0.0%)</option>
+				<option value="file13">go-seo/internal/infrastructure/database/postgres/repositories/site_repository.go (0.0%)</option>
 				
-				<option value="file14">go-seo/internal/usecases/container.go (0.0%)</option>
+				<option value="file14">go-seo/internal/repositories/container.go (0.0%)</option>
 				
-				<option value="file15">go-seo/internal/usecases/domain_error.go (0.0%)</option>
+				<option value="file15">go-seo/internal/usecases/container.go (0.0%)</option>
 				
-				<option value="file16">go-seo/internal/usecases/keyword_usecase.go (0.0%)</option>
+				<option value="file16">go-seo/internal/usecases/domain_error.go (0.0%)</option>
 				
-				<option value="file17">go-seo/internal/usecases/site_usecase.go (0.0%)</option>
+				<option value="file17">go-seo/internal/usecases/keyword_usecase.go (0.0%)</option>
+				
+				<option value="file18">go-seo/internal/usecases/site_usecase.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -1035,7 +1037,95 @@ func getEnvAsStringSlice(key string, defaultValue []string) []string <span class
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package migrations
+		<pre class="file" id="file7" style="display: none">package database
+
+import (
+        "errors"
+        "strings"
+
+        "gorm.io/gorm"
+)
+
+// DatabaseError представляет ошибку базы данных
+type DatabaseError struct {
+        Code    string
+        Message string
+        Err     error
+}
+
+func (e *DatabaseError) Error() string <span class="cov0" title="0">{
+        return e.Message
+}</span>
+
+// WrapDatabaseError оборачивает ошибку GORM в пользовательскую ошибку
+func WrapDatabaseError(err error) error <span class="cov0" title="0">{
+        if err == nil </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+
+        // Проверяем, является ли это ошибкой GORM
+        <span class="cov0" title="0">if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
+                return &amp;DatabaseError{
+                        Code:    "NOT_FOUND",
+                        Message: "Record not found",
+                        Err:     err,
+                }
+        }</span>
+
+        // Проверяем на нарушение ограничений
+        <span class="cov0" title="0">errStr := err.Error()
+        
+        // Нарушение уникального ключа
+        if strings.Contains(errStr, "duplicate key") || strings.Contains(errStr, "UNIQUE constraint") </span><span class="cov0" title="0">{
+                return &amp;DatabaseError{
+                        Code:    "DUPLICATE_ENTRY",
+                        Message: "Record already exists",
+                        Err:     err,
+                }
+        }</span>
+
+        // Нарушение внешнего ключа
+        <span class="cov0" title="0">if strings.Contains(errStr, "foreign key constraint") || strings.Contains(errStr, "violates foreign key") </span><span class="cov0" title="0">{
+                return &amp;DatabaseError{
+                        Code:    "FOREIGN_KEY_VIOLATION",
+                        Message: "Referenced record does not exist",
+                        Err:     err,
+                }
+        }</span>
+
+        // Нарушение NOT NULL
+        <span class="cov0" title="0">if strings.Contains(errStr, "NOT NULL constraint") || strings.Contains(errStr, "null value") </span><span class="cov0" title="0">{
+                return &amp;DatabaseError{
+                        Code:    "NULL_CONSTRAINT",
+                        Message: "Required field cannot be empty",
+                        Err:     err,
+                }
+        }</span>
+
+        // Общая ошибка базы данных
+        <span class="cov0" title="0">return &amp;DatabaseError{
+                Code:    "DATABASE_ERROR",
+                Message: "Database operation failed",
+                Err:     err,
+        }</span>
+}
+
+// IsDatabaseError проверяет, является ли ошибка DatabaseError
+func IsDatabaseError(err error) bool <span class="cov0" title="0">{
+        _, ok := err.(*DatabaseError)
+        return ok
+}</span>
+
+// GetDatabaseErrorCode возвращает код ошибки базы данных
+func GetDatabaseErrorCode(err error) string <span class="cov0" title="0">{
+        if de, ok := err.(*DatabaseError); ok </span><span class="cov0" title="0">{
+                return de.Code
+        }</span>
+        <span class="cov0" title="0">return ""</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package migrations
 
 import (
         "go-seo/internal/infrastructure/database/postgres/models"
@@ -1074,7 +1164,7 @@ func CreateTables(db *gorm.DB) error <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package postgres
+		<pre class="file" id="file9" style="display: none">package postgres
 
 import (
         "fmt"
@@ -1150,7 +1240,7 @@ func (d *Database) Close() error <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package repositories
+		<pre class="file" id="file10" style="display: none">package repositories
 
 import (
         "go-seo/internal/domain/repositories"
@@ -1173,11 +1263,12 @@ func NewRepositoryContainer(db *gorm.DB) *RepositoryContainer <span class="cov0"
 }</span>
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">package repositories
+		<pre class="file" id="file11" style="display: none">package repositories
 
 import (
         "go-seo/internal/domain/entities"
         "go-seo/internal/domain/repositories"
+        "go-seo/internal/infrastructure/database"
         "go-seo/internal/infrastructure/database/postgres/models"
 
         "gorm.io/gorm"
@@ -1198,7 +1289,7 @@ func (r *keywordRepository) Create(keyword *entities.Keyword) error <span class=
         }
 
         if err := r.db.Create(model).Error; err != nil </span><span class="cov0" title="0">{
-                return err
+                return database.WrapDatabaseError(err)
         }</span>
 
         <span class="cov0" title="0">keyword.ID = model.ID
@@ -1274,7 +1365,7 @@ func (r *keywordRepository) toDomain(model *models.Keyword) *entities.Keyword <s
 }</span>
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package repositories
+		<pre class="file" id="file12" style="display: none">package repositories
 
 import (
         "go-seo/internal/domain/entities"
@@ -1418,11 +1509,12 @@ func (r *positionRepository) toDomain(model *models.Position) *entities.Position
 }
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">package repositories
+		<pre class="file" id="file13" style="display: none">package repositories
 
 import (
         "go-seo/internal/domain/entities"
         "go-seo/internal/domain/repositories"
+        "go-seo/internal/infrastructure/database"
         "go-seo/internal/infrastructure/database/postgres/models"
 
         "gorm.io/gorm"
@@ -1443,7 +1535,7 @@ func (r *siteRepository) Create(site *entities.Site) error <span class="cov0" ti
         }
 
         if err := r.db.Create(model).Error; err != nil </span><span class="cov0" title="0">{
-                return err
+                return database.WrapDatabaseError(err)
         }</span>
 
         <span class="cov0" title="0">site.ID = model.ID
@@ -1505,7 +1597,7 @@ func (r *siteRepository) toDomain(model *models.Site) *entities.Site <span class
 }</span>
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package repositories
+		<pre class="file" id="file14" style="display: none">package repositories
 
 import (
         "go-seo/internal/domain/repositories"
@@ -1531,7 +1623,7 @@ func NewContainer(db *gorm.DB) *Container <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package usecases
+		<pre class="file" id="file15" style="display: none">package usecases
 
 import (
         "go-seo/internal/repositories"
@@ -1550,7 +1642,7 @@ func NewContainer(repos *repositories.Container) *Container <span class="cov0" t
 }</span>
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">package usecases
+		<pre class="file" id="file16" style="display: none">package usecases
 
 import "errors"
 
@@ -1585,11 +1677,12 @@ func GetDomainErrorCode(err error) string <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">package usecases
+		<pre class="file" id="file17" style="display: none">package usecases
 
 import (
         "go-seo/internal/domain/entities"
         "go-seo/internal/domain/repositories"
+        "go-seo/internal/infrastructure/database"
 )
 
 type KeywordUseCase struct {
@@ -1619,12 +1712,35 @@ func (uc *KeywordUseCase) CreateKeyword(value string, siteID int) (*entities.Key
         }
 
         if err := uc.keywordRepo.Create(keyword); err != nil </span><span class="cov0" title="0">{
-                return nil, &amp;DomainError{
+                // Проверяем тип ошибки
+                if database.IsDatabaseError(err) </span><span class="cov0" title="0">{
+                        switch database.GetDatabaseErrorCode(err) </span>{
+                        case "FOREIGN_KEY_VIOLATION":<span class="cov0" title="0">
+                                return nil, &amp;DomainError{
+                                        Code:    ErrorKeywordCreation,
+                                        Message: "Site not found",
+                                        Err:     err,
+                                }</span>
+                        case "DUPLICATE_ENTRY":<span class="cov0" title="0">
+                                return nil, &amp;DomainError{
+                                        Code:    ErrorKeywordExists,
+                                        Message: "Keyword already exists for this site",
+                                        Err:     err,
+                                }</span>
+                        default:<span class="cov0" title="0">
+                                return nil, &amp;DomainError{
+                                        Code:    ErrorKeywordCreation,
+                                        Message: "Failed to create keyword",
+                                        Err:     err,
+                                }</span>
+                        }
+                }
+                <span class="cov0" title="0">return nil, &amp;DomainError{
                         Code:    ErrorKeywordCreation,
                         Message: "Failed to create keyword",
                         Err:     err,
-                }
-        }</span>
+                }</span>
+        }
 
         <span class="cov0" title="0">return keyword, nil</span>
 }
@@ -1672,11 +1788,12 @@ func (uc *KeywordUseCase) GetKeywordsBySite(siteID int) ([]*entities.Keyword, er
 }
 </pre>
 		
-		<pre class="file" id="file17" style="display: none">package usecases
+		<pre class="file" id="file18" style="display: none">package usecases
 
 import (
         "go-seo/internal/domain/entities"
         "go-seo/internal/domain/repositories"
+        "go-seo/internal/infrastructure/database"
 )
 
 type SiteUseCase struct {
@@ -1706,12 +1823,29 @@ func (uc *SiteUseCase) CreateSite(name, domain string) (*entities.Site, error) <
         }
 
         if err := uc.siteRepo.Create(site); err != nil </span><span class="cov0" title="0">{
-                return nil, &amp;DomainError{
+                // Проверяем тип ошибки
+                if database.IsDatabaseError(err) </span><span class="cov0" title="0">{
+                        switch database.GetDatabaseErrorCode(err) </span>{
+                        case "DUPLICATE_ENTRY":<span class="cov0" title="0">
+                                return nil, &amp;DomainError{
+                                        Code:    ErrorSiteExists,
+                                        Message: "Site with this domain already exists",
+                                        Err:     err,
+                                }</span>
+                        default:<span class="cov0" title="0">
+                                return nil, &amp;DomainError{
+                                        Code:    ErrorSiteCreation,
+                                        Message: "Failed to create site",
+                                        Err:     err,
+                                }</span>
+                        }
+                }
+                <span class="cov0" title="0">return nil, &amp;DomainError{
                         Code:    ErrorSiteCreation,
                         Message: "Failed to create site",
                         Err:     err,
-                }
-        }</span>
+                }</span>
+        }
 
         <span class="cov0" title="0">return site, nil</span>
 }

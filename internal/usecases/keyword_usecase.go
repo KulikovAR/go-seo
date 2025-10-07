@@ -3,6 +3,7 @@ package usecases
 import (
 	"go-seo/internal/domain/entities"
 	"go-seo/internal/domain/repositories"
+	"go-seo/internal/infrastructure/database"
 )
 
 type KeywordUseCase struct {
@@ -32,6 +33,29 @@ func (uc *KeywordUseCase) CreateKeyword(value string, siteID int) (*entities.Key
 	}
 
 	if err := uc.keywordRepo.Create(keyword); err != nil {
+		// Проверяем тип ошибки
+		if database.IsDatabaseError(err) {
+			switch database.GetDatabaseErrorCode(err) {
+			case "FOREIGN_KEY_VIOLATION":
+				return nil, &DomainError{
+					Code:    ErrorKeywordCreation,
+					Message: "Site not found",
+					Err:     err,
+				}
+			case "DUPLICATE_ENTRY":
+				return nil, &DomainError{
+					Code:    ErrorKeywordExists,
+					Message: "Keyword already exists for this site",
+					Err:     err,
+				}
+			default:
+				return nil, &DomainError{
+					Code:    ErrorKeywordCreation,
+					Message: "Failed to create keyword",
+					Err:     err,
+				}
+			}
+		}
 		return nil, &DomainError{
 			Code:    ErrorKeywordCreation,
 			Message: "Failed to create keyword",

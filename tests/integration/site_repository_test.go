@@ -26,7 +26,6 @@ func TestSiteRepository_Create(t *testing.T) {
 
 	repo := repositories.NewSiteRepository(gormDB)
 
-	// Ожидаем INSERT запрос
 	mock.ExpectBegin()
 	mock.ExpectQuery(`INSERT INTO "sites"`).
 		WithArgs("Test Site", "test.com", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -58,7 +57,6 @@ func TestSiteRepository_GetByDomain(t *testing.T) {
 
 	repo := repositories.NewSiteRepository(gormDB)
 
-	// Ожидаем SELECT запрос
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{"id", "name", "domain", "created_at", "updated_at"}).
 		AddRow(1, "Test Site", "test.com", now, now)
@@ -89,7 +87,6 @@ func TestSiteRepository_GetAll(t *testing.T) {
 
 	repo := repositories.NewSiteRepository(gormDB)
 
-	// Ожидаем SELECT запрос
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{"id", "name", "domain", "created_at", "updated_at"}).
 		AddRow(1, "Test Site 1", "test1.com", now, now).
@@ -120,7 +117,6 @@ func TestSiteRepository_Delete(t *testing.T) {
 
 	repo := repositories.NewSiteRepository(gormDB)
 
-	// Ожидаем DELETE запрос
 	mock.ExpectBegin()
 	mock.ExpectExec(`DELETE FROM "sites" WHERE "sites"\."id" = \$1`).
 		WithArgs(1).

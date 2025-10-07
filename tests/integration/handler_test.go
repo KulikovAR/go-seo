@@ -22,11 +22,9 @@ func TestSiteHandler_CreateSite(t *testing.T) {
 	mockSiteUseCase := new(MockSiteUseCase)
 	handler := handlers.NewSiteHandler(mockSiteUseCase)
 
-	// Настраиваем мок
 	expectedSite := &entities.Site{ID: 1, Name: "Test Site", Domain: "test.com"}
 	mockSiteUseCase.On("CreateSite", "Test Site", "test.com").Return(expectedSite, nil)
 
-	// Создаем запрос
 	reqBody := dto.CreateSiteRequest{
 		Name:   "Test Site",
 		Domain: "test.com",
@@ -35,15 +33,12 @@ func TestSiteHandler_CreateSite(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/sites", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
 
-	// Создаем ResponseRecorder
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	// Выполняем запрос
 	handler.CreateSite(c)
 
-	// Проверяем результат
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	var response dto.SiteResponse
@@ -62,7 +57,6 @@ func TestSiteHandler_CreateSite_ValidationError(t *testing.T) {
 	mockSiteUseCase := new(MockSiteUseCase)
 	handler := handlers.NewSiteHandler(mockSiteUseCase)
 
-	// Создаем невалидный запрос (без обязательных полей)
 	reqBody := map[string]interface{}{}
 	jsonBody, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest("POST", "/api/sites", bytes.NewBuffer(jsonBody))
@@ -88,11 +82,9 @@ func TestKeywordHandler_CreateKeyword(t *testing.T) {
 	mockKeywordUseCase := new(MockKeywordUseCase)
 	handler := handlers.NewKeywordHandler(mockKeywordUseCase)
 
-	// Настраиваем мок
 	expectedKeyword := &entities.Keyword{ID: 1, Value: "купить чай", SiteID: 1}
 	mockKeywordUseCase.On("CreateKeyword", "купить чай", 1).Return(expectedKeyword, nil)
 
-	// Создаем запрос
 	reqBody := dto.CreateKeywordRequest{
 		Value:  "купить чай",
 		SiteID: 1,
@@ -125,14 +117,12 @@ func TestKeywordHandler_GetKeywords(t *testing.T) {
 	mockKeywordUseCase := new(MockKeywordUseCase)
 	handler := handlers.NewKeywordHandler(mockKeywordUseCase)
 
-	// Настраиваем мок
 	keywords := []*entities.Keyword{
 		{ID: 1, Value: "купить чай", SiteID: 1},
 		{ID: 2, Value: "купить кофе", SiteID: 1},
 	}
 	mockKeywordUseCase.On("GetKeywordsBySite", 1).Return(keywords, nil)
 
-	// Создаем запрос с query параметром
 	req := httptest.NewRequest("GET", "/api/keywords?site_id=1", nil)
 
 	w := httptest.NewRecorder()
@@ -159,7 +149,6 @@ func TestKeywordHandler_GetKeywords_MissingSiteID(t *testing.T) {
 	mockKeywordUseCase := new(MockKeywordUseCase)
 	handler := handlers.NewKeywordHandler(mockKeywordUseCase)
 
-	// Создаем запрос без site_id
 	req := httptest.NewRequest("GET", "/api/keywords", nil)
 
 	w := httptest.NewRecorder()
@@ -177,7 +166,6 @@ func TestKeywordHandler_GetKeywords_MissingSiteID(t *testing.T) {
 	assert.Contains(t, response.Message, "site_id parameter is required")
 }
 
-// Mock Use Cases для тестирования handlers
 type MockSiteUseCase struct {
 	mock.Mock
 }

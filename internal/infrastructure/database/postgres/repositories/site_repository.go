@@ -3,6 +3,7 @@ package repositories
 import (
 	"go-seo/internal/domain/entities"
 	"go-seo/internal/domain/repositories"
+	"go-seo/internal/infrastructure/database"
 	"go-seo/internal/infrastructure/database/postgres/models"
 
 	"gorm.io/gorm"
@@ -23,7 +24,7 @@ func (r *siteRepository) Create(site *entities.Site) error {
 	}
 
 	if err := r.db.Create(model).Error; err != nil {
-		return err
+		return database.WrapDatabaseError(err)
 	}
 
 	site.ID = model.ID
