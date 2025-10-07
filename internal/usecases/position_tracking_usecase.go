@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"go-seo/internal/domain/entities"
@@ -49,13 +50,32 @@ func (uc *PositionTrackingUseCase) TrackSitePositions(siteID int, device, os str
 		}
 	}
 
-	count := 0
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var count int
+	var firstError error
+
 	for _, keyword := range keywords {
-		err := uc.trackKeywordPosition(site, keyword, device, os, ads, country, lang)
-		if err != nil {
-			return count, err
-		}
-		count++
+		wg.Add(1)
+		go func(kw *entities.Keyword) {
+			defer wg.Done()
+
+			err := uc.trackKeywordPosition(site, kw, device, os, ads, country, lang)
+
+			mu.Lock()
+			if err != nil && firstError == nil {
+				firstError = err
+			} else if err == nil {
+				count++
+			}
+			mu.Unlock()
+		}(keyword)
+	}
+
+	wg.Wait()
+
+	if firstError != nil {
+		return count, firstError
 	}
 
 	return count, nil
