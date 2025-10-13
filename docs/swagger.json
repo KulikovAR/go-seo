@@ -163,6 +163,18 @@
                         "description": "Source filter (optional) - google or yandex",
                         "name": "source",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date filter (optional) - YYYY-MM-DD format",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date filter (optional) - YYYY-MM-DD format",
+                        "name": "date_to",
+                        "in": "query"
                     }
                 ],
                 "responses": {

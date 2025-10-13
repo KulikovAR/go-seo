@@ -50,7 +50,7 @@ func (r *siteRepository) GetByDomain(domain string) (*entities.Site, error) {
 
 func (r *siteRepository) GetAll() ([]*entities.Site, error) {
 	var models []models.Site
-	if err := r.db.Find(&models).Error; err != nil {
+	if err := r.db.Order("created_at ASC").Find(&models).Error; err != nil {
 		return nil, err
 	}
 

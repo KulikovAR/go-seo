@@ -2,6 +2,7 @@ package integration
 
 import (
 	"testing"
+	"time"
 
 	"go-seo/internal/domain/entities"
 	"go-seo/internal/usecases"
@@ -155,6 +156,25 @@ func (m *MockPositionRepository) GetBySiteIDAndSource(siteID int, source string)
 
 func (m *MockPositionRepository) GetByKeywordAndSiteAndSource(keywordID, siteID int, source string) ([]*entities.Position, error) {
 	args := m.Called(keywordID, siteID, source)
+	return args.Get(0).([]*entities.Position), args.Error(1)
+}
+func (m *MockPositionRepository) GetBySiteIDWithDateRange(siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	args := m.Called(siteID, dateFrom, dateTo)
+	return args.Get(0).([]*entities.Position), args.Error(1)
+}
+
+func (m *MockPositionRepository) GetBySiteIDAndSourceWithDateRange(siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	args := m.Called(siteID, source, dateFrom, dateTo)
+	return args.Get(0).([]*entities.Position), args.Error(1)
+}
+
+func (m *MockPositionRepository) GetByKeywordAndSiteWithDateRange(keywordID, siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	args := m.Called(keywordID, siteID, dateFrom, dateTo)
+	return args.Get(0).([]*entities.Position), args.Error(1)
+}
+
+func (m *MockPositionRepository) GetByKeywordAndSiteAndSourceWithDateRange(keywordID, siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	args := m.Called(keywordID, siteID, source, dateFrom, dateTo)
 	return args.Get(0).([]*entities.Position), args.Error(1)
 }
 

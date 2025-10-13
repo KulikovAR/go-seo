@@ -233,6 +233,14 @@ paths:
         in: query
         name: source
         type: string
+      - description: Start date filter (optional) - YYYY-MM-DD format
+        in: query
+        name: date_from
+        type: string
+      - description: End date filter (optional) - YYYY-MM-DD format
+        in: query
+        name: date_to
+        type: string
       produces:
       - application/json
       responses:

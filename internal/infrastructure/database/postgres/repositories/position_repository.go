@@ -4,6 +4,7 @@ import (
 	"go-seo/internal/domain/entities"
 	"go-seo/internal/domain/repositories"
 	"go-seo/internal/infrastructure/database/postgres/models"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -102,6 +103,97 @@ func (r *positionRepository) GetByKeywordAndSiteAndSource(keywordID, siteID int,
 	if err := r.db.Where("keyword_id = ? AND site_id = ? AND source = ?", keywordID, siteID, source).
 		Order("date DESC").
 		Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+func (r *positionRepository) GetBySiteIDWithDateRange(siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	query := r.db.Where("site_id = ?", siteID)
+
+	if dateFrom != nil {
+		query = query.Where("date >= ?", *dateFrom)
+	}
+	if dateTo != nil {
+		query = query.Where("date <= ?", *dateTo)
+	}
+
+	var models []models.Position
+	if err := query.Order("date DESC").Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+
+func (r *positionRepository) GetBySiteIDAndSourceWithDateRange(siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	query := r.db.Where("site_id = ? AND source = ?", siteID, source)
+
+	if dateFrom != nil {
+		query = query.Where("date >= ?", *dateFrom)
+	}
+	if dateTo != nil {
+		query = query.Where("date <= ?", *dateTo)
+	}
+
+	var models []models.Position
+	if err := query.Order("date DESC").Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+
+func (r *positionRepository) GetByKeywordAndSiteWithDateRange(keywordID, siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	query := r.db.Where("keyword_id = ? AND site_id = ?", keywordID, siteID)
+
+	if dateFrom != nil {
+		query = query.Where("date >= ?", *dateFrom)
+	}
+	if dateTo != nil {
+		query = query.Where("date <= ?", *dateTo)
+	}
+
+	var models []models.Position
+	if err := query.Order("date DESC").Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+
+func (r *positionRepository) GetByKeywordAndSiteAndSourceWithDateRange(keywordID, siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	query := r.db.Where("keyword_id = ? AND site_id = ? AND source = ?", keywordID, siteID, source)
+
+	if dateFrom != nil {
+		query = query.Where("date >= ?", *dateFrom)
+	}
+	if dateTo != nil {
+		query = query.Where("date <= ?", *dateTo)
+	}
+
+	var models []models.Position
+	if err := query.Order("date DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
 

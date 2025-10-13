@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"go-seo/internal/delivery/http/dto"
 	"go-seo/internal/usecases"
@@ -89,6 +90,8 @@ func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 // @Param site_id query int true "Site ID"
 // @Param keyword_id query int false "Keyword ID (optional)"
 // @Param source query string false "Source filter (optional) - google or yandex" Enums(google,yandex)
+// @Param date_from query string false "Start date filter (optional) - YYYY-MM-DD format"
+// @Param date_to query string false "End date filter (optional) - YYYY-MM-DD format"
 // @Success 200 {array} dto.PositionResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
@@ -97,6 +100,8 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 	siteIDStr := c.Query("site_id")
 	keywordIDStr := c.Query("keyword_id")
 	sourceStr := c.Query("source")
+	dateFromStr := c.Query("date_from")
+	dateToStr := c.Query("date_to")
 
 	if siteIDStr == "" {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
@@ -140,7 +145,31 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 		source = &sourceStr
 	}
 
-	positions, err := h.positionTrackingUseCase.GetPositionsHistory(siteID, keywordID, source)
+	var dateFrom, dateTo *time.Time
+	if dateFromStr != "" {
+		parsed, err := time.Parse("2006-01-02", dateFromStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "Invalid date_from parameter. Use YYYY-MM-DD format",
+			})
+			return
+		}
+		dateFrom = &parsed
+	}
+	if dateToStr != "" {
+		parsed, err := time.Parse("2006-01-02", dateToStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "Invalid date_to parameter. Use YYYY-MM-DD format",
+			})
+			return
+		}
+		dateTo = &parsed
+	}
+
+	positions, err := h.positionTrackingUseCase.GetPositionsHistory(siteID, keywordID, source, dateFrom, dateTo)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
