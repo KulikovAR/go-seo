@@ -222,7 +222,7 @@ const docTemplate = `{
         },
         "/api/positions/track-site": {
             "post": {
-                "description": "Track positions for specific site and its keywords",
+                "description": "Track positions for specific site and its keywords. Supports both Google and Yandex search engines.",
                 "consumes": [
                     "application/json"
                 ],
@@ -235,7 +235,7 @@ const docTemplate = `{
                 "summary": "Track positions for specific site",
                 "parameters": [
                     {
-                        "description": "Site tracking parameters",
+                        "description": "Site tracking parameters (source: google or yandex)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -474,6 +474,9 @@ const docTemplate = `{
                 "site_id": {
                     "type": "integer"
                 },
+                "source": {
+                    "type": "string"
+                },
                 "title": {
                     "type": "string"
                 },
@@ -511,7 +514,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "device",
-                "site_id"
+                "site_id",
+                "source"
             ],
             "properties": {
                 "ads": {
@@ -540,6 +544,13 @@ const docTemplate = `{
                 },
                 "site_id": {
                     "type": "integer"
+                },
+                "source": {
+                    "type": "string",
+                    "enum": [
+                        "google",
+                        "yandex"
+                    ]
                 }
             }
         }

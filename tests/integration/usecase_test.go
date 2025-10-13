@@ -111,6 +111,11 @@ func (m *MockPositionRepository) GetByKeywordAndSite(keywordID, siteID int) ([]*
 	return args.Get(0).([]*entities.Position), args.Error(1)
 }
 
+func (m *MockPositionRepository) GetBySiteID(siteID int) ([]*entities.Position, error) {
+	args := m.Called(siteID)
+	return args.Get(0).([]*entities.Position), args.Error(1)
+}
+
 func (m *MockPositionRepository) GetLatestByKeywordAndSite(keywordID, siteID int) (*entities.Position, error) {
 	args := m.Called(keywordID, siteID)
 	if args.Get(0) == nil {

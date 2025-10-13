@@ -1,0 +1,140 @@
+URL - http://xmlriver.com/search/xml?user=1111&key=142f286c6ca63854027126089a85490b9f9719a4&query=123
+
+
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<yandexsearch version="1.0">
+<response date="20251007T163152">
+<found priority="all">100</found>
+<results>
+<grouping>
+<page first="1" last="9">0</page>
+<group id="1">
+<doccount>1</doccount>
+<doc>
+<url>https://www.123.ru/</url>
+<title>123.RU</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<breadcrumbs>https://www.123.ru</breadcrumbs>
+<passages>
+<passage/>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="2">
+<doccount>1</doccount>
+<doc>
+<url>https://poisk123.ru/</url>
+<title>Запчасти для телефонов, планшетов, ноутбуков ...</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<breadcrumbs>https://poisk123.ru</breadcrumbs>
+<passages>
+<passage>Запчасти для телефонов, планшетов, ноутбуков - поиск по предложениям поставщиков. Poisk123.ru - поисковик запчастей для техники.</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="3">
+<doccount>1</doccount>
+<doc>
+<url>https://math123.ru/</url>
+<title>РАЗ-ДВА-ТРИ Официальный сайт Центра 123 !</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<breadcrumbs>https://math123.ru</breadcrumbs>
+<passages>
+<passage>Один из крупнейших Центров с площадками в Санкт-Петербурге и Москве, онлайн-обучением детей со всей России и других стран математике, физике, программированию,...</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="4">
+<doccount>1</doccount>
+<doc>
+<url>https://2gis.ru/moscow/branches/4504136498737506</url>
+<title>Www.123.ru, интернет-магазин в Москве: филиалы — ...</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<breadcrumbs>https://2gis.ru › Москва › Мобильные телефоны</breadcrumbs>
+<passages>
+<passage>Www.123.ru, интернет-магазин: все адреса на карте, телефоны, время работы, фото и отзывы. Проложите маршрут до нужного вам филиала.</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="5">
+<doccount>1</doccount>
+<doc>
+<url>https://ru.wikipedia.org/wiki/123_%D0%B3%D0%BE%D0%B4</url>
+<title>123 год</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<breadcrumbs>https://ru.wikipedia.org › wiki › 123_год</breadcrumbs>
+<passages>
+<passage>123 (сто два́дцать тре́тий) год по юлианскому календарю — невисокосный год, начинающийся в четверг. Это 123 год нашей эры, 3‑й год 3‑го десятилетия II века 1‑го...</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="6">
+<doccount>1</doccount>
+<doc>
+<url>https://школа123.екатеринбург.рф/</url>
+<title>МАОУ СОШ № 123</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<breadcrumbs>https://школа123.екатеринбург.рф</breadcrumbs>
+<passages>
+<passage>Наша школа была открыта в 2022 году и является многопрофильной. Однако, основной акцент сделан на химико-биологическом направлении. Мы гордимся своими...</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="7">
+<doccount>1</doccount>
+<doc>
+<url>https://vk.com/razdvatri_shop</url>
+<title>Онлайн-гипермаркет электроники 123.ru</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<breadcrumbs>https://vk.com › razdvatri_shop</breadcrumbs>
+<passages>
+<passage>Приветствуем в группе онлайн-гипермаркета 123.ru! Советы, лайфхаки и прочие интересности из мира IT. Мы работаем с 10:00 до 22:00</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="8">
+<doccount>1</doccount>
+<doc>
+<url>https://fincalculator.ru/avto/kody-regionov/123</url>
+<title>123 регион</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<breadcrumbs>https://fincalculator.ru › avto › kody-regionov › 123</breadcrumbs>
+<passages>
+<passage>Регион РФ, Автомобильный код региона. Краснодарский край, 23, 93, 123, 193. © 2010-2025 fincalculator | Обратная связь | Политика конфиденциальности...</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="9">
+<doccount>1</doccount>
+<doc>
+<url>https://schuc123.mskobr.ru/</url>
+<title>ГБОУ Школа № 123</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<breadcrumbs>https://schuc123.mskobr.ru</breadcrumbs>
+<passages>
+<passage>Добро пожаловать в Государственное бюджетное общеобразовательное учреждение города Москвы "Школа № 123"</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+</grouping>
+</results>
+</response>
+</yandexsearch>

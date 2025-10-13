@@ -9,6 +9,13 @@ type Position struct {
 	Rank      int
 	URL       string
 	Title     string
+	Source    string
+	Device    string
+	OS        string
+	Ads       bool
+	Country   string
+	Lang      string
+	Pages     int
 	Date      time.Time
 
 	Keyword *Keyword

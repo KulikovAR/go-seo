@@ -1,0 +1,145 @@
+URL - http://xmlriver.com/search_yandex/xml?user=1111&key=142f286c6ca63854027126089a85490b9f9719a4&query=123
+
+
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<yandexsearch version="1.0">
+<response date="20251007T163119">
+<found priority="all">748000</found>
+<fixtype>quotes</fixtype>
+<results>
+<grouping>
+<page first="1" last="10">1</page>
+<group id="1">
+<doccount>1</doccount>
+<doc>
+<url>https://otzovik.com/reviews/123_ru-internet-magazin_bitovoy_tehniki_i_elektroniki/2/</url>
+<title>Отзывы о 123.ru - интернет-магазин бытовой техники и электроники | Страница 2</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<passages>
+<passage>Недостатки: Сначала курьер не привез товар, но отметил, что товар доставлен. Потом оказалось, что привезли вообще не то... 123.ru - интернет-магазин бытовой техники и электроники фото.</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="2">
+<doccount>1</doccount>
+<doc>
+<url>https://reviews.yandex.ru/shop/123.ru</url>
+<title>123.ru — отзывы</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<passages>
+<passage>123.ru. Автогрузоперевозки. 4,4.... Читать отзывы. Перейти на сайт. 123.ru. О чём пишут покупатели.</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="3">
+<doccount>1</doccount>
+<doc>
+<url>https://2gis.ru/moscow/firm/70000001032490536/tab/reviews</url>
+<title>Отзывы о www.123.ru, интернет-магазин, Москва, Москва - 2ГИС</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<passages>
+<passage>5 отзывов о www.123.ru, интернет-магазин. Рейтинг 2.6 на основе 5 оценок, Москва.</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="4">
+<doccount>1</doccount>
+<doc>
+<url>https://yandex.ru/maps/org/123_ru/236289434050/</url>
+<title>123. Ру, компьютерный магазин — Яндекс Карты</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<passages>
+<passage>Компьютерный магазин «123. Ру», +7 495 225 91 23. Смотреть часы работы. Построить маршрут в Яндекс Картах. 123. Ру. Ещё нет отзывов. Написать отзыв.</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="5">
+<doccount>1</doccount>
+<doc>
+<url>https://m.vk.com/razdvatri_shop</url>
+<title>Онлайн-гипермаркет электроники 123.ru — ВКонтакте</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<passages>
+<passage>Приветствуем в группе онлайн-гипермаркета 123.ru! Советы, лайфхаки и прочие интересности из...</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="6">
+<doccount>1</doccount>
+<doc>
+<url>https://m.youtube.com/channel/UC-fr3ppe4x92mQkbsiqe0jQ</url>
+<title>Онлайн-гипермаркет 123.ru - YouTube</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<passages>
+<passage>Онлайн-гипермаркет 123.ru. @-ru-ds8hp. • 188 подписчиков • 53 видео.... 123.ru и ещё 3 ссылки. Подписаться. Главная.</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="7">
+<doccount>1</doccount>
+<doc>
+<url>https://123.ru.com/about/</url>
+<title>123.ru – О компании | Лидер по продаже офисных кресел в Москве</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<passages>
+<passage>Интернет-магазин 123.ru – ваш надежный выбор эргономичных кресел для офиса и дома. Предлагаемые нами кресла обеспечивают комфорт и поддержку, а прочные стальные каркасы...</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="8">
+<doccount>1</doccount>
+<doc>
+<url>https://zoon.ru/msk/shops/internet-magazin_www123ru_na_metro_elektrozavodskaya/reviews/</url>
+<title>Отзывы об интернет-магазине www.123.ru по адресу Москва, Барабанный переулок, 4 ст2 (1 этаж) на Zoon</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<passages>
+<passage>40 оценок и 17 отзывов реальных покупателей интернет-магазина www.123.ru на Соколиной горе (полный адрес: Москва, Барабанный переулок, 4 ст2) фотографии, рейтинг и подробная...</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="9">
+<doccount>1</doccount>
+<doc>
+<url>https://123ru.market/</url>
+<title>Бесплатные объявления в городах России (купить, продать, найти)</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<passages>
+<passage>Разместить объявление на сайте бесплатных объявлений 123ru.market может каждый желающий.</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+<group id="10">
+<doccount>1</doccount>
+<doc>
+<url>https://www.Yell.ru/moscow/com/123-ru_10955425/reviews/</url>
+<title>Отзывы о компании 123.ru в Барабанном переулке в Москве – магазины</title>
+<contenttype>organic</contenttype>
+<data_amp/>
+<passages>
+<passage>К новому году в 123ру подарками закупились, родни полно, не набегаешься по магазинам. А тут удобно, все домой привезли, оплата по карте.</passage>
+</passages>
+<tablesnippet/>
+</doc>
+</group>
+</grouping>
+</results>
+</response>
+</yandexsearch>

@@ -23,6 +23,13 @@ func (r *positionRepository) Create(position *entities.Position) error {
 		Rank:      position.Rank,
 		URL:       position.URL,
 		Title:     position.Title,
+		Source:    position.Source,
+		Device:    position.Device,
+		OS:        position.OS,
+		Ads:       position.Ads,
+		Country:   position.Country,
+		Lang:      position.Lang,
+		Pages:     position.Pages,
 		Date:      position.Date,
 	}
 
@@ -110,6 +117,13 @@ func (r *positionRepository) Update(position *entities.Position) error {
 		Rank:      position.Rank,
 		URL:       position.URL,
 		Title:     position.Title,
+		Source:    position.Source,
+		Device:    position.Device,
+		OS:        position.OS,
+		Ads:       position.Ads,
+		Country:   position.Country,
+		Lang:      position.Lang,
+		Pages:     position.Pages,
 		Date:      position.Date,
 	}
 
@@ -136,6 +150,13 @@ func (r *positionRepository) toDomain(model *models.Position) *entities.Position
 		Rank:      model.Rank,
 		URL:       model.URL,
 		Title:     model.Title,
+		Source:    model.Source,
+		Device:    model.Device,
+		OS:        model.OS,
+		Ads:       model.Ads,
+		Country:   model.Country,
+		Lang:      model.Lang,
+		Pages:     model.Pages,
 		Date:      model.Date,
 	}
 

@@ -40,6 +40,8 @@ type ErrorResponse struct {
 // Position DTOs
 type TrackSitePositionsRequest struct {
 	SiteID  int    `json:"site_id" binding:"required"`
+	Source  string `json:"source" binding:"required,oneof=google yandex"`
+	Pages   int    `json:"pages" binding:"required,min=1,max=10"`
 	Device  string `json:"device" binding:"required,oneof=desktop tablet mobile"`
 	OS      string `json:"os" binding:"omitempty,oneof=ios android"`
 	Ads     bool   `json:"ads"`
@@ -54,6 +56,13 @@ type PositionResponse struct {
 	Rank      int       `json:"rank"`
 	URL       string    `json:"url"`
 	Title     string    `json:"title"`
+	Source    string    `json:"source"`
+	Device    string    `json:"device"`
+	OS        string    `json:"os"`
+	Ads       bool      `json:"ads"`
+	Country   string    `json:"country"`
+	Lang      string    `json:"lang"`
+	Pages     int       `json:"pages"`
 	Date      time.Time `json:"date"`
 	Keyword   string    `json:"keyword,omitempty"`
 	Site      string    `json:"site,omitempty"`

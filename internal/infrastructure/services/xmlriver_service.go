@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"go-seo/internal/domain/entities"
 )
 
 type XMLRiverService struct {
@@ -71,7 +73,7 @@ func NewXMLRiverService(baseURL, userID, apiKey string) (*XMLRiverService, error
 	}, nil
 }
 
-func (s *XMLRiverService) Search(req SearchRequest) (*SearchResponse, error) {
+func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchResponse, error) {
 	params := url.Values{}
 	params.Set("user", s.userID)
 	params.Set("key", s.apiKey)
@@ -98,7 +100,14 @@ func (s *XMLRiverService) Search(req SearchRequest) (*SearchResponse, error) {
 		params.Set("domain", req.Domain)
 	}
 
-	requestURL := fmt.Sprintf("%s/search/xml?%s", s.baseURL, params.Encode())
+	var endpoint string
+	if source == entities.YandexSearch {
+		endpoint = "/search_yandex/xml"
+	} else {
+		endpoint = "/search/xml"
+	}
+
+	requestURL := fmt.Sprintf("%s%s?%s", s.baseURL, endpoint, params.Encode())
 
 	resp, err := s.client.Get(requestURL)
 	if err != nil {
@@ -110,7 +119,6 @@ func (s *XMLRiverService) Search(req SearchRequest) (*SearchResponse, error) {
 		return nil, fmt.Errorf("XMLRiver API returned status %d", resp.StatusCode)
 	}
 
-	// Парсим XML ответ
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
@@ -124,11 +132,11 @@ func (s *XMLRiverService) Search(req SearchRequest) (*SearchResponse, error) {
 	return &searchResp, nil
 }
 
-func (s *XMLRiverService) FindSitePosition(req SearchRequest, siteDomain string) (int, string, string, error) {
-	for page := 1; page <= 10; page++ {
+func (s *XMLRiverService) findSitePositionInternal(req SearchRequest, siteDomain string, source string, maxPages int) (int, string, string, error) {
+	for page := 1; page <= maxPages; page++ {
 		req.Page = page
 
-		resp, err := s.Search(req)
+		resp, err := s.Search(req, source)
 		if err != nil {
 			return 0, "", "", fmt.Errorf("failed to search page %d: %w", page, err)
 		}
@@ -146,6 +154,20 @@ func (s *XMLRiverService) FindSitePosition(req SearchRequest, siteDomain string)
 	}
 
 	return 0, "", "", nil
+}
+
+func (s *XMLRiverService) FindSitePosition(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string) (int, string, string, error) {
+	req := SearchRequest{
+		Query:   query,
+		Page:    1,
+		Device:  device,
+		OS:      os,
+		Ads:     ads,
+		Country: country,
+		Lang:    lang,
+	}
+
+	return s.findSitePositionInternal(req, siteDomain, source, maxPages)
 }
 
 func (s *XMLRiverService) isSiteMatch(resultURL, siteDomain string) bool {

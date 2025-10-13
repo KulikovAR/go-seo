@@ -9,6 +9,13 @@ type Position struct {
 	Rank      int       `gorm:"not null"`
 	URL       string    `gorm:"not null"`
 	Title     string    `gorm:"not null"`
+	Source    string    `gorm:"not null;index"`
+	Device    string    `gorm:"not null"`
+	OS        string    `gorm:""`
+	Ads       bool      `gorm:"not null"`
+	Country   string    `gorm:""`
+	Lang      string    `gorm:""`
+	Pages     int       `gorm:"not null"`
 	Date      time.Time `gorm:"not null"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`

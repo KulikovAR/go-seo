@@ -61,6 +61,8 @@ definitions:
         type: string
       site_id:
         type: integer
+      source:
+        type: string
       title:
         type: string
       url:
@@ -103,9 +105,15 @@ definitions:
         type: string
       site_id:
         type: integer
+      source:
+        enum:
+        - google
+        - yandex
+        type: string
     required:
     - device
     - site_id
+    - source
     type: object
 info:
   contact: {}
@@ -249,9 +257,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Track positions for specific site and its keywords
+      description: Track positions for specific site and its keywords. Supports both
+        Google and Yandex search engines.
       parameters:
-      - description: Site tracking parameters
+      - description: 'Site tracking parameters (source: google or yandex)'
         in: body
         name: request
         required: true

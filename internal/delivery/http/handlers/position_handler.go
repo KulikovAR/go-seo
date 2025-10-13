@@ -20,17 +20,6 @@ func NewPositionHandler(positionTrackingUseCase *usecases.PositionTrackingUseCas
 	}
 }
 
-// TrackSitePositions godoc
-// @Summary Track positions for specific site
-// @Description Track positions for specific site and its keywords
-// @Tags positions
-// @Accept json
-// @Produce json
-// @Param request body dto.TrackSitePositionsRequest true "Site tracking parameters"
-// @Success 200 {object} dto.TrackPositionsResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /api/positions/track-site [post]
 func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 	var req dto.TrackSitePositionsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -41,7 +30,6 @@ func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 		return
 	}
 
-	// Валидация: если device=mobile, то OS обязателен
 	if req.Device == "mobile" && req.OS == "" {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "validation_error",
@@ -52,11 +40,13 @@ func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 
 	count, err := h.positionTrackingUseCase.TrackSitePositions(
 		req.SiteID,
+		req.Source,
 		req.Device,
 		req.OS,
 		req.Ads,
 		req.Country,
 		req.Lang,
+		req.Pages,
 	)
 
 	if err != nil {
@@ -80,17 +70,6 @@ func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 	})
 }
 
-// GetPositionsHistory godoc
-// @Summary Get positions history
-// @Description Get positions history for specific site and optional keyword
-// @Tags positions
-// @Produce json
-// @Param site_id query int true "Site ID"
-// @Param keyword_id query int false "Keyword ID (optional)"
-// @Success 200 {array} dto.PositionResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /api/positions/history [get]
 func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 	siteIDStr := c.Query("site_id")
 	keywordIDStr := c.Query("keyword_id")
@@ -154,6 +133,13 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 			Rank:      pos.Rank,
 			URL:       pos.URL,
 			Title:     pos.Title,
+			Source:    pos.Source,
+			Device:    pos.Device,
+			OS:        pos.OS,
+			Ads:       pos.Ads,
+			Country:   pos.Country,
+			Lang:      pos.Lang,
+			Pages:     pos.Pages,
 			Date:      pos.Date,
 			Keyword:   keywordValue,
 		})
@@ -162,14 +148,6 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// GetLatestPositions godoc
-// @Summary Get latest positions
-// @Description Get latest positions for all sites and keywords
-// @Tags positions
-// @Produce json
-// @Success 200 {array} dto.PositionResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /api/positions/latest [get]
 func (h *PositionHandler) GetLatestPositions(c *gin.Context) {
 	positions, err := h.positionTrackingUseCase.GetLatestPositions()
 	if err != nil {
@@ -187,7 +165,6 @@ func (h *PositionHandler) GetLatestPositions(c *gin.Context) {
 		return
 	}
 
-	// Конвертируем в DTO
 	var response []dto.PositionResponse
 	for _, pos := range positions {
 		response = append(response, dto.PositionResponse{
@@ -197,6 +174,13 @@ func (h *PositionHandler) GetLatestPositions(c *gin.Context) {
 			Rank:      pos.Rank,
 			URL:       pos.URL,
 			Title:     pos.Title,
+			Source:    pos.Source,
+			Device:    pos.Device,
+			OS:        pos.OS,
+			Ads:       pos.Ads,
+			Country:   pos.Country,
+			Lang:      pos.Lang,
+			Pages:     pos.Pages,
 			Date:      pos.Date,
 		})
 	}
