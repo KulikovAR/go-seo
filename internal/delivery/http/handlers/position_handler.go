@@ -23,7 +23,7 @@ func NewPositionHandler(positionTrackingUseCase *usecases.PositionTrackingUseCas
 
 // TrackSitePositions godoc
 // @Summary Track positions for specific site
-// @Description Track positions for specific site and its keywords. Supports both Google and Yandex search engines.
+// @Description Track positions for specific site and its keywords. Supports both Google and Yandex search engines. Can include subdomains in search.
 // @Tags positions
 // @Accept json
 // @Produce json
@@ -59,6 +59,7 @@ func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 		req.Country,
 		req.Lang,
 		req.Pages,
+		req.Subdomains,
 	)
 
 	if err != nil {

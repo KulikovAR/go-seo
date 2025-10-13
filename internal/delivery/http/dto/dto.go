@@ -37,14 +37,15 @@ type ErrorResponse struct {
 
 // Position DTOs
 type TrackSitePositionsRequest struct {
-	SiteID  int    `json:"site_id" binding:"required"`
-	Source  string `json:"source" binding:"required,oneof=google yandex"`
-	Pages   int    `json:"pages" binding:"required,min=1,max=10"`
-	Device  string `json:"device" binding:"required,oneof=desktop tablet mobile"`
-	OS      string `json:"os" binding:"omitempty,oneof=ios android"`
-	Ads     bool   `json:"ads"`
-	Country string `json:"country"`
-	Lang    string `json:"lang"`
+	SiteID     int    `json:"site_id" binding:"required"`
+	Source     string `json:"source" binding:"required,oneof=google yandex"`
+	Pages      int    `json:"pages" binding:"required,min=1,max=10"`
+	Device     string `json:"device" binding:"required,oneof=desktop tablet mobile"`
+	OS         string `json:"os" binding:"omitempty,oneof=ios android"`
+	Ads        bool   `json:"ads"`
+	Country    string `json:"country"`
+	Lang       string `json:"lang"`
+	Subdomains bool   `json:"subdomains"`
 }
 
 type PositionResponse struct {

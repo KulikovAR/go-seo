@@ -244,7 +244,7 @@ const docTemplate = `{
         },
         "/api/positions/track-site": {
             "post": {
-                "description": "Track positions for specific site and its keywords. Supports both Google and Yandex search engines.",
+                "description": "Track positions for specific site and its keywords. Supports both Google and Yandex search engines. Can include subdomains in search.",
                 "consumes": [
                     "application/json"
                 ],
@@ -590,6 +590,9 @@ const docTemplate = `{
                         "google",
                         "yandex"
                     ]
+                },
+                "subdomains": {
+                    "type": "boolean"
                 }
             }
         }

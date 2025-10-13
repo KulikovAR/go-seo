@@ -31,7 +31,7 @@ func NewPositionTrackingUseCase(
 	}
 }
 
-func (uc *PositionTrackingUseCase) TrackSitePositions(siteID int, source, device, os string, ads bool, country, lang string, pages int) (int, error) {
+func (uc *PositionTrackingUseCase) TrackSitePositions(siteID int, source, device, os string, ads bool, country, lang string, pages int, subdomains bool) (int, error) {
 	site, err := uc.siteRepo.GetByID(siteID)
 	if err != nil {
 		return 0, &DomainError{
@@ -60,7 +60,7 @@ func (uc *PositionTrackingUseCase) TrackSitePositions(siteID int, source, device
 		go func(kw *entities.Keyword) {
 			defer wg.Done()
 
-			err := uc.trackKeywordPosition(site, kw, source, device, os, ads, country, lang, pages)
+			err := uc.trackKeywordPosition(site, kw, source, device, os, ads, country, lang, pages, subdomains)
 
 			mu.Lock()
 			if err != nil && firstError == nil {
@@ -88,8 +88,9 @@ func (uc *PositionTrackingUseCase) trackKeywordPosition(
 	ads bool,
 	country, lang string,
 	pages int,
+	subdomains bool,
 ) error {
-	position, url, title, err := uc.xmlRiver.FindSitePosition(keyword.Value, site.Domain, source, pages, device, os, ads, country, lang)
+	position, url, title, err := uc.xmlRiver.FindSitePositionWithSubdomains(keyword.Value, site.Domain, source, pages, device, os, ads, country, lang, subdomains)
 	if err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,

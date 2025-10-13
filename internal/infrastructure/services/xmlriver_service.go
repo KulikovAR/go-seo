@@ -132,6 +132,29 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	return &searchResp, nil
 }
 
+func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchRequest, siteDomain string, source string, maxPages int, subdomains bool) (int, string, string, error) {
+	for page := 1; page <= maxPages; page++ {
+		req.Page = page
+
+		resp, err := s.Search(req, source)
+		if err != nil {
+			return 0, "", "", fmt.Errorf("failed to search page %d: %w", page, err)
+		}
+
+		position := 1
+		for _, group := range resp.Response.Results.Grouping.Groups {
+			for _, doc := range group.Docs {
+				if doc.ContentType == "organic" && s.isSiteMatchWithSubdomains(doc.URL, siteDomain, subdomains) {
+					absolutePosition := (page-1)*10 + position
+					return absolutePosition, doc.URL, doc.Title, nil
+				}
+				position++
+			}
+		}
+	}
+
+	return 0, "", "", nil
+}
 func (s *XMLRiverService) findSitePositionInternal(req SearchRequest, siteDomain string, source string, maxPages int) (int, string, string, error) {
 	for page := 1; page <= maxPages; page++ {
 		req.Page = page
@@ -179,7 +202,34 @@ func (s *XMLRiverService) isSiteMatch(resultURL, siteDomain string) bool {
 
 	return resultDomain == siteDomainExtracted
 }
+func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, subdomains bool) (int, string, string, error) {
+	req := SearchRequest{
+		Query:   query,
+		Page:    1,
+		Device:  device,
+		OS:      os,
+		Ads:     ads,
+		Country: country,
+		Lang:    lang,
+	}
 
+	return s.findSitePositionInternalWithSubdomains(req, siteDomain, source, maxPages, subdomains)
+}
+
+func (s *XMLRiverService) isSiteMatchWithSubdomains(resultURL, siteDomain string, subdomains bool) bool {
+	resultDomain := s.extractDomain(resultURL)
+	siteDomainExtracted := s.extractDomain(siteDomain)
+
+	resultDomain = strings.ToLower(strings.TrimPrefix(resultDomain, "www."))
+	siteDomainExtracted = strings.ToLower(strings.TrimPrefix(siteDomainExtracted, "www."))
+
+	if !subdomains {
+		return resultDomain == siteDomainExtracted
+	}
+
+	// Поиск по поддоменам: проверяем, что результат принадлежит домену или его поддоменам
+	return resultDomain == siteDomainExtracted || strings.HasSuffix(resultDomain, "."+siteDomainExtracted)
+}
 func (s *XMLRiverService) extractDomain(urlStr string) string {
 	if !strings.HasPrefix(urlStr, "http") {
 		urlStr = "http://" + urlStr

@@ -121,6 +121,8 @@ definitions:
         - google
         - yandex
         type: string
+      subdomains:
+        type: boolean
     required:
     - device
     - pages
@@ -285,7 +287,7 @@ paths:
       consumes:
       - application/json
       description: Track positions for specific site and its keywords. Supports both
-        Google and Yandex search engines.
+        Google and Yandex search engines. Can include subdomains in search.
       parameters:
       - description: 'Site tracking parameters (source: google or yandex)'
         in: body
