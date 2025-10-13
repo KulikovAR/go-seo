@@ -18,22 +18,12 @@ func NewSiteUseCase(siteRepo repositories.SiteRepository, positionRepo repositor
 	}
 }
 
-func (uc *SiteUseCase) CreateSite(name, domain string) (*entities.Site, error) {
-	existingSite, err := uc.siteRepo.GetByDomain(domain)
-	if err == nil && existingSite != nil {
-		return nil, &DomainError{
-			Code:    ErrorSiteExists,
-			Message: "Site with this domain already exists",
-		}
-	}
-
+func (uc *SiteUseCase) CreateSite(domain string) (*entities.Site, error) {
 	site := &entities.Site{
-		Name:   name,
 		Domain: domain,
 	}
 
 	if err := uc.siteRepo.Create(site); err != nil {
-		// Проверяем тип ошибки
 		if database.IsDatabaseError(err) {
 			switch database.GetDatabaseErrorCode(err) {
 			case "DUPLICATE_ENTRY":

@@ -13,11 +13,8 @@ definitions:
     properties:
       domain:
         type: string
-      name:
-        type: string
     required:
     - domain
-    - name
     type: object
   dto.DeleteKeywordResponse:
     properties:
@@ -47,13 +44,25 @@ definitions:
     type: object
   dto.PositionResponse:
     properties:
+      ads:
+        type: boolean
+      country:
+        type: string
       date:
+        type: string
+      device:
         type: string
       id:
         type: integer
       keyword:
         type: string
       keyword_id:
+        type: integer
+      lang:
+        type: string
+      os:
+        type: string
+      pages:
         type: integer
       rank:
         type: integer
@@ -74,8 +83,6 @@ definitions:
         type: string
       id:
         type: integer
-      name:
-        type: string
     type: object
   dto.TrackPositionsResponse:
     properties:
@@ -103,6 +110,10 @@ definitions:
         - ios
         - android
         type: string
+      pages:
+        maximum: 10
+        minimum: 1
+        type: integer
       site_id:
         type: integer
       source:
@@ -112,6 +123,7 @@ definitions:
         type: string
     required:
     - device
+    - pages
     - site_id
     - source
     type: object
@@ -214,6 +226,13 @@ paths:
         in: query
         name: keyword_id
         type: integer
+      - description: Source filter (optional) - google or yandex
+        enum:
+        - google
+        - yandex
+        in: query
+        name: source
+        type: string
       produces:
       - application/json
       responses:

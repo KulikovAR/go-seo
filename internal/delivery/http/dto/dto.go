@@ -3,13 +3,11 @@ package dto
 import "time"
 
 type CreateSiteRequest struct {
-	Name   string `json:"name" binding:"required"`
 	Domain string `json:"domain" binding:"required"`
 }
 
 type SiteResponse struct {
 	ID     int    `json:"id"`
-	Name   string `json:"name"`
 	Domain string `json:"domain"`
 }
 

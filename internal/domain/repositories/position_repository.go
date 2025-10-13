@@ -7,6 +7,8 @@ type PositionRepository interface {
 	GetByID(id int) (*entities.Position, error)
 	GetByKeywordAndSite(keywordID, siteID int) ([]*entities.Position, error)
 	GetBySiteID(siteID int) ([]*entities.Position, error)
+	GetBySiteIDAndSource(siteID int, source string) ([]*entities.Position, error)
+	GetByKeywordAndSiteAndSource(keywordID, siteID int, source string) ([]*entities.Position, error)
 	GetLatestByKeywordAndSite(keywordID, siteID int) (*entities.Position, error)
 	GetAll() ([]*entities.Position, error)
 	Update(position *entities.Position) error

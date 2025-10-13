@@ -19,7 +19,6 @@ func NewSiteRepository(db *gorm.DB) repositories.SiteRepository {
 
 func (r *siteRepository) Create(site *entities.Site) error {
 	model := &models.Site{
-		Name:   site.Name,
 		Domain: site.Domain,
 	}
 
@@ -66,7 +65,6 @@ func (r *siteRepository) GetAll() ([]*entities.Site, error) {
 func (r *siteRepository) Update(site *entities.Site) error {
 	model := &models.Site{
 		ID:     site.ID,
-		Name:   site.Name,
 		Domain: site.Domain,
 	}
 
@@ -80,7 +78,6 @@ func (r *siteRepository) Delete(id int) error {
 func (r *siteRepository) toDomain(model *models.Site) *entities.Site {
 	return &entities.Site{
 		ID:     model.ID,
-		Name:   model.Name,
 		Domain: model.Domain,
 	}
 }

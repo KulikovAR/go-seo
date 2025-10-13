@@ -125,12 +125,16 @@ func (uc *PositionTrackingUseCase) trackKeywordPosition(
 	return nil
 }
 
-func (uc *PositionTrackingUseCase) GetPositionsHistory(siteID int, keywordID *int) ([]*entities.Position, error) {
+func (uc *PositionTrackingUseCase) GetPositionsHistory(siteID int, keywordID *int, source *string) ([]*entities.Position, error) {
 	var positions []*entities.Position
 	var err error
 
-	if keywordID != nil {
+	if keywordID != nil && source != nil {
+		positions, err = uc.positionRepo.GetByKeywordAndSiteAndSource(*keywordID, siteID, *source)
+	} else if keywordID != nil {
 		positions, err = uc.positionRepo.GetByKeywordAndSite(*keywordID, siteID)
+	} else if source != nil {
+		positions, err = uc.positionRepo.GetBySiteIDAndSource(siteID, *source)
 	} else {
 		positions, err = uc.positionRepo.GetBySiteID(siteID)
 	}

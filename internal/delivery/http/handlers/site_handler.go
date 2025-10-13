@@ -41,7 +41,7 @@ func (h *SiteHandler) CreateSite(c *gin.Context) {
 		return
 	}
 
-	site, err := h.siteUseCase.CreateSite(req.Name, req.Domain)
+	site, err := h.siteUseCase.CreateSite(req.Domain)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			code := usecases.GetDomainErrorCode(err)
@@ -70,7 +70,6 @@ func (h *SiteHandler) CreateSite(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, dto.SiteResponse{
 		ID:     site.ID,
-		Name:   site.Name,
 		Domain: site.Domain,
 	})
 }
@@ -157,7 +156,6 @@ func (h *SiteHandler) GetSites(c *gin.Context) {
 	for i, site := range sites {
 		response[i] = dto.SiteResponse{
 			ID:     site.ID,
-			Name:   site.Name,
 			Domain: site.Domain,
 		}
 	}

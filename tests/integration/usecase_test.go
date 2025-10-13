@@ -148,6 +148,15 @@ func (m *MockPositionRepository) DeleteByKeywordID(keywordID int) error {
 	args := m.Called(keywordID)
 	return args.Error(0)
 }
+func (m *MockPositionRepository) GetBySiteIDAndSource(siteID int, source string) ([]*entities.Position, error) {
+	args := m.Called(siteID, source)
+	return args.Get(0).([]*entities.Position), args.Error(1)
+}
+
+func (m *MockPositionRepository) GetByKeywordAndSiteAndSource(keywordID, siteID int, source string) ([]*entities.Position, error) {
+	args := m.Called(keywordID, siteID, source)
+	return args.Get(0).([]*entities.Position), args.Error(1)
+}
 
 func TestSiteUseCase_CreateSite(t *testing.T) {
 	mockSiteRepo := new(MockSiteRepository)
@@ -155,33 +164,13 @@ func TestSiteUseCase_CreateSite(t *testing.T) {
 
 	useCase := usecases.NewSiteUseCase(mockSiteRepo, mockPositionRepo)
 
-	mockSiteRepo.On("GetByDomain", "test.com").Return(nil, assert.AnError)
 	mockSiteRepo.On("Create", mock.AnythingOfType("*entities.Site")).Return(nil)
 
-	site, err := useCase.CreateSite("Test Site", "test.com")
+	site, err := useCase.CreateSite("test.com")
 
 	assert.NoError(t, err)
-	assert.Equal(t, "Test Site", site.Name)
 	assert.Equal(t, "test.com", site.Domain)
 	assert.Equal(t, 1, site.ID)
-
-	mockSiteRepo.AssertExpectations(t)
-}
-
-func TestSiteUseCase_CreateSite_AlreadyExists(t *testing.T) {
-	mockSiteRepo := new(MockSiteRepository)
-	mockPositionRepo := new(MockPositionRepository)
-
-	useCase := usecases.NewSiteUseCase(mockSiteRepo, mockPositionRepo)
-
-	existingSite := &entities.Site{ID: 1, Name: "Existing Site", Domain: "test.com"}
-	mockSiteRepo.On("GetByDomain", "test.com").Return(existingSite, nil)
-
-	site, err := useCase.CreateSite("Test Site", "test.com")
-
-	assert.Error(t, err)
-	assert.Nil(t, site)
-	assert.Contains(t, err.Error(), "Site with this domain already exists")
 
 	mockSiteRepo.AssertExpectations(t)
 }

@@ -20,6 +20,17 @@ func NewPositionHandler(positionTrackingUseCase *usecases.PositionTrackingUseCas
 	}
 }
 
+// TrackSitePositions godoc
+// @Summary Track positions for specific site
+// @Description Track positions for specific site and its keywords. Supports both Google and Yandex search engines.
+// @Tags positions
+// @Accept json
+// @Produce json
+// @Param request body dto.TrackSitePositionsRequest true "Site tracking parameters (source: google or yandex)"
+// @Success 200 {object} dto.TrackPositionsResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/track-site [post]
 func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 	var req dto.TrackSitePositionsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -70,9 +81,22 @@ func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 	})
 }
 
+// GetPositionsHistory godoc
+// @Summary Get positions history
+// @Description Get positions history for specific site and optional keyword
+// @Tags positions
+// @Produce json
+// @Param site_id query int true "Site ID"
+// @Param keyword_id query int false "Keyword ID (optional)"
+// @Param source query string false "Source filter (optional) - google or yandex" Enums(google,yandex)
+// @Success 200 {array} dto.PositionResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/history [get]
 func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 	siteIDStr := c.Query("site_id")
 	keywordIDStr := c.Query("keyword_id")
+	sourceStr := c.Query("source")
 
 	if siteIDStr == "" {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
@@ -104,7 +128,19 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 		keywordID = &id
 	}
 
-	positions, err := h.positionTrackingUseCase.GetPositionsHistory(siteID, keywordID)
+	var source *string
+	if sourceStr != "" {
+		if sourceStr != "google" && sourceStr != "yandex" {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "source must be either 'google' or 'yandex'",
+			})
+			return
+		}
+		source = &sourceStr
+	}
+
+	positions, err := h.positionTrackingUseCase.GetPositionsHistory(siteID, keywordID, source)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
@@ -148,6 +184,14 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// GetLatestPositions godoc
+// @Summary Get latest positions
+// @Description Get latest positions for all sites and keywords
+// @Tags positions
+// @Produce json
+// @Success 200 {array} dto.PositionResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/latest [get]
 func (h *PositionHandler) GetLatestPositions(c *gin.Context) {
 	positions, err := h.positionTrackingUseCase.GetLatestPositions()
 	if err != nil {

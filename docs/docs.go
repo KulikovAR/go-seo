@@ -164,6 +164,16 @@ const docTemplate = `{
                         "description": "Keyword ID (optional)",
                         "name": "keyword_id",
                         "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "google",
+                            "yandex"
+                        ],
+                        "type": "string",
+                        "description": "Source filter (optional) - google or yandex",
+                        "name": "source",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -397,14 +407,10 @@ const docTemplate = `{
         "dto.CreateSiteRequest": {
             "type": "object",
             "required": [
-                "domain",
-                "name"
+                "domain"
             ],
             "properties": {
                 "domain": {
-                    "type": "string"
-                },
-                "name": {
                     "type": "string"
                 }
             }
@@ -453,7 +459,16 @@ const docTemplate = `{
         "dto.PositionResponse": {
             "type": "object",
             "properties": {
+                "ads": {
+                    "type": "boolean"
+                },
+                "country": {
+                    "type": "string"
+                },
                 "date": {
+                    "type": "string"
+                },
+                "device": {
                     "type": "string"
                 },
                 "id": {
@@ -463,6 +478,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "keyword_id": {
+                    "type": "integer"
+                },
+                "lang": {
+                    "type": "string"
+                },
+                "os": {
+                    "type": "string"
+                },
+                "pages": {
                     "type": "integer"
                 },
                 "rank": {
@@ -493,9 +517,6 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
-                },
-                "name": {
-                    "type": "string"
                 }
             }
         },
@@ -514,6 +535,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "device",
+                "pages",
                 "site_id",
                 "source"
             ],
@@ -541,6 +563,11 @@ const docTemplate = `{
                         "ios",
                         "android"
                     ]
+                },
+                "pages": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 1
                 },
                 "site_id": {
                     "type": "integer"

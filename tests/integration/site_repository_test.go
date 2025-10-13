@@ -28,12 +28,11 @@ func TestSiteRepository_Create(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(`INSERT INTO "sites"`).
-		WithArgs("Test Site", "test.com", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs("test.com", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 	mock.ExpectCommit()
 
 	site := &entities.Site{
-		Name:   "Test Site",
 		Domain: "test.com",
 	}
 
@@ -58,8 +57,8 @@ func TestSiteRepository_GetByDomain(t *testing.T) {
 	repo := repositories.NewSiteRepository(gormDB)
 
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"id", "name", "domain", "created_at", "updated_at"}).
-		AddRow(1, "Test Site", "test.com", now, now)
+	rows := sqlmock.NewRows([]string{"id", "domain", "created_at", "updated_at"}).
+		AddRow(1, "test.com", now, now)
 
 	mock.ExpectQuery(`SELECT \* FROM "sites" WHERE domain = \$1 ORDER BY "sites"\."id" LIMIT \$2`).
 		WithArgs("test.com", 1).
@@ -68,7 +67,6 @@ func TestSiteRepository_GetByDomain(t *testing.T) {
 	site, err := repo.GetByDomain("test.com")
 	assert.NoError(t, err)
 	assert.Equal(t, 1, site.ID)
-	assert.Equal(t, "Test Site", site.Name)
 	assert.Equal(t, "test.com", site.Domain)
 
 	err = mock.ExpectationsWereMet()
@@ -88,9 +86,9 @@ func TestSiteRepository_GetAll(t *testing.T) {
 	repo := repositories.NewSiteRepository(gormDB)
 
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"id", "name", "domain", "created_at", "updated_at"}).
-		AddRow(1, "Test Site 1", "test1.com", now, now).
-		AddRow(2, "Test Site 2", "test2.com", now, now)
+	rows := sqlmock.NewRows([]string{"id", "domain", "created_at", "updated_at"}).
+		AddRow(1, "test1.com", now, now).
+		AddRow(2, "test2.com", now, now)
 
 	mock.ExpectQuery(`SELECT \* FROM "sites"`).
 		WillReturnRows(rows)
@@ -98,8 +96,8 @@ func TestSiteRepository_GetAll(t *testing.T) {
 	sites, err := repo.GetAll()
 	assert.NoError(t, err)
 	assert.Len(t, sites, 2)
-	assert.Equal(t, "Test Site 1", sites[0].Name)
-	assert.Equal(t, "Test Site 2", sites[1].Name)
+	assert.Equal(t, "test1.com", sites[0].Domain)
+	assert.Equal(t, "test2.com", sites[1].Domain)
 
 	err = mock.ExpectationsWereMet()
 	assert.NoError(t, err)

@@ -22,11 +22,10 @@ func TestSiteHandler_CreateSite(t *testing.T) {
 	mockSiteUseCase := new(MockSiteUseCase)
 	handler := handlers.NewSiteHandler(mockSiteUseCase)
 
-	expectedSite := &entities.Site{ID: 1, Name: "Test Site", Domain: "test.com"}
-	mockSiteUseCase.On("CreateSite", "Test Site", "test.com").Return(expectedSite, nil)
+	expectedSite := &entities.Site{ID: 1, Domain: "test.com"}
+	mockSiteUseCase.On("CreateSite", "test.com").Return(expectedSite, nil)
 
 	reqBody := dto.CreateSiteRequest{
-		Name:   "Test Site",
 		Domain: "test.com",
 	}
 	jsonBody, _ := json.Marshal(reqBody)
@@ -45,7 +44,6 @@ func TestSiteHandler_CreateSite(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, response.ID)
-	assert.Equal(t, "Test Site", response.Name)
 	assert.Equal(t, "test.com", response.Domain)
 
 	mockSiteUseCase.AssertExpectations(t)
@@ -170,8 +168,8 @@ type MockSiteUseCase struct {
 	mock.Mock
 }
 
-func (m *MockSiteUseCase) CreateSite(name, domain string) (*entities.Site, error) {
-	args := m.Called(name, domain)
+func (m *MockSiteUseCase) CreateSite(domain string) (*entities.Site, error) {
+	args := m.Called(domain)
 	return args.Get(0).(*entities.Site), args.Error(1)
 }
 
