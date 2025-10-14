@@ -240,9 +240,20 @@ func (s *XMLRiverService) extractDomain(urlStr string) string {
 		return ""
 	}
 
-	return u.Host
+	// Приводим к нижнему регистру для корректного сравнения
+	return strings.ToLower(u.Host)
 }
 
 func (s *XMLRiverService) Close() error {
 	return nil
+}
+
+// IsSiteMatch - публичный метод для тестирования сопоставления доменов
+func (s *XMLRiverService) IsSiteMatch(resultURL, siteDomain string) bool {
+	return s.isSiteMatch(resultURL, siteDomain)
+}
+
+// IsSiteMatchWithSubdomains - публичный метод для тестирования сопоставления доменов с поддоменами
+func (s *XMLRiverService) IsSiteMatchWithSubdomains(resultURL, siteDomain string, subdomains bool) bool {
+	return s.isSiteMatchWithSubdomains(resultURL, siteDomain, subdomains)
 }

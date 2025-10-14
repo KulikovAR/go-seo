@@ -183,6 +183,11 @@ func (m *MockSiteUseCase) GetAllSites() ([]*entities.Site, error) {
 	return args.Get(0).([]*entities.Site), args.Error(1)
 }
 
+func (m *MockSiteUseCase) GetSitesByIDs(ids []int) ([]*entities.Site, error) {
+	args := m.Called(ids)
+	return args.Get(0).([]*entities.Site), args.Error(1)
+}
+
 type MockKeywordUseCase struct {
 	mock.Mock
 }

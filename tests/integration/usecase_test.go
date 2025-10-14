@@ -39,6 +39,11 @@ func (m *MockSiteRepository) GetAll() ([]*entities.Site, error) {
 	return args.Get(0).([]*entities.Site), args.Error(1)
 }
 
+func (m *MockSiteRepository) GetByIDs(ids []int) ([]*entities.Site, error) {
+	args := m.Called(ids)
+	return args.Get(0).([]*entities.Site), args.Error(1)
+}
+
 func (m *MockSiteRepository) Update(site *entities.Site) error {
 	args := m.Called(site)
 	return args.Error(0)
