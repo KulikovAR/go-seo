@@ -9,7 +9,7 @@ type Position struct {
 	Rank      int       `gorm:"not null"`
 	URL       string    `gorm:"not null"`
 	Title     string    `gorm:"not null"`
-	Source    string    `gorm:"not null;index"`
+	Source    string    `gorm:"index"`
 	Device    string    `gorm:"not null"`
 	OS        string    `gorm:""`
 	Ads       bool      `gorm:"not null"`
