@@ -91,3 +91,16 @@ func (uc *SiteUseCase) GetAllSites() ([]*entities.Site, error) {
 
 	return sites, nil
 }
+
+func (uc *SiteUseCase) GetSitesByIDs(ids []int) ([]*entities.Site, error) {
+	sites, err := uc.siteRepo.GetByIDs(ids)
+	if err != nil {
+		return nil, &DomainError{
+			Code:    ErrorSiteFetch,
+			Message: "Failed to fetch sites by IDs",
+			Err:     err,
+		}
+	}
+
+	return sites, nil
+}

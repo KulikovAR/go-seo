@@ -315,7 +315,13 @@ paths:
       - positions
   /api/sites:
     get:
-      description: Get list of all tracked sites
+      description: Get list of tracked sites. If ids parameter is provided, returns
+        only sites with specified IDs
+      parameters:
+      - description: Comma-separated list of site IDs to filter by
+        in: query
+        name: ids
+        type: string
       produces:
       - application/json
       responses:
@@ -325,11 +331,15 @@ paths:
             items:
               $ref: '#/definitions/dto.SiteResponse'
             type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
-      summary: Get all sites
+      summary: Get sites
       tags:
       - sites
     post:

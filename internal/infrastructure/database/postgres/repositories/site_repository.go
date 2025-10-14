@@ -62,6 +62,24 @@ func (r *siteRepository) GetAll() ([]*entities.Site, error) {
 	return sites, nil
 }
 
+func (r *siteRepository) GetByIDs(ids []int) ([]*entities.Site, error) {
+	if len(ids) == 0 {
+		return []*entities.Site{}, nil
+	}
+
+	var models []models.Site
+	if err := r.db.Where("id IN ?", ids).Order("created_at ASC").Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	sites := make([]*entities.Site, len(models))
+	for i, model := range models {
+		sites[i] = r.toDomain(&model)
+	}
+
+	return sites, nil
+}
+
 func (r *siteRepository) Update(site *entities.Site) error {
 	model := &models.Site{
 		ID:     site.ID,

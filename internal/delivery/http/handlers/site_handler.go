@@ -3,8 +3,10 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"go-seo/internal/delivery/http/dto"
+	"go-seo/internal/domain/entities"
 	"go-seo/internal/usecases"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +20,32 @@ func NewSiteHandler(siteUseCase usecases.SiteUseCaseInterface) *SiteHandler {
 	return &SiteHandler{
 		siteUseCase: siteUseCase,
 	}
+}
+
+// parseIDsFromQuery парсит массив ID из query параметра "ids"
+func parseIDsFromQuery(c *gin.Context) ([]int, error) {
+	idsStr := c.Query("ids")
+	if idsStr == "" {
+		return nil, nil
+	}
+
+	idStrings := strings.Split(idsStr, ",")
+	ids := make([]int, 0, len(idStrings))
+
+	for _, idStr := range idStrings {
+		idStr = strings.TrimSpace(idStr)
+		if idStr == "" {
+			continue
+		}
+		
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
 }
 
 // CreateSite godoc
@@ -127,15 +155,35 @@ func (h *SiteHandler) DeleteSite(c *gin.Context) {
 }
 
 // GetSites godoc
-// @Summary Get all sites
-// @Description Get list of all tracked sites
+// @Summary Get sites
+// @Description Get list of tracked sites. If ids parameter is provided, returns only sites with specified IDs
 // @Tags sites
 // @Produce json
+// @Param ids query string false "Comma-separated list of site IDs to filter by"
 // @Success 200 {array} dto.SiteResponse
+// @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /api/sites [get]
 func (h *SiteHandler) GetSites(c *gin.Context) {
-	sites, err := h.siteUseCase.GetAllSites()
+	// Парсим параметр ids из query
+	ids, err := parseIDsFromQuery(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "invalid_ids",
+			Message: "Invalid IDs format. Expected comma-separated integers",
+		})
+		return
+	}
+
+	var sites []*entities.Site
+	if ids != nil {
+		// Если ids указаны, получаем только нужные сайты
+		sites, err = h.siteUseCase.GetSitesByIDs(ids)
+	} else {
+		// Если ids не указаны, получаем все сайты
+		sites, err = h.siteUseCase.GetAllSites()
+	}
+
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{

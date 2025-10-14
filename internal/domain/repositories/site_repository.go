@@ -7,6 +7,7 @@ type SiteRepository interface {
 	GetByID(id int) (*entities.Site, error)
 	GetByDomain(domain string) (*entities.Site, error)
 	GetAll() ([]*entities.Site, error)
+	GetByIDs(ids []int) ([]*entities.Site, error)
 	Update(site *entities.Site) error
 	Delete(id int) error
 }

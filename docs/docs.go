@@ -290,14 +290,22 @@ const docTemplate = `{
         },
         "/api/sites": {
             "get": {
-                "description": "Get list of all tracked sites",
+                "description": "Get list of tracked sites. If ids parameter is provided, returns only sites with specified IDs",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "sites"
                 ],
-                "summary": "Get all sites",
+                "summary": "Get sites",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comma-separated list of site IDs to filter by",
+                        "name": "ids",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -306,6 +314,12 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/dto.SiteResponse"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {

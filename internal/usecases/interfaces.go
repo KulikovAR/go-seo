@@ -7,6 +7,7 @@ type SiteUseCaseInterface interface {
 	CreateSite(domain string) (*entities.Site, error)
 	DeleteSite(id int) error
 	GetAllSites() ([]*entities.Site, error)
+	GetSitesByIDs(ids []int) ([]*entities.Site, error)
 }
 
 type KeywordUseCaseInterface interface {
