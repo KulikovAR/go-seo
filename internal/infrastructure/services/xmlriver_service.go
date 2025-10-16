@@ -76,7 +76,7 @@ func NewXMLRiverService(baseURL, userID, apiKey string) (*XMLRiverService, error
 		userID:  userID,
 		apiKey:  apiKey,
 		client: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: 120 * time.Second,
 		},
 	}, nil
 }
@@ -86,8 +86,16 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	params.Set("user", s.userID)
 	params.Set("key", s.apiKey)
 	params.Set("query", req.Query)
-	params.Set("page", strconv.Itoa(req.Page))
-	params.Set("ai", "0")
+	
+	if source == entities.YandexSearch {
+		if req.Page > 1 {
+			params.Set("page", strconv.Itoa(req.Page-1))
+		}
+	} else {
+		if req.Page > 0 {
+			params.Set("page", strconv.Itoa(req.Page))
+		}
+	}
 
 	if req.Device != "" {
 		params.Set("device", req.Device)
@@ -149,26 +157,15 @@ func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchReque
 			return 0, "", "", fmt.Errorf("failed to search page %d: %w", page, err)
 		}
 
-		if len(resp.Response.Results.Results) > 0 {
-			for _, result := range resp.Response.Results.Results {
-				if result.Type == "organic" {
-					if s.isSiteMatchWithSubdomains(result.URL, siteDomain, subdomains) {
-						absolutePosition := (page-1)*10 + result.Position
-						return absolutePosition, result.URL, result.Title, nil
+		position := 1
+		for _, group := range resp.Response.Results.Grouping.Groups {
+			for _, doc := range group.Docs {
+				if doc.ContentType == "organic" {
+					if s.isSiteMatchWithSubdomains(doc.URL, siteDomain, subdomains) {
+						absolutePosition := (page-1)*10 + position
+						return absolutePosition, doc.URL, doc.Title, nil
 					}
-				}
-			}
-		} else {
-			position := 1
-			for _, group := range resp.Response.Results.Grouping.Groups {
-				for _, doc := range group.Docs {
-					if doc.ContentType == "organic" {
-						if s.isSiteMatchWithSubdomains(doc.URL, siteDomain, subdomains) {
-							absolutePosition := (page-1)*10 + position
-							return absolutePosition, doc.URL, doc.Title, nil
-						}
-						position++
-					}
+					position++
 				}
 			}
 		}
@@ -185,26 +182,15 @@ func (s *XMLRiverService) findSitePositionInternal(req SearchRequest, siteDomain
 			return 0, "", "", fmt.Errorf("failed to search page %d: %w", page, err)
 		}
 
-		if len(resp.Response.Results.Results) > 0 {
-			for _, result := range resp.Response.Results.Results {
-				if result.Type == "organic" {
-					if s.isSiteMatch(result.URL, siteDomain) {
-						absolutePosition := (page-1)*10 + result.Position
-						return absolutePosition, result.URL, result.Title, nil
+		position := 1
+		for _, group := range resp.Response.Results.Grouping.Groups {
+			for _, doc := range group.Docs {
+				if doc.ContentType == "organic" {
+					if s.isSiteMatch(doc.URL, siteDomain) {
+						absolutePosition := (page-1)*10 + position
+						return absolutePosition, doc.URL, doc.Title, nil
 					}
-				}
-			}
-		} else {
-			position := 1
-			for _, group := range resp.Response.Results.Grouping.Groups {
-				for _, doc := range group.Docs {
-					if doc.ContentType == "organic" {
-						if s.isSiteMatch(doc.URL, siteDomain) {
-							absolutePosition := (page-1)*10 + position
-							return absolutePosition, doc.URL, doc.Title, nil
-						}
-						position++
-					}
+					position++
 				}
 			}
 		}
@@ -257,14 +243,24 @@ func (s *XMLRiverService) isSiteMatchWithSubdomains(resultURL, siteDomain string
 	resultDomain = strings.ToLower(strings.TrimPrefix(resultDomain, "www."))
 	siteDomainExtracted = strings.ToLower(strings.TrimPrefix(siteDomainExtracted, "www."))
 
-	if !subdomains {
-		return resultDomain == siteDomainExtracted
+	exactMatch := resultDomain == siteDomainExtracted
+	if exactMatch {
+		return true
 	}
 
-	exactMatch := resultDomain == siteDomainExtracted
-	subdomainMatch := strings.HasSuffix(resultDomain, "."+siteDomainExtracted)
+	if subdomains {
+		subdomainMatch := strings.HasSuffix(resultDomain, "."+siteDomainExtracted)
+		if subdomainMatch {
+			return true
+		}
 
-	return exactMatch || subdomainMatch
+		parentMatch := strings.HasSuffix(siteDomainExtracted, "."+resultDomain)
+		if parentMatch {
+			return true
+		}
+	}
+
+	return false
 }
 func (s *XMLRiverService) extractDomain(urlStr string) string {
 	if !strings.HasPrefix(urlStr, "http") {
@@ -283,12 +279,10 @@ func (s *XMLRiverService) Close() error {
 	return nil
 }
 
-// IsSiteMatch - публичный метод для тестирования сопоставления доменов
 func (s *XMLRiverService) IsSiteMatch(resultURL, siteDomain string) bool {
 	return s.isSiteMatch(resultURL, siteDomain)
 }
 
-// IsSiteMatchWithSubdomains - публичный метод для тестирования сопоставления доменов с поддоменами
 func (s *XMLRiverService) IsSiteMatchWithSubdomains(resultURL, siteDomain string, subdomains bool) bool {
 	return s.isSiteMatchWithSubdomains(resultURL, siteDomain, subdomains)
 }
