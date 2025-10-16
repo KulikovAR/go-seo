@@ -265,6 +265,139 @@ func (r *positionRepository) DeleteByKeywordID(keywordID int) error {
 	return r.db.Where("keyword_id = ?", keywordID).Delete(&models.Position{}).Error
 }
 
+func (r *positionRepository) GetTodayByKeywordAndSiteAndSource(keywordID, siteID int, source string) (*entities.Position, error) {
+	var model models.Position
+
+	now := time.Now()
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	endOfDay := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999999999, now.Location())
+
+	if err := r.db.Where("keyword_id = ? AND site_id = ? AND source = ? AND date >= ? AND date <= ?",
+		keywordID, siteID, source, startOfDay, endOfDay).
+		First(&model).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return r.toDomain(&model), nil
+}
+
+func (r *positionRepository) CreateOrUpdateToday(position *entities.Position) error {
+	existingPosition, err := r.GetTodayByKeywordAndSiteAndSource(position.KeywordID, position.SiteID, position.Source)
+	if err != nil {
+		return err
+	}
+
+	if existingPosition != nil {
+		position.ID = existingPosition.ID
+		return r.Update(position)
+	} else {
+		return r.Create(position)
+	}
+}
+
+func (r *positionRepository) GetHistoryBySiteIDWithOnePerDay(siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	query := r.db.Table("positions").
+		Select("DISTINCT ON (keyword_id, DATE(date)) *").
+		Where("site_id = ?", siteID)
+
+	if dateFrom != nil {
+		query = query.Where("date >= ?", *dateFrom)
+	}
+	if dateTo != nil {
+		query = query.Where("date <= ?", *dateTo)
+	}
+
+	var models []models.Position
+	if err := query.Order("keyword_id, DATE(date) DESC, date DESC").Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+
+func (r *positionRepository) GetHistoryBySiteIDAndSourceWithOnePerDay(siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	query := r.db.Table("positions").
+		Select("DISTINCT ON (keyword_id, DATE(date)) *").
+		Where("site_id = ? AND source = ?", siteID, source)
+
+	if dateFrom != nil {
+		query = query.Where("date >= ?", *dateFrom)
+	}
+	if dateTo != nil {
+		query = query.Where("date <= ?", *dateTo)
+	}
+
+	var models []models.Position
+	if err := query.Order("keyword_id, DATE(date) DESC, date DESC").Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+
+func (r *positionRepository) GetHistoryByKeywordAndSiteWithOnePerDay(keywordID, siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	query := r.db.Table("positions").
+		Select("DISTINCT ON (DATE(date)) *").
+		Where("keyword_id = ? AND site_id = ?", keywordID, siteID)
+
+	if dateFrom != nil {
+		query = query.Where("date >= ?", *dateFrom)
+	}
+	if dateTo != nil {
+		query = query.Where("date <= ?", *dateTo)
+	}
+
+	var models []models.Position
+	if err := query.Order("DATE(date) DESC, date DESC").Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+
+func (r *positionRepository) GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(keywordID, siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+	query := r.db.Table("positions").
+		Select("DISTINCT ON (DATE(date)) *").
+		Where("keyword_id = ? AND site_id = ? AND source = ?", keywordID, siteID, source)
+
+	if dateFrom != nil {
+		query = query.Where("date >= ?", *dateFrom)
+	}
+	if dateTo != nil {
+		query = query.Where("date <= ?", *dateTo)
+	}
+
+	var models []models.Position
+	if err := query.Order("DATE(date) DESC, date DESC").Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+
 func (r *positionRepository) toDomain(model *models.Position) *entities.Position {
 	position := &entities.Position{
 		ID:        model.ID,

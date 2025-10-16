@@ -15,6 +15,7 @@ type PositionTrackingUseCase struct {
 	keywordRepo  repositories.KeywordRepository
 	positionRepo repositories.PositionRepository
 	xmlRiver     *services.XMLRiverService
+	wordstat     *services.WordstatService
 }
 
 func NewPositionTrackingUseCase(
@@ -22,12 +23,14 @@ func NewPositionTrackingUseCase(
 	keywordRepo repositories.KeywordRepository,
 	positionRepo repositories.PositionRepository,
 	xmlRiver *services.XMLRiverService,
+	wordstat *services.WordstatService,
 ) *PositionTrackingUseCase {
 	return &PositionTrackingUseCase{
 		siteRepo:     siteRepo,
 		keywordRepo:  keywordRepo,
 		positionRepo: positionRepo,
 		xmlRiver:     xmlRiver,
+		wordstat:     wordstat,
 	}
 }
 
@@ -90,6 +93,10 @@ func (uc *PositionTrackingUseCase) trackKeywordPosition(
 	pages int,
 	subdomains bool,
 ) error {
+	if source == entities.Wordstat {
+		return uc.trackWordstatPosition(keyword)
+	}
+
 	position, url, title, err := uc.xmlRiver.FindSitePositionWithSubdomains(keyword.Value, site.Domain, source, pages, device, os, ads, country, lang, subdomains)
 	if err != nil {
 		return &DomainError{
@@ -115,7 +122,7 @@ func (uc *PositionTrackingUseCase) trackKeywordPosition(
 		Date:      time.Now(),
 	}
 
-	if err := uc.positionRepo.Create(positionEntity); err != nil {
+	if err := uc.positionRepo.CreateOrUpdateToday(positionEntity); err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,
 			Message: "Failed to save position",
@@ -131,13 +138,13 @@ func (uc *PositionTrackingUseCase) GetPositionsHistory(siteID int, keywordID *in
 	var err error
 
 	if keywordID != nil && source != nil {
-		positions, err = uc.positionRepo.GetByKeywordAndSiteAndSourceWithDateRange(*keywordID, siteID, *source, dateFrom, dateTo)
+		positions, err = uc.positionRepo.GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(*keywordID, siteID, *source, dateFrom, dateTo)
 	} else if keywordID != nil {
-		positions, err = uc.positionRepo.GetByKeywordAndSiteWithDateRange(*keywordID, siteID, dateFrom, dateTo)
+		positions, err = uc.positionRepo.GetHistoryByKeywordAndSiteWithOnePerDay(*keywordID, siteID, dateFrom, dateTo)
 	} else if source != nil {
-		positions, err = uc.positionRepo.GetBySiteIDAndSourceWithDateRange(siteID, *source, dateFrom, dateTo)
+		positions, err = uc.positionRepo.GetHistoryBySiteIDAndSourceWithOnePerDay(siteID, *source, dateFrom, dateTo)
 	} else {
-		positions, err = uc.positionRepo.GetBySiteIDWithDateRange(siteID, dateFrom, dateTo)
+		positions, err = uc.positionRepo.GetHistoryBySiteIDWithOnePerDay(siteID, dateFrom, dateTo)
 	}
 
 	if err != nil {
@@ -185,4 +192,41 @@ func (uc *PositionTrackingUseCase) GetLatestPositions() ([]*entities.Position, e
 	}
 
 	return latestPositions, nil
+}
+
+func (uc *PositionTrackingUseCase) trackWordstatPosition(keyword *entities.Keyword) error {
+	frequency, err := uc.wordstat.GetKeywordFrequency(keyword.Value)
+	if err != nil {
+		return &DomainError{
+			Code:    ErrorPositionCreation,
+			Message: fmt.Sprintf("Failed to get frequency for keyword '%s'", keyword.Value),
+			Err:     err,
+		}
+	}
+
+	positionEntity := &entities.Position{
+		KeywordID: keyword.ID,
+		SiteID:    keyword.SiteID,
+		Rank:      frequency,
+		URL:       "",
+		Title:     "",
+		Source:    entities.Wordstat,
+		Device:    "",
+		OS:        "",
+		Ads:       false,
+		Country:   "",
+		Lang:      "",
+		Pages:     0,
+		Date:      time.Now(),
+	}
+
+	if err := uc.positionRepo.CreateOrUpdateToday(positionEntity); err != nil {
+		return &DomainError{
+			Code:    ErrorPositionCreation,
+			Message: "Failed to save wordstat position",
+			Err:     err,
+		}
+	}
+
+	return nil
 }

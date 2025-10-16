@@ -23,4 +23,12 @@ type PositionRepository interface {
 
 	DeleteBySiteID(siteID int) error
 	DeleteByKeywordID(keywordID int) error
+
+	GetTodayByKeywordAndSiteAndSource(keywordID, siteID int, source string) (*entities.Position, error)
+	CreateOrUpdateToday(position *entities.Position) error
+
+	GetHistoryBySiteIDWithOnePerDay(siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error)
+	GetHistoryBySiteIDAndSourceWithOnePerDay(siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error)
+	GetHistoryByKeywordAndSiteWithOnePerDay(keywordID, siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error)
+	GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(keywordID, siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error)
 }

@@ -46,7 +46,17 @@ func main() {
 	}
 	defer xmlRiverService.Close()
 
-	useCases := usecases.NewContainer(repos, xmlRiverService)
+	wordstatService, err := services.NewWordstatService(
+		cfg.XMLRiver.BaseURL,
+		cfg.XMLRiver.UserID,
+		cfg.XMLRiver.APIKey,
+	)
+	if err != nil {
+		log.Fatal("Failed to create Wordstat service:", err)
+	}
+	defer wordstatService.Close()
+
+	useCases := usecases.NewContainer(repos, xmlRiverService, wordstatService)
 
 	r := gin.Default()
 

@@ -23,11 +23,11 @@ func NewPositionHandler(positionTrackingUseCase *usecases.PositionTrackingUseCas
 
 // TrackSitePositions godoc
 // @Summary Track positions for specific site
-// @Description Track positions for specific site and its keywords. Supports both Google and Yandex search engines. Can include subdomains in search.
+// @Description Track positions for specific site and its keywords. Supports Google, Yandex and Wordstat sources. Can include subdomains in search.
 // @Tags positions
 // @Accept json
 // @Produce json
-// @Param request body dto.TrackSitePositionsRequest true "Site tracking parameters (source: google or yandex)"
+// @Param request body dto.TrackSitePositionsRequest true "Site tracking parameters (source: google, yandex or wordstat)"
 // @Success 200 {object} dto.TrackPositionsResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
@@ -42,23 +42,46 @@ func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 		return
 	}
 
-	if req.Device == "mobile" && req.OS == "" {
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
-			Error:   "validation_error",
-			Message: "OS parameter is required when device is mobile",
-		})
-		return
+	if req.Source != "wordstat" {
+		if req.Pages == 0 {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "pages parameter is required for google and yandex sources",
+			})
+			return
+		}
+		if req.Device == "" {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "device parameter is required for google and yandex sources",
+			})
+			return
+		}
+		if req.Device == "mobile" && req.OS == "" {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "OS parameter is required when device is mobile",
+			})
+			return
+		}
+	}
+
+	device := req.Device
+	pages := req.Pages
+	if req.Source == "wordstat" {
+		device = ""
+		pages = 0
 	}
 
 	count, err := h.positionTrackingUseCase.TrackSitePositions(
 		req.SiteID,
 		req.Source,
-		req.Device,
+		device,
 		req.OS,
 		req.Ads,
 		req.Country,
 		req.Lang,
-		req.Pages,
+		pages,
 		req.Subdomains,
 	)
 
@@ -90,7 +113,7 @@ func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 // @Produce json
 // @Param site_id query int true "Site ID"
 // @Param keyword_id query int false "Keyword ID (optional)"
-// @Param source query string false "Source filter (optional) - google or yandex" Enums(google,yandex)
+// @Param source query string false "Source filter (optional) - google, yandex or wordstat" Enums(google,yandex,wordstat)
 // @Param date_from query string false "Start date filter (optional) - YYYY-MM-DD format"
 // @Param date_to query string false "End date filter (optional) - YYYY-MM-DD format"
 // @Success 200 {array} dto.PositionResponse
@@ -136,10 +159,10 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 
 	var source *string
 	if sourceStr != "" {
-		if sourceStr != "google" && sourceStr != "yandex" {
+		if sourceStr != "google" && sourceStr != "yandex" && sourceStr != "wordstat" {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 				Error:   "validation_error",
-				Message: "source must be either 'google' or 'yandex'",
+				Message: "source must be either 'google', 'yandex' or 'wordstat'",
 			})
 			return
 		}

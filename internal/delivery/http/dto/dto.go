@@ -38,9 +38,9 @@ type ErrorResponse struct {
 // Position DTOs
 type TrackSitePositionsRequest struct {
 	SiteID     int    `json:"site_id" binding:"required"`
-	Source     string `json:"source" binding:"required,oneof=google yandex"`
-	Pages      int    `json:"pages" binding:"required,min=1,max=10"`
-	Device     string `json:"device" binding:"required,oneof=desktop tablet mobile"`
+	Source     string `json:"source" binding:"required,oneof=google yandex wordstat"`
+	Pages      int    `json:"pages" binding:"omitempty,min=1,max=10"`
+	Device     string `json:"device" binding:"omitempty,oneof=desktop tablet mobile"`
 	OS         string `json:"os" binding:"omitempty,oneof=ios android"`
 	Ads        bool   `json:"ads"`
 	Country    string `json:"country"`
@@ -70,4 +70,21 @@ type PositionResponse struct {
 type TrackPositionsResponse struct {
 	Message string `json:"message"`
 	Count   int    `json:"count"`
+}
+
+// Wordstat DTOs
+type WordstatFrequencyResponse struct {
+	Message   string `json:"message"`
+	Frequency int    `json:"frequency"`
+}
+
+type WordstatItemResponse struct {
+	IsAssociations bool   `json:"isAssociations"`
+	Value          string `json:"value"`
+	Text           string `json:"text"`
+}
+
+type WordstatRelatedResponse struct {
+	Message string                 `json:"message"`
+	Items   []WordstatItemResponse `json:"items"`
 }

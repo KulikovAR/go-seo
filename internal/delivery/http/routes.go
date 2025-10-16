@@ -13,6 +13,7 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 	siteHandler := handlers.NewSiteHandler(useCases.Site)
 	keywordHandler := handlers.NewKeywordHandler(useCases.Keyword)
 	positionHandler := handlers.NewPositionHandler(useCases.PositionTracking)
+	wordstatHandler := handlers.NewWordstatHandler(useCases.Wordstat)
 
 	api := r.Group("/api")
 	{
@@ -35,6 +36,13 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 			positions.POST("/track-site", positionHandler.TrackSitePositions)
 			positions.GET("/history", positionHandler.GetPositionsHistory)
 			positions.GET("/latest", positionHandler.GetLatestPositions)
+		}
+
+		wordstat := api.Group("/wordstat")
+		{
+			wordstat.POST("/keyword/:keyword_id/frequency", wordstatHandler.TrackKeywordFrequency)
+			wordstat.POST("/site/:site_id/frequency", wordstatHandler.TrackSiteKeywordsFrequency)
+			wordstat.GET("/related", wordstatHandler.GetRelatedKeywords)
 		}
 	}
 
