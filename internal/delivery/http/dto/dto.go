@@ -71,20 +71,3 @@ type TrackPositionsResponse struct {
 	Message string `json:"message"`
 	Count   int    `json:"count"`
 }
-
-// Wordstat DTOs
-type WordstatFrequencyResponse struct {
-	Message   string `json:"message"`
-	Frequency int    `json:"frequency"`
-}
-
-type WordstatItemResponse struct {
-	IsAssociations bool   `json:"isAssociations"`
-	Value          string `json:"value"`
-	Text           string `json:"text"`
-}
-
-type WordstatRelatedResponse struct {
-	Message string                 `json:"message"`
-	Items   []WordstatItemResponse `json:"items"`
-}

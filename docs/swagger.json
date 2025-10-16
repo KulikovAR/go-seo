@@ -157,10 +157,11 @@
                     {
                         "enum": [
                             "google",
-                            "yandex"
+                            "yandex",
+                            "wordstat"
                         ],
                         "type": "string",
-                        "description": "Source filter (optional) - google or yandex",
+                        "description": "Source filter (optional) - google, yandex or wordstat",
                         "name": "source",
                         "in": "query"
                     },
@@ -233,7 +234,7 @@
         },
         "/api/positions/track-site": {
             "post": {
-                "description": "Track positions for specific site and its keywords. Supports both Google and Yandex search engines. Can include subdomains in search.",
+                "description": "Track positions for specific site and its keywords. Supports Google, Yandex and Wordstat sources. Can include subdomains in search.",
                 "consumes": [
                     "application/json"
                 ],
@@ -246,7 +247,7 @@
                 "summary": "Track positions for specific site",
                 "parameters": [
                     {
-                        "description": "Site tracking parameters (source: google or yandex)",
+                        "description": "Site tracking parameters (source: google, yandex or wordstat)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -389,6 +390,138 @@
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/wordstat/keyword/{keyword_id}/frequency": {
+            "post": {
+                "description": "Track frequency for specific keyword from Yandex Wordstat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wordstat"
+                ],
+                "summary": "Track keyword frequency from Wordstat",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Keyword ID",
+                        "name": "keyword_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.WordstatFrequencyResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/wordstat/related": {
+            "get": {
+                "description": "Get related keywords and associations from Yandex Wordstat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wordstat"
+                ],
+                "summary": "Get related keywords from Wordstat",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.WordstatRelatedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/wordstat/site/{site_id}/frequency": {
+            "post": {
+                "description": "Track frequency for all keywords of specific site from Yandex Wordstat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wordstat"
+                ],
+                "summary": "Track keywords frequency for site from Wordstat",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Site ID",
+                        "name": "site_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TrackPositionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -549,8 +682,6 @@
         "dto.TrackSitePositionsRequest": {
             "type": "object",
             "required": [
-                "device",
-                "pages",
                 "site_id",
                 "source"
             ],
@@ -591,11 +722,51 @@
                     "type": "string",
                     "enum": [
                         "google",
-                        "yandex"
+                        "yandex",
+                        "wordstat"
                     ]
                 },
                 "subdomains": {
                     "type": "boolean"
+                }
+            }
+        },
+        "dto.WordstatFrequencyResponse": {
+            "type": "object",
+            "properties": {
+                "frequency": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.WordstatItemResponse": {
+            "type": "object",
+            "properties": {
+                "isAssociations": {
+                    "type": "boolean"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.WordstatRelatedResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.WordstatItemResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
                 }
             }
         }
