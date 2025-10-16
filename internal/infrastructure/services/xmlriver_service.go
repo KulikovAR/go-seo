@@ -44,6 +44,7 @@ type Response struct {
 
 type Results struct {
 	Grouping Grouping `xml:"grouping"`
+	Results  []Result `xml:"result"`
 }
 
 type Grouping struct {
@@ -60,6 +61,13 @@ type Doc struct {
 	URL         string `xml:"url"`
 	Title       string `xml:"title"`
 	ContentType string `xml:"contenttype"`
+}
+
+type Result struct {
+	Position int    `xml:"position"`
+	URL      string `xml:"url"`
+	Title    string `xml:"title"`
+	Type     string `xml:"type"`
 }
 
 func NewXMLRiverService(baseURL, userID, apiKey string) (*XMLRiverService, error) {
@@ -141,14 +149,27 @@ func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchReque
 			return 0, "", "", fmt.Errorf("failed to search page %d: %w", page, err)
 		}
 
-		position := 1
-		for _, group := range resp.Response.Results.Grouping.Groups {
-			for _, doc := range group.Docs {
-				if doc.ContentType == "organic" && s.isSiteMatchWithSubdomains(doc.URL, siteDomain, subdomains) {
-					absolutePosition := (page-1)*10 + position
-					return absolutePosition, doc.URL, doc.Title, nil
+		if len(resp.Response.Results.Results) > 0 {
+			for _, result := range resp.Response.Results.Results {
+				if result.Type == "organic" {
+					if s.isSiteMatchWithSubdomains(result.URL, siteDomain, subdomains) {
+						absolutePosition := (page-1)*10 + result.Position
+						return absolutePosition, result.URL, result.Title, nil
+					}
 				}
-				position++
+			}
+		} else {
+			position := 1
+			for _, group := range resp.Response.Results.Grouping.Groups {
+				for _, doc := range group.Docs {
+					if doc.ContentType == "organic" {
+						if s.isSiteMatchWithSubdomains(doc.URL, siteDomain, subdomains) {
+							absolutePosition := (page-1)*10 + position
+							return absolutePosition, doc.URL, doc.Title, nil
+						}
+						position++
+					}
+				}
 			}
 		}
 	}
@@ -164,14 +185,27 @@ func (s *XMLRiverService) findSitePositionInternal(req SearchRequest, siteDomain
 			return 0, "", "", fmt.Errorf("failed to search page %d: %w", page, err)
 		}
 
-		position := 1
-		for _, group := range resp.Response.Results.Grouping.Groups {
-			for _, doc := range group.Docs {
-				if doc.ContentType == "organic" && s.isSiteMatch(doc.URL, siteDomain) {
-					absolutePosition := (page-1)*10 + position
-					return absolutePosition, doc.URL, doc.Title, nil
+		if len(resp.Response.Results.Results) > 0 {
+			for _, result := range resp.Response.Results.Results {
+				if result.Type == "organic" {
+					if s.isSiteMatch(result.URL, siteDomain) {
+						absolutePosition := (page-1)*10 + result.Position
+						return absolutePosition, result.URL, result.Title, nil
+					}
 				}
-				position++
+			}
+		} else {
+			position := 1
+			for _, group := range resp.Response.Results.Grouping.Groups {
+				for _, doc := range group.Docs {
+					if doc.ContentType == "organic" {
+						if s.isSiteMatch(doc.URL, siteDomain) {
+							absolutePosition := (page-1)*10 + position
+							return absolutePosition, doc.URL, doc.Title, nil
+						}
+						position++
+					}
+				}
 			}
 		}
 	}
@@ -227,8 +261,10 @@ func (s *XMLRiverService) isSiteMatchWithSubdomains(resultURL, siteDomain string
 		return resultDomain == siteDomainExtracted
 	}
 
-	// Поиск по поддоменам: проверяем, что результат принадлежит домену или его поддоменам
-	return resultDomain == siteDomainExtracted || strings.HasSuffix(resultDomain, "."+siteDomainExtracted)
+	exactMatch := resultDomain == siteDomainExtracted
+	subdomainMatch := strings.HasSuffix(resultDomain, "."+siteDomainExtracted)
+
+	return exactMatch || subdomainMatch
 }
 func (s *XMLRiverService) extractDomain(urlStr string) string {
 	if !strings.HasPrefix(urlStr, "http") {
@@ -240,7 +276,6 @@ func (s *XMLRiverService) extractDomain(urlStr string) string {
 		return ""
 	}
 
-	// Приводим к нижнему регистру для корректного сравнения
 	return strings.ToLower(u.Host)
 }
 
