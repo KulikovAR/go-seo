@@ -91,6 +91,14 @@ func (r *keywordRepository) Delete(id int) error {
 	return r.db.Delete(&models.Keyword{}, id).Error
 }
 
+func (r *keywordRepository) CountBySiteID(siteID int) (int, error) {
+	var count int64
+	if err := r.db.Model(&models.Keyword{}).Where("site_id = ?", siteID).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+
 func (r *keywordRepository) toDomain(model *models.Keyword) *entities.Keyword {
 	return &entities.Keyword{
 		ID:     model.ID,

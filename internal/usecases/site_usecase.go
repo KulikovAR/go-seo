@@ -9,12 +9,14 @@ import (
 type SiteUseCase struct {
 	siteRepo     repositories.SiteRepository
 	positionRepo repositories.PositionRepository
+	keywordRepo  repositories.KeywordRepository
 }
 
-func NewSiteUseCase(siteRepo repositories.SiteRepository, positionRepo repositories.PositionRepository) *SiteUseCase {
+func NewSiteUseCase(siteRepo repositories.SiteRepository, positionRepo repositories.PositionRepository, keywordRepo repositories.KeywordRepository) *SiteUseCase {
 	return &SiteUseCase{
 		siteRepo:     siteRepo,
 		positionRepo: positionRepo,
+		keywordRepo:  keywordRepo,
 	}
 }
 
@@ -103,4 +105,17 @@ func (uc *SiteUseCase) GetSitesByIDs(ids []int) ([]*entities.Site, error) {
 	}
 
 	return sites, nil
+}
+
+func (uc *SiteUseCase) GetKeywordsCount(siteID int) (int, error) {
+	count, err := uc.keywordRepo.CountBySiteID(siteID)
+	if err != nil {
+		return 0, &DomainError{
+			Code:    ErrorSiteFetch,
+			Message: "Failed to get keywords count",
+			Err:     err,
+		}
+	}
+
+	return count, nil
 }

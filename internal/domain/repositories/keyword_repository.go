@@ -10,4 +10,5 @@ type KeywordRepository interface {
 	GetAll() ([]*entities.Keyword, error)
 	Update(keyword *entities.Keyword) error
 	Delete(id int) error
+	CountBySiteID(siteID int) (int, error)
 }

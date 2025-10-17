@@ -86,7 +86,7 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	params.Set("user", s.userID)
 	params.Set("key", s.apiKey)
 	params.Set("query", req.Query)
-	
+
 	if source == entities.YandexSearch {
 		if req.Page > 1 {
 			params.Set("page", strconv.Itoa(req.Page-1))

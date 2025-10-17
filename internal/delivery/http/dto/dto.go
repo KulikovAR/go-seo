@@ -7,8 +7,9 @@ type CreateSiteRequest struct {
 }
 
 type SiteResponse struct {
-	ID     int    `json:"id"`
-	Domain string `json:"domain"`
+	ID            int    `json:"id"`
+	Domain        string `json:"domain"`
+	KeywordsCount int    `json:"keywords_count"`
 }
 
 type DeleteSiteResponse struct {

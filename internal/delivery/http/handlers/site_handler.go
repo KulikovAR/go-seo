@@ -37,7 +37,7 @@ func parseIDsFromQuery(c *gin.Context) ([]int, error) {
 		if idStr == "" {
 			continue
 		}
-		
+
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			return nil, err
@@ -97,8 +97,9 @@ func (h *SiteHandler) CreateSite(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, dto.SiteResponse{
-		ID:     site.ID,
-		Domain: site.Domain,
+		ID:            site.ID,
+		Domain:        site.Domain,
+		KeywordsCount: 0, // Новый сайт не имеет ключевых слов
 	})
 }
 
@@ -202,9 +203,17 @@ func (h *SiteHandler) GetSites(c *gin.Context) {
 
 	response := make([]dto.SiteResponse, len(sites))
 	for i, site := range sites {
+		// Получаем количество ключевых слов для сайта
+		keywordsCount, err := h.siteUseCase.GetKeywordsCount(site.ID)
+		if err != nil {
+			// Если не удалось получить количество ключевых слов, используем 0
+			keywordsCount = 0
+		}
+
 		response[i] = dto.SiteResponse{
-			ID:     site.ID,
-			Domain: site.Domain,
+			ID:            site.ID,
+			Domain:        site.Domain,
+			KeywordsCount: keywordsCount,
 		}
 	}
 

@@ -83,6 +83,8 @@ definitions:
         type: string
       id:
         type: integer
+      keywords_count:
+        type: integer
     type: object
   dto.TrackPositionsResponse:
     properties:
@@ -127,31 +129,6 @@ definitions:
     required:
     - site_id
     - source
-    type: object
-  dto.WordstatFrequencyResponse:
-    properties:
-      frequency:
-        type: integer
-      message:
-        type: string
-    type: object
-  dto.WordstatItemResponse:
-    properties:
-      isAssociations:
-        type: boolean
-      text:
-        type: string
-      value:
-        type: string
-    type: object
-  dto.WordstatRelatedResponse:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/dto.WordstatItemResponse'
-        type: array
-      message:
-        type: string
     type: object
 info:
   contact: {}
@@ -421,91 +398,4 @@ paths:
       summary: Delete a site
       tags:
       - sites
-  /api/wordstat/keyword/{keyword_id}/frequency:
-    post:
-      consumes:
-      - application/json
-      description: Track frequency for specific keyword from Yandex Wordstat
-      parameters:
-      - description: Keyword ID
-        in: path
-        name: keyword_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.WordstatFrequencyResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Track keyword frequency from Wordstat
-      tags:
-      - wordstat
-  /api/wordstat/related:
-    get:
-      consumes:
-      - application/json
-      description: Get related keywords and associations from Yandex Wordstat
-      parameters:
-      - description: Search query
-        in: query
-        name: query
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.WordstatRelatedResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Get related keywords from Wordstat
-      tags:
-      - wordstat
-  /api/wordstat/site/{site_id}/frequency:
-    post:
-      consumes:
-      - application/json
-      description: Track frequency for all keywords of specific site from Yandex Wordstat
-      parameters:
-      - description: Site ID
-        in: path
-        name: site_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.TrackPositionsResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Track keywords frequency for site from Wordstat
-      tags:
-      - wordstat
 swagger: "2.0"

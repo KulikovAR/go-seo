@@ -8,6 +8,7 @@ type SiteUseCaseInterface interface {
 	DeleteSite(id int) error
 	GetAllSites() ([]*entities.Site, error)
 	GetSitesByIDs(ids []int) ([]*entities.Site, error)
+	GetKeywordsCount(siteID int) (int, error)
 }
 
 type KeywordUseCaseInterface interface {
