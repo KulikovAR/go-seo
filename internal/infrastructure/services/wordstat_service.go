@@ -49,11 +49,15 @@ func NewWordstatService(baseURL, userID, apiKey string) (*WordstatService, error
 	}, nil
 }
 
-func (s *WordstatService) GetWordstatData(query string) (*WordstatResponse, error) {
+func (s *WordstatService) GetWordstatData(query string, regions *int) (*WordstatResponse, error) {
 	params := url.Values{}
 	params.Set("user", s.userID)
 	params.Set("key", s.apiKey)
 	params.Set("query", query)
+
+	if regions != nil {
+		params.Set("regions", strconv.Itoa(*regions))
+	}
 
 	endpoint := "/wordstat/new/json"
 	requestURL := fmt.Sprintf("%s%s?%s", s.baseURL, endpoint, params.Encode())
@@ -81,8 +85,8 @@ func (s *WordstatService) GetWordstatData(query string) (*WordstatResponse, erro
 	return &wordstatResp, nil
 }
 
-func (s *WordstatService) GetKeywordFrequency(query string) (int, error) {
-	resp, err := s.GetWordstatData(query)
+func (s *WordstatService) GetKeywordFrequency(query string, regions *int) (int, error) {
+	resp, err := s.GetWordstatData(query, regions)
 	if err != nil {
 		return 0, err
 	}
@@ -100,8 +104,8 @@ func (s *WordstatService) GetKeywordFrequency(query string) (int, error) {
 	return 0, nil
 }
 
-func (s *WordstatService) GetRelatedKeywords(query string) ([]WordstatItem, error) {
-	resp, err := s.GetWordstatData(query)
+func (s *WordstatService) GetRelatedKeywords(query string, regions *int) ([]WordstatItem, error) {
+	resp, err := s.GetWordstatData(query, regions)
 	if err != nil {
 		return nil, err
 	}

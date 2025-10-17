@@ -13,6 +13,7 @@ type Config struct {
 	Database DatabaseConfig
 	Server   ServerConfig
 	XMLRiver XMLRiverConfig
+	XMLStock XMLStockConfig
 }
 
 type DatabaseConfig struct {
@@ -30,6 +31,12 @@ type ServerConfig struct {
 }
 
 type XMLRiverConfig struct {
+	UserID  string
+	APIKey  string
+	BaseURL string
+}
+
+type XMLStockConfig struct {
 	UserID  string
 	APIKey  string
 	BaseURL string
@@ -57,6 +64,11 @@ func Load() (*Config, error) {
 			UserID:  getEnv("XMLRIVER_USER_ID", ""),
 			APIKey:  getEnv("XMLRIVER_API_KEY", ""),
 			BaseURL: getEnv("XMLRIVER_BASE_URL", "https://xmlriver.com"),
+		},
+		XMLStock: XMLStockConfig{
+			UserID:  getEnv("XMLSTOCK_USER_ID", ""),
+			APIKey:  getEnv("XMLSTOCK_API_KEY", ""),
+			BaseURL: getEnv("XMLSTOCK_BASE_URL", "https://xmlstock.com"),
 		},
 	}, nil
 }

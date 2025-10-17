@@ -11,10 +11,10 @@ type Container struct {
 	PositionTracking *PositionTrackingUseCase
 }
 
-func NewContainer(repos *repositories.Container, xmlRiver *services.XMLRiverService, wordstat *services.WordstatService) *Container {
+func NewContainer(repos *repositories.Container, xmlRiver *services.XMLRiverService, xmlStock *services.XMLRiverService, wordstat *services.WordstatService) *Container {
 	return &Container{
 		Site:             NewSiteUseCase(repos.Site, repos.Position, repos.Keyword),
 		Keyword:          NewKeywordUseCase(repos.Keyword, repos.Position),
-		PositionTracking: NewPositionTrackingUseCase(repos.Site, repos.Keyword, repos.Position, xmlRiver, wordstat),
+		PositionTracking: NewPositionTrackingUseCase(repos.Site, repos.Keyword, repos.Position, xmlRiver, xmlStock, wordstat),
 	}
 }

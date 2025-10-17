@@ -15,6 +15,7 @@ type PositionTrackingUseCase struct {
 	keywordRepo  repositories.KeywordRepository
 	positionRepo repositories.PositionRepository
 	xmlRiver     *services.XMLRiverService
+	xmlStock     *services.XMLRiverService
 	wordstat     *services.WordstatService
 }
 
@@ -23,6 +24,7 @@ func NewPositionTrackingUseCase(
 	keywordRepo repositories.KeywordRepository,
 	positionRepo repositories.PositionRepository,
 	xmlRiver *services.XMLRiverService,
+	xmlStock *services.XMLRiverService,
 	wordstat *services.WordstatService,
 ) *PositionTrackingUseCase {
 	return &PositionTrackingUseCase{
@@ -30,11 +32,15 @@ func NewPositionTrackingUseCase(
 		keywordRepo:  keywordRepo,
 		positionRepo: positionRepo,
 		xmlRiver:     xmlRiver,
+		xmlStock:     xmlStock,
 		wordstat:     wordstat,
 	}
 }
 
-func (uc *PositionTrackingUseCase) TrackSitePositions(siteID int, source, device, os string, ads bool, country, lang string, pages int, subdomains bool) (int, error) {
+func (uc *PositionTrackingUseCase) TrackGooglePositions(
+	siteID int, device, os string, ads bool, country, lang string, pages int, subdomains bool,
+	xmlUserID, xmlAPIKey, xmlBaseURL, tbs string, filter, highlights, nfpr, loc, ai int, raw string,
+) (int, error) {
 	site, err := uc.siteRepo.GetByID(siteID)
 	if err != nil {
 		return 0, &DomainError{
@@ -63,7 +69,112 @@ func (uc *PositionTrackingUseCase) TrackSitePositions(siteID int, source, device
 		go func(kw *entities.Keyword) {
 			defer wg.Done()
 
-			err := uc.trackKeywordPosition(site, kw, source, device, os, ads, country, lang, pages, subdomains)
+			err := uc.trackGoogleKeywordPosition(site, kw, device, os, ads, country, lang, pages, subdomains,
+				xmlUserID, xmlAPIKey, xmlBaseURL, tbs, filter, highlights, nfpr, loc, ai, raw)
+
+			mu.Lock()
+			if err != nil && firstError == nil {
+				firstError = err
+			} else if err == nil {
+				count++
+			}
+			mu.Unlock()
+		}(keyword)
+	}
+
+	wg.Wait()
+
+	if firstError != nil {
+		return count, firstError
+	}
+
+	return count, nil
+}
+
+func (uc *PositionTrackingUseCase) TrackYandexPositions(
+	siteID int, device, os string, ads bool, country, lang string, pages int, subdomains bool,
+	xmlUserID, xmlAPIKey, xmlBaseURL string, groupBy, filter, highlights, within, lr int, raw string, inIndex, strict int,
+) (int, error) {
+	site, err := uc.siteRepo.GetByID(siteID)
+	if err != nil {
+		return 0, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: "Site not found",
+			Err:     err,
+		}
+	}
+
+	keywords, err := uc.keywordRepo.GetBySiteID(siteID)
+	if err != nil {
+		return 0, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: fmt.Sprintf("Failed to fetch keywords for site %s", site.Domain),
+			Err:     err,
+		}
+	}
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var count int
+	var firstError error
+
+	for _, keyword := range keywords {
+		wg.Add(1)
+		go func(kw *entities.Keyword) {
+			defer wg.Done()
+
+			err := uc.trackYandexKeywordPosition(site, kw, device, os, ads, country, lang, pages, subdomains,
+				xmlUserID, xmlAPIKey, xmlBaseURL, groupBy, filter, highlights, within, lr, raw, inIndex, strict)
+
+			mu.Lock()
+			if err != nil && firstError == nil {
+				firstError = err
+			} else if err == nil {
+				count++
+			}
+			mu.Unlock()
+		}(keyword)
+	}
+
+	wg.Wait()
+
+	if firstError != nil {
+		return count, firstError
+	}
+
+	return count, nil
+}
+
+func (uc *PositionTrackingUseCase) TrackWordstatPositions(siteID int, xmlUserID, xmlAPIKey, xmlBaseURL string, regions *int) (int, error) {
+	site, err := uc.siteRepo.GetByID(siteID)
+	if err != nil {
+		return 0, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: "Site not found",
+			Err:     err,
+		}
+	}
+
+	keywords, err := uc.keywordRepo.GetBySiteID(siteID)
+	if err != nil {
+		return 0, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: fmt.Sprintf("Failed to fetch keywords for site %s", site.Domain),
+			Err:     err,
+		}
+	}
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var count int
+	var firstError error
+
+	for _, keyword := range keywords {
+		wg.Add(1)
+		go func(kw *entities.Keyword) {
+			defer wg.Done()
+
+			err := uc.trackWordstatKeywordPosition(kw, xmlUserID, xmlAPIKey, xmlBaseURL, regions)
 
 			mu.Lock()
 			if err != nil && firstError == nil {
@@ -195,7 +306,196 @@ func (uc *PositionTrackingUseCase) GetLatestPositions() ([]*entities.Position, e
 }
 
 func (uc *PositionTrackingUseCase) trackWordstatPosition(keyword *entities.Keyword) error {
-	frequency, err := uc.wordstat.GetKeywordFrequency(keyword.Value)
+	frequency, err := uc.wordstat.GetKeywordFrequency(keyword.Value, nil)
+	if err != nil {
+		return &DomainError{
+			Code:    ErrorPositionCreation,
+			Message: fmt.Sprintf("Failed to get frequency for keyword '%s'", keyword.Value),
+			Err:     err,
+		}
+	}
+
+	positionEntity := &entities.Position{
+		KeywordID: keyword.ID,
+		SiteID:    keyword.SiteID,
+		Rank:      frequency,
+		URL:       "",
+		Title:     "",
+		Source:    entities.Wordstat,
+		Device:    "",
+		OS:        "",
+		Ads:       false,
+		Country:   "",
+		Lang:      "",
+		Pages:     0,
+		Date:      time.Now(),
+	}
+
+	if err := uc.positionRepo.CreateOrUpdateToday(positionEntity); err != nil {
+		return &DomainError{
+			Code:    ErrorPositionCreation,
+			Message: "Failed to save wordstat position",
+			Err:     err,
+		}
+	}
+
+	return nil
+}
+
+func (uc *PositionTrackingUseCase) trackGoogleKeywordPosition(
+	site *entities.Site,
+	keyword *entities.Keyword,
+	device, os string,
+	ads bool,
+	country, lang string,
+	pages int,
+	subdomains bool,
+	xmlUserID, xmlAPIKey, xmlBaseURL, tbs string,
+	filter, highlights, nfpr, loc, ai int,
+	raw string,
+) error {
+	// Создаем временный XMLRiver сервис с кастомными настройками
+	var xmlRiverService *services.XMLRiverService
+	if xmlUserID != "" && xmlAPIKey != "" && xmlBaseURL != "" {
+		var err error
+		xmlRiverService, err = services.NewXMLRiverService(xmlBaseURL, xmlUserID, xmlAPIKey)
+		if err != nil {
+			return &DomainError{
+				Code:    ErrorPositionCreation,
+				Message: "Failed to create XMLRiver service with custom settings",
+				Err:     err,
+			}
+		}
+	} else {
+		// По умолчанию используем XMLStock для Google
+		xmlRiverService = uc.xmlStock
+	}
+
+	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(keyword.Value, site.Domain, entities.GoogleSearch, pages, device, os, ads, country, lang, subdomains)
+	if err != nil {
+		return &DomainError{
+			Code:    ErrorPositionCreation,
+			Message: fmt.Sprintf("Failed to search position for keyword '%s'", keyword.Value),
+			Err:     err,
+		}
+	}
+
+	positionEntity := &entities.Position{
+		KeywordID: keyword.ID,
+		SiteID:    site.ID,
+		Rank:      position,
+		URL:       url,
+		Title:     title,
+		Source:    entities.GoogleSearch,
+		Device:    device,
+		OS:        os,
+		Ads:       ads,
+		Country:   country,
+		Lang:      lang,
+		Pages:     pages,
+		Date:      time.Now(),
+	}
+
+	if err := uc.positionRepo.CreateOrUpdateToday(positionEntity); err != nil {
+		return &DomainError{
+			Code:    ErrorPositionCreation,
+			Message: "Failed to save position",
+			Err:     err,
+		}
+	}
+
+	return nil
+}
+
+func (uc *PositionTrackingUseCase) trackYandexKeywordPosition(
+	site *entities.Site,
+	keyword *entities.Keyword,
+	device, os string,
+	ads bool,
+	country, lang string,
+	pages int,
+	subdomains bool,
+	xmlUserID, xmlAPIKey, xmlBaseURL string,
+	groupBy, filter, highlights, within, lr int,
+	raw string,
+	inIndex, strict int,
+) error {
+	// Создаем временный XMLRiver сервис с кастомными настройками
+	var xmlRiverService *services.XMLRiverService
+	if xmlUserID != "" && xmlAPIKey != "" && xmlBaseURL != "" {
+		var err error
+		xmlRiverService, err = services.NewXMLRiverService(xmlBaseURL, xmlUserID, xmlAPIKey)
+		if err != nil {
+			return &DomainError{
+				Code:    ErrorPositionCreation,
+				Message: "Failed to create XMLRiver service with custom settings",
+				Err:     err,
+			}
+		}
+	} else {
+		// По умолчанию используем XMLStock для Yandex
+		xmlRiverService = uc.xmlStock
+	}
+
+	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(keyword.Value, site.Domain, entities.YandexSearch, pages, device, os, ads, country, lang, subdomains)
+	if err != nil {
+		return &DomainError{
+			Code:    ErrorPositionCreation,
+			Message: fmt.Sprintf("Failed to search position for keyword '%s'", keyword.Value),
+			Err:     err,
+		}
+	}
+
+	positionEntity := &entities.Position{
+		KeywordID: keyword.ID,
+		SiteID:    site.ID,
+		Rank:      position,
+		URL:       url,
+		Title:     title,
+		Source:    entities.YandexSearch,
+		Device:    device,
+		OS:        os,
+		Ads:       ads,
+		Country:   country,
+		Lang:      lang,
+		Pages:     pages,
+		Date:      time.Now(),
+	}
+
+	if err := uc.positionRepo.CreateOrUpdateToday(positionEntity); err != nil {
+		return &DomainError{
+			Code:    ErrorPositionCreation,
+			Message: "Failed to save position",
+			Err:     err,
+		}
+	}
+
+	return nil
+}
+
+func (uc *PositionTrackingUseCase) trackWordstatKeywordPosition(
+	keyword *entities.Keyword,
+	xmlUserID, xmlAPIKey, xmlBaseURL string,
+	regions *int,
+) error {
+	// Создаем временный Wordstat сервис с кастомными настройками
+	var wordstatService *services.WordstatService
+	if xmlUserID != "" && xmlAPIKey != "" && xmlBaseURL != "" {
+		var err error
+		wordstatService, err = services.NewWordstatService(xmlBaseURL, xmlUserID, xmlAPIKey)
+		if err != nil {
+			return &DomainError{
+				Code:    ErrorPositionCreation,
+				Message: "Failed to create Wordstat service with custom settings",
+				Err:     err,
+			}
+		}
+	} else {
+		// По умолчанию используем XMLRiver для Wordstat
+		wordstatService = uc.wordstat
+	}
+
+	frequency, err := wordstatService.GetKeywordFrequency(keyword.Value, regions)
 	if err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,

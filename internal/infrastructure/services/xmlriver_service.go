@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"go-seo/internal/domain/entities"
+	"go-seo/pkg/logger"
 )
 
 type XMLRiverService struct {
@@ -117,13 +118,22 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	}
 
 	var endpoint string
+
 	if source == entities.YandexSearch {
-		endpoint = "/search_yandex/xml"
+		endpoint = "/yandex/xml"
 	} else {
-		endpoint = "/search/xml"
+		endpoint = "/google/xml"
 	}
 
 	requestURL := fmt.Sprintf("%s%s?%s", s.baseURL, endpoint, params.Encode())
+
+	paramsMap := make(map[string]string)
+	for key, values := range params {
+		if len(values) > 0 {
+			paramsMap[key] = values[0]
+		}
+	}
+	logger.LogXMLRiverURL(requestURL, paramsMap)
 
 	resp, err := s.client.Get(requestURL)
 	if err != nil {
@@ -131,13 +141,15 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("XMLRiver API returned status %d", resp.StatusCode)
-	}
-
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	logger.LogXMLRiverResponse(resp.StatusCode, string(bodyBytes))
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("XMLRiver API returned status %d", resp.StatusCode)
 	}
 
 	var searchResp SearchResponse

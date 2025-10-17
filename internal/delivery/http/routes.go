@@ -32,7 +32,9 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 
 		positions := api.Group("/positions")
 		{
-			positions.POST("/track-site", positionHandler.TrackSitePositions)
+			positions.POST("/track-google", positionHandler.TrackGooglePositions)
+			positions.POST("/track-yandex", positionHandler.TrackYandexPositions)
+			positions.POST("/track-wordstat", positionHandler.TrackWordstatPositions)
 			positions.GET("/history", positionHandler.GetPositionsHistory)
 			positions.GET("/latest", positionHandler.GetLatestPositions)
 		}

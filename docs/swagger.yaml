@@ -86,6 +86,68 @@ definitions:
       keywords_count:
         type: integer
     type: object
+  dto.TrackGooglePositionsRequest:
+    properties:
+      ads:
+        type: boolean
+      ai:
+        description: 'Парсинг блока "Обзор от ИИ": 0 или 1'
+        type: integer
+      country:
+        type: string
+      device:
+        enum:
+        - desktop
+        - tablet
+        - mobile
+        type: string
+      domain:
+        description: ID домена Google
+        type: integer
+      filter:
+        description: 'Скрывать похожие результаты: 0 или 1'
+        type: integer
+      highlights:
+        description: 'Подсветка ключевых слов: 0 или 1'
+        type: integer
+      lang:
+        type: string
+      loc:
+        description: ID местоположения
+        type: integer
+      nfpr:
+        description: 'Отменить исправление запроса: 0 или 1'
+        type: integer
+      os:
+        enum:
+        - ios
+        - android
+        type: string
+      pages:
+        maximum: 10
+        minimum: 1
+        type: integer
+      raw:
+        description: 'Полный HTML код страницы: "page"'
+        type: string
+      site_id:
+        type: integer
+      subdomains:
+        type: boolean
+      tbs:
+        description: Google-specific parameters
+        type: string
+      xml_api_key:
+        type: string
+      xml_base_url:
+        type: string
+      xml_user_id:
+        type: string
+    required:
+    - device
+    - pages
+    - site_id
+    type: object
   dto.TrackPositionsResponse:
     properties:
       count:
@@ -93,7 +155,20 @@ definitions:
       message:
         type: string
     type: object
-  dto.TrackSitePositionsRequest:
+  dto.TrackWordstatPositionsRequest:
+    properties:
+      site_id:
+        type: integer
+      xml_api_key:
+        type: string
+      xml_base_url:
+        type: string
+      xml_user_id:
+        type: string
+    required:
+    - site_id
+    type: object
+  dto.TrackYandexPositionsRequest:
     properties:
       ads:
         type: boolean
@@ -105,8 +180,26 @@ definitions:
         - tablet
         - mobile
         type: string
+      domain:
+        description: 'Домен Яндекса: ru, com, ua, com.tr, by, kz'
+        type: string
+      filter:
+        description: 'Скрывать похожие результаты: 0 или 1'
+        type: integer
+      groupby:
+        description: Yandex-specific parameters
+        type: integer
+      highlights:
+        description: 'Подсветка ключевых слов: 0 или 1'
+        type: integer
+      inindex:
+        description: 'Проверка индексации: 0 или 1'
+        type: integer
       lang:
         type: string
+      lr:
+        description: ID региона Яндекса
+        type: integer
       os:
         enum:
         - ios
@@ -116,19 +209,29 @@ definitions:
         maximum: 10
         minimum: 1
         type: integer
+      raw:
+        description: 'Полный HTML код страницы: "page"'
+        type: string
       site_id:
         type: integer
-      source:
-        enum:
-        - google
-        - yandex
-        - wordstat
-        type: string
+      strict:
+        description: 'Режим строгого соответствия: 0 или 1'
+        type: integer
       subdomains:
         type: boolean
+      within:
+        description: 'Фильтр по периоду: 77, 1, 2, 0'
+        type: integer
+      xml_api_key:
+        type: string
+      xml_base_url:
+        type: string
+      xml_user_id:
+        type: string
     required:
+    - device
+    - pages
     - site_id
-    - source
     type: object
 info:
   contact: {}
@@ -284,19 +387,19 @@ paths:
       summary: Get latest positions
       tags:
       - positions
-  /api/positions/track-site:
+  /api/positions/track-google:
     post:
       consumes:
       - application/json
-      description: Track positions for specific site and its keywords. Supports Google,
-        Yandex and Wordstat sources. Can include subdomains in search.
+      description: Track Google positions for specific site and its keywords. Can
+        include subdomains in search.
       parameters:
-      - description: 'Site tracking parameters (source: google, yandex or wordstat)'
+      - description: Google tracking parameters
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.TrackSitePositionsRequest'
+          $ref: '#/definitions/dto.TrackGooglePositionsRequest'
       produces:
       - application/json
       responses:
@@ -312,7 +415,68 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
-      summary: Track positions for specific site
+      summary: Track Google positions for specific site
+      tags:
+      - positions
+  /api/positions/track-wordstat:
+    post:
+      consumes:
+      - application/json
+      description: Track Wordstat positions for specific site and its keywords.
+      parameters:
+      - description: Wordstat tracking parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TrackWordstatPositionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TrackPositionsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Track Wordstat positions for specific site
+      tags:
+      - positions
+  /api/positions/track-yandex:
+    post:
+      consumes:
+      - application/json
+      description: Track Yandex positions for specific site and its keywords. Can
+        include subdomains in search.
+      parameters:
+      - description: Yandex tracking parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TrackYandexPositionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TrackPositionsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Track Yandex positions for specific site
       tags:
       - positions
   /api/sites:

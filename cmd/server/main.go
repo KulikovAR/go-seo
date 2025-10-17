@@ -36,6 +36,7 @@ func main() {
 
 	repos := repositories.NewContainer(db.DB)
 
+	// XMLRiver сервис для Wordstat
 	xmlRiverService, err := services.NewXMLRiverService(
 		cfg.XMLRiver.BaseURL,
 		cfg.XMLRiver.UserID,
@@ -45,6 +46,17 @@ func main() {
 		log.Fatal("Failed to create XMLRiver service:", err)
 	}
 	defer xmlRiverService.Close()
+
+	// XMLStock сервис для Google/Yandex
+	xmlStockService, err := services.NewXMLRiverService(
+		cfg.XMLStock.BaseURL,
+		cfg.XMLStock.UserID,
+		cfg.XMLStock.APIKey,
+	)
+	if err != nil {
+		log.Fatal("Failed to create XMLStock service:", err)
+	}
+	defer xmlStockService.Close()
 
 	wordstatService, err := services.NewWordstatService(
 		cfg.XMLRiver.BaseURL,
@@ -56,7 +68,7 @@ func main() {
 	}
 	defer wordstatService.Close()
 
-	useCases := usecases.NewContainer(repos, xmlRiverService, wordstatService)
+	useCases := usecases.NewContainer(repos, xmlRiverService, xmlStockService, wordstatService)
 
 	r := gin.Default()
 

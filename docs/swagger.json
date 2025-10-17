@@ -232,9 +232,9 @@
                 }
             }
         },
-        "/api/positions/track-site": {
+        "/api/positions/track-google": {
             "post": {
-                "description": "Track positions for specific site and its keywords. Supports Google, Yandex and Wordstat sources. Can include subdomains in search.",
+                "description": "Track Google positions for specific site and its keywords. Can include subdomains in search.",
                 "consumes": [
                     "application/json"
                 ],
@@ -244,15 +244,107 @@
                 "tags": [
                     "positions"
                 ],
-                "summary": "Track positions for specific site",
+                "summary": "Track Google positions for specific site",
                 "parameters": [
                     {
-                        "description": "Site tracking parameters (source: google, yandex or wordstat)",
+                        "description": "Google tracking parameters",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.TrackSitePositionsRequest"
+                            "$ref": "#/definitions/dto.TrackGooglePositionsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TrackPositionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/positions/track-wordstat": {
+            "post": {
+                "description": "Track Wordstat positions for specific site and its keywords.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "positions"
+                ],
+                "summary": "Track Wordstat positions for specific site",
+                "parameters": [
+                    {
+                        "description": "Wordstat tracking parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.TrackWordstatPositionsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TrackPositionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/positions/track-yandex": {
+            "post": {
+                "description": "Track Yandex positions for specific site and its keywords. Can include subdomains in search.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "positions"
+                ],
+                "summary": "Track Yandex positions for specific site",
+                "parameters": [
+                    {
+                        "description": "Yandex tracking parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.TrackYandexPositionsRequest"
                         }
                     }
                 ],
@@ -539,6 +631,92 @@
                 }
             }
         },
+        "dto.TrackGooglePositionsRequest": {
+            "type": "object",
+            "required": [
+                "device",
+                "pages",
+                "site_id"
+            ],
+            "properties": {
+                "ads": {
+                    "type": "boolean"
+                },
+                "ai": {
+                    "description": "Парсинг блока \"Обзор от ИИ\": 0 или 1",
+                    "type": "integer"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "device": {
+                    "type": "string",
+                    "enum": [
+                        "desktop",
+                        "tablet",
+                        "mobile"
+                    ]
+                },
+                "domain": {
+                    "description": "ID домена Google",
+                    "type": "integer"
+                },
+                "filter": {
+                    "description": "Скрывать похожие результаты: 0 или 1",
+                    "type": "integer"
+                },
+                "highlights": {
+                    "description": "Подсветка ключевых слов: 0 или 1",
+                    "type": "integer"
+                },
+                "lang": {
+                    "type": "string"
+                },
+                "loc": {
+                    "description": "ID местоположения",
+                    "type": "integer"
+                },
+                "nfpr": {
+                    "description": "Отменить исправление запроса: 0 или 1",
+                    "type": "integer"
+                },
+                "os": {
+                    "type": "string",
+                    "enum": [
+                        "ios",
+                        "android"
+                    ]
+                },
+                "pages": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 1
+                },
+                "raw": {
+                    "description": "Полный HTML код страницы: \"page\"",
+                    "type": "string"
+                },
+                "site_id": {
+                    "type": "integer"
+                },
+                "subdomains": {
+                    "type": "boolean"
+                },
+                "tbs": {
+                    "description": "Google-specific parameters",
+                    "type": "string"
+                },
+                "xml_api_key": {
+                    "type": "string"
+                },
+                "xml_base_url": {
+                    "type": "string"
+                },
+                "xml_user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.TrackPositionsResponse": {
             "type": "object",
             "properties": {
@@ -550,11 +728,32 @@
                 }
             }
         },
-        "dto.TrackSitePositionsRequest": {
+        "dto.TrackWordstatPositionsRequest": {
             "type": "object",
             "required": [
-                "site_id",
-                "source"
+                "site_id"
+            ],
+            "properties": {
+                "site_id": {
+                    "type": "integer"
+                },
+                "xml_api_key": {
+                    "type": "string"
+                },
+                "xml_base_url": {
+                    "type": "string"
+                },
+                "xml_user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TrackYandexPositionsRequest": {
+            "type": "object",
+            "required": [
+                "device",
+                "pages",
+                "site_id"
             ],
             "properties": {
                 "ads": {
@@ -571,8 +770,32 @@
                         "mobile"
                     ]
                 },
+                "domain": {
+                    "description": "Домен Яндекса: ru, com, ua, com.tr, by, kz",
+                    "type": "string"
+                },
+                "filter": {
+                    "description": "Скрывать похожие результаты: 0 или 1",
+                    "type": "integer"
+                },
+                "groupby": {
+                    "description": "Yandex-specific parameters",
+                    "type": "integer"
+                },
+                "highlights": {
+                    "description": "Подсветка ключевых слов: 0 или 1",
+                    "type": "integer"
+                },
+                "inindex": {
+                    "description": "Проверка индексации: 0 или 1",
+                    "type": "integer"
+                },
                 "lang": {
                     "type": "string"
+                },
+                "lr": {
+                    "description": "ID региона Яндекса",
+                    "type": "integer"
                 },
                 "os": {
                     "type": "string",
@@ -586,19 +809,32 @@
                     "maximum": 10,
                     "minimum": 1
                 },
+                "raw": {
+                    "description": "Полный HTML код страницы: \"page\"",
+                    "type": "string"
+                },
                 "site_id": {
                     "type": "integer"
                 },
-                "source": {
-                    "type": "string",
-                    "enum": [
-                        "google",
-                        "yandex",
-                        "wordstat"
-                    ]
+                "strict": {
+                    "description": "Режим строгого соответствия: 0 или 1",
+                    "type": "integer"
                 },
                 "subdomains": {
                     "type": "boolean"
+                },
+                "within": {
+                    "description": "Фильтр по периоду: 77, 1, 2, 0",
+                    "type": "integer"
+                },
+                "xml_api_key": {
+                    "type": "string"
+                },
+                "xml_base_url": {
+                    "type": "string"
+                },
+                "xml_user_id": {
+                    "type": "string"
                 }
             }
         }

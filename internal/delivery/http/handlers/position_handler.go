@@ -7,6 +7,7 @@ import (
 
 	"go-seo/internal/delivery/http/dto"
 	"go-seo/internal/usecases"
+	"go-seo/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,19 +22,19 @@ func NewPositionHandler(positionTrackingUseCase *usecases.PositionTrackingUseCas
 	}
 }
 
-// TrackSitePositions godoc
-// @Summary Track positions for specific site
-// @Description Track positions for specific site and its keywords. Supports Google, Yandex and Wordstat sources. Can include subdomains in search.
+// TrackGooglePositions godoc
+// @Summary Track Google positions for specific site
+// @Description Track Google positions for specific site and its keywords. Can include subdomains in search.
 // @Tags positions
 // @Accept json
 // @Produce json
-// @Param request body dto.TrackSitePositionsRequest true "Site tracking parameters (source: google, yandex or wordstat)"
+// @Param request body dto.TrackGooglePositionsRequest true "Google tracking parameters"
 // @Success 200 {object} dto.TrackPositionsResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /api/positions/track-site [post]
-func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
-	var req dto.TrackSitePositionsRequest
+// @Router /api/positions/track-google [post]
+func (h *PositionHandler) TrackGooglePositions(c *gin.Context) {
+	var req dto.TrackGooglePositionsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "validation_error",
@@ -42,47 +43,46 @@ func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 		return
 	}
 
-	if req.Source != "wordstat" {
-		if req.Pages == 0 {
-			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
-				Error:   "validation_error",
-				Message: "pages parameter is required for google and yandex sources",
-			})
-			return
-		}
-		if req.Device == "" {
-			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
-				Error:   "validation_error",
-				Message: "device parameter is required for google and yandex sources",
-			})
-			return
-		}
-		if req.Device == "mobile" && req.OS == "" {
-			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
-				Error:   "validation_error",
-				Message: "OS parameter is required when device is mobile",
-			})
-			return
-		}
+	if req.Device == "mobile" && req.OS == "" {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "OS parameter is required when device is mobile",
+		})
+		return
 	}
 
-	device := req.Device
-	pages := req.Pages
-	if req.Source == "wordstat" {
-		device = ""
-		pages = 0
-	}
-
-	count, err := h.positionTrackingUseCase.TrackSitePositions(
+	// Логируем параметры запроса
+	logger.LogTrackSiteParams(
 		req.SiteID,
-		req.Source,
-		device,
+		"google",
+		req.Device,
 		req.OS,
 		req.Ads,
 		req.Country,
 		req.Lang,
-		pages,
+		req.Pages,
 		req.Subdomains,
+	)
+
+	count, err := h.positionTrackingUseCase.TrackGooglePositions(
+		req.SiteID,
+		req.Device,
+		req.OS,
+		req.Ads,
+		req.Country,
+		req.Lang,
+		req.Pages,
+		req.Subdomains,
+		req.XMLUserID,
+		req.XMLAPIKey,
+		req.XMLBaseURL,
+		req.TBS,
+		req.Filter,
+		req.Highlights,
+		req.NFPR,
+		req.Loc,
+		req.AI,
+		req.Raw,
 	)
 
 	if err != nil {
@@ -95,13 +95,161 @@ func (h *PositionHandler) TrackSitePositions(c *gin.Context) {
 		}
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
-			Message: "Failed to track site positions",
+			Message: "Failed to track Google positions",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, dto.TrackPositionsResponse{
-		Message: "Site positions tracked successfully",
+		Message: "Google positions tracked successfully",
+		Count:   count,
+	})
+}
+
+// TrackYandexPositions godoc
+// @Summary Track Yandex positions for specific site
+// @Description Track Yandex positions for specific site and its keywords. Can include subdomains in search.
+// @Tags positions
+// @Accept json
+// @Produce json
+// @Param request body dto.TrackYandexPositionsRequest true "Yandex tracking parameters"
+// @Success 200 {object} dto.TrackPositionsResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/track-yandex [post]
+func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
+	var req dto.TrackYandexPositionsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	if req.Device == "mobile" && req.OS == "" {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "OS parameter is required when device is mobile",
+		})
+		return
+	}
+
+	// Логируем параметры запроса
+	logger.LogTrackSiteParams(
+		req.SiteID,
+		"yandex",
+		req.Device,
+		req.OS,
+		req.Ads,
+		req.Country,
+		req.Lang,
+		req.Pages,
+		req.Subdomains,
+	)
+
+	count, err := h.positionTrackingUseCase.TrackYandexPositions(
+		req.SiteID,
+		req.Device,
+		req.OS,
+		req.Ads,
+		req.Country,
+		req.Lang,
+		req.Pages,
+		req.Subdomains,
+		req.XMLUserID,
+		req.XMLAPIKey,
+		req.XMLBaseURL,
+		req.GroupBy,
+		req.Filter,
+		req.Highlights,
+		req.Within,
+		req.LR,
+		req.Raw,
+		req.InIndex,
+		req.Strict,
+	)
+
+	if err != nil {
+		if usecases.IsDomainError(err) {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   usecases.GetDomainErrorCode(err),
+				Message: err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "internal_error",
+			Message: "Failed to track Yandex positions",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.TrackPositionsResponse{
+		Message: "Yandex positions tracked successfully",
+		Count:   count,
+	})
+}
+
+// TrackWordstatPositions godoc
+// @Summary Track Wordstat positions for specific site
+// @Description Track Wordstat positions for specific site and its keywords.
+// @Tags positions
+// @Accept json
+// @Produce json
+// @Param request body dto.TrackWordstatPositionsRequest true "Wordstat tracking parameters"
+// @Success 200 {object} dto.TrackPositionsResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/track-wordstat [post]
+func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
+	var req dto.TrackWordstatPositionsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// Логируем параметры запроса
+	logger.LogTrackSiteParams(
+		req.SiteID,
+		"wordstat",
+		"",
+		"",
+		false,
+		"",
+		"",
+		0,
+		false,
+	)
+
+	count, err := h.positionTrackingUseCase.TrackWordstatPositions(
+		req.SiteID,
+		req.XMLUserID,
+		req.XMLAPIKey,
+		req.XMLBaseURL,
+		req.Regions,
+	)
+
+	if err != nil {
+		if usecases.IsDomainError(err) {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   usecases.GetDomainErrorCode(err),
+				Message: err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "internal_error",
+			Message: "Failed to track Wordstat positions",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.TrackPositionsResponse{
+		Message: "Wordstat positions tracked successfully",
 		Count:   count,
 	})
 }
