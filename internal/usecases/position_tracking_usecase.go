@@ -244,18 +244,60 @@ func (uc *PositionTrackingUseCase) trackKeywordPosition(
 	return nil
 }
 
-func (uc *PositionTrackingUseCase) GetPositionsHistory(siteID int, keywordID *int, source *string, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {
+func (uc *PositionTrackingUseCase) GetPositionsHistory(siteID int, keywordID *int, source *string, dateFrom, dateTo *time.Time, last bool) ([]*entities.Position, error) {
 	var positions []*entities.Position
 	var err error
 
-	if keywordID != nil && source != nil {
-		positions, err = uc.positionRepo.GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(*keywordID, siteID, *source, dateFrom, dateTo)
-	} else if keywordID != nil {
-		positions, err = uc.positionRepo.GetHistoryByKeywordAndSiteWithOnePerDay(*keywordID, siteID, dateFrom, dateTo)
-	} else if source != nil {
-		positions, err = uc.positionRepo.GetHistoryBySiteIDAndSourceWithOnePerDay(siteID, *source, dateFrom, dateTo)
+	// Если запрашиваются только последние данные
+	if last {
+		if keywordID != nil && source != nil {
+			// Для конкретного ключевого слова и источника возвращаем последнюю запись
+			position, err := uc.positionRepo.GetLatestByKeywordAndSite(*keywordID, siteID)
+			if err != nil {
+				return nil, &DomainError{
+					Code:    ErrorPositionFetch,
+					Message: "Failed to fetch latest position",
+					Err:     err,
+				}
+			}
+			if position != nil && position.Source == *source {
+				positions = []*entities.Position{position}
+			} else {
+				positions = []*entities.Position{}
+			}
+		} else if keywordID != nil {
+			// Для конкретного ключевого слова возвращаем последнюю запись
+			position, err := uc.positionRepo.GetLatestByKeywordAndSite(*keywordID, siteID)
+			if err != nil {
+				return nil, &DomainError{
+					Code:    ErrorPositionFetch,
+					Message: "Failed to fetch latest position",
+					Err:     err,
+				}
+			}
+			if position != nil {
+				positions = []*entities.Position{position}
+			} else {
+				positions = []*entities.Position{}
+			}
+		} else if source != nil {
+			// Для конкретного источника возвращаем последние данные по каждому ключевому слову
+			positions, err = uc.positionRepo.GetLatestBySiteIDAndSource(siteID, *source)
+		} else {
+			// Для сайта возвращаем последние данные по каждому ключевому слову
+			positions, err = uc.positionRepo.GetLatestBySiteID(siteID)
+		}
 	} else {
-		positions, err = uc.positionRepo.GetHistoryBySiteIDWithOnePerDay(siteID, dateFrom, dateTo)
+		// Обычная логика получения истории
+		if keywordID != nil && source != nil {
+			positions, err = uc.positionRepo.GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(*keywordID, siteID, *source, dateFrom, dateTo)
+		} else if keywordID != nil {
+			positions, err = uc.positionRepo.GetHistoryByKeywordAndSiteWithOnePerDay(*keywordID, siteID, dateFrom, dateTo)
+		} else if source != nil {
+			positions, err = uc.positionRepo.GetHistoryBySiteIDAndSourceWithOnePerDay(siteID, *source, dateFrom, dateTo)
+		} else {
+			positions, err = uc.positionRepo.GetHistoryBySiteIDWithOnePerDay(siteID, dateFrom, dateTo)
+		}
 	}
 
 	if err != nil {

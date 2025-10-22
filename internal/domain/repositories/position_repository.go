@@ -31,4 +31,8 @@ type PositionRepository interface {
 	GetHistoryBySiteIDAndSourceWithOnePerDay(siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error)
 	GetHistoryByKeywordAndSiteWithOnePerDay(keywordID, siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error)
 	GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(keywordID, siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error)
+
+	// Методы для получения последних данных по каждому ключевому слову
+	GetLatestBySiteID(siteID int) ([]*entities.Position, error)
+	GetLatestBySiteIDAndSource(siteID int, source string) ([]*entities.Position, error)
 }

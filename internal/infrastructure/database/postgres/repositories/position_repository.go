@@ -398,6 +398,52 @@ func (r *positionRepository) GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(ke
 	return positions, nil
 }
 
+func (r *positionRepository) GetLatestBySiteID(siteID int) ([]*entities.Position, error) {
+	var models []models.Position
+
+	// Используем оконную функцию для получения последней записи по каждому keyword_id
+	query := `
+		SELECT DISTINCT ON (keyword_id) *
+		FROM positions 
+		WHERE site_id = ?
+		ORDER BY keyword_id, date DESC
+	`
+
+	if err := r.db.Raw(query, siteID).Scan(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+
+func (r *positionRepository) GetLatestBySiteIDAndSource(siteID int, source string) ([]*entities.Position, error) {
+	var models []models.Position
+
+	// Используем оконную функцию для получения последней записи по каждому keyword_id и source
+	query := `
+		SELECT DISTINCT ON (keyword_id) *
+		FROM positions 
+		WHERE site_id = ? AND source = ?
+		ORDER BY keyword_id, date DESC
+	`
+
+	if err := r.db.Raw(query, siteID, source).Scan(&models).Error; err != nil {
+		return nil, err
+	}
+
+	positions := make([]*entities.Position, len(models))
+	for i, model := range models {
+		positions[i] = r.toDomain(&model)
+	}
+
+	return positions, nil
+}
+
 func (r *positionRepository) toDomain(model *models.Position) *entities.Position {
 	position := &entities.Position{
 		ID:        model.ID,

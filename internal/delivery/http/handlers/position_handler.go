@@ -264,6 +264,7 @@ func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 // @Param source query string false "Source filter (optional) - google, yandex or wordstat" Enums(google,yandex,wordstat)
 // @Param date_from query string false "Start date filter (optional) - YYYY-MM-DD format"
 // @Param date_to query string false "End date filter (optional) - YYYY-MM-DD format"
+// @Param last query bool false "Get only latest data for each keyword (optional) - true or false"
 // @Success 200 {array} dto.PositionResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
@@ -274,6 +275,7 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 	sourceStr := c.Query("source")
 	dateFromStr := c.Query("date_from")
 	dateToStr := c.Query("date_to")
+	lastStr := c.Query("last")
 
 	if siteIDStr == "" {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
@@ -341,7 +343,20 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 		dateTo = &parsed
 	}
 
-	positions, err := h.positionTrackingUseCase.GetPositionsHistory(siteID, keywordID, source, dateFrom, dateTo)
+	var last bool
+	if lastStr != "" {
+		parsed, err := strconv.ParseBool(lastStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "Invalid last parameter. Use true or false",
+			})
+			return
+		}
+		last = parsed
+	}
+
+	positions, err := h.positionTrackingUseCase.GetPositionsHistory(siteID, keywordID, source, dateFrom, dateTo, last)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
