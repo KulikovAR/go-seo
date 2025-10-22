@@ -166,13 +166,14 @@ func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchReque
 		position := 1
 		for _, group := range resp.Response.Results.Grouping.Groups {
 			for _, doc := range group.Docs {
-				if doc.ContentType == "organic" {
-					if s.isSiteMatchWithSubdomains(doc.URL, siteDomain, subdomains) {
-						absolutePosition := (page)*10 + position
-						return absolutePosition, doc.URL, doc.Title, nil
-					}
-					position++
+				if doc.ContentType != "organic" && source == entities.GoogleSearch {
+					continue
 				}
+				if s.isSiteMatchWithSubdomains(doc.URL, siteDomain, subdomains) {
+					absolutePosition := (page)*10 + position
+					return absolutePosition, doc.URL, doc.Title, nil
+				}
+				position++
 			}
 		}
 	}
