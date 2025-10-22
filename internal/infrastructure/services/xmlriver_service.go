@@ -88,14 +88,8 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	params.Set("key", s.apiKey)
 	params.Set("query", req.Query)
 
-	if source == entities.YandexSearch {
-		if req.Page > 1 {
-			params.Set("page", strconv.Itoa(req.Page-1))
-		}
-	} else {
-		if req.Page > 0 {
-			params.Set("page", strconv.Itoa(req.Page))
-		}
+	if req.Page > 0 {
+		params.Set("page", strconv.Itoa(req.Page))
 	}
 
 	if req.Device != "" {
@@ -161,7 +155,7 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 }
 
 func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchRequest, siteDomain string, source string, maxPages int, subdomains bool) (int, string, string, error) {
-	for page := 1; page <= maxPages; page++ {
+	for page := 0; page <= maxPages-1; page++ {
 		req.Page = page
 
 		resp, err := s.Search(req, source)
@@ -174,7 +168,7 @@ func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchReque
 			for _, doc := range group.Docs {
 				if doc.ContentType == "organic" {
 					if s.isSiteMatchWithSubdomains(doc.URL, siteDomain, subdomains) {
-						absolutePosition := (page-1)*10 + position
+						absolutePosition := (page)*10 + position
 						return absolutePosition, doc.URL, doc.Title, nil
 					}
 					position++
@@ -186,7 +180,7 @@ func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchReque
 	return 0, "", "", nil
 }
 func (s *XMLRiverService) findSitePositionInternal(req SearchRequest, siteDomain string, source string, maxPages int) (int, string, string, error) {
-	for page := 1; page <= maxPages; page++ {
+	for page := 0; page <= maxPages-1; page++ {
 		req.Page = page
 
 		resp, err := s.Search(req, source)
@@ -199,7 +193,7 @@ func (s *XMLRiverService) findSitePositionInternal(req SearchRequest, siteDomain
 			for _, doc := range group.Docs {
 				if doc.ContentType == "organic" {
 					if s.isSiteMatch(doc.URL, siteDomain) {
-						absolutePosition := (page-1)*10 + position
+						absolutePosition := (page)*10 + position
 						return absolutePosition, doc.URL, doc.Title, nil
 					}
 					position++
@@ -214,7 +208,7 @@ func (s *XMLRiverService) findSitePositionInternal(req SearchRequest, siteDomain
 func (s *XMLRiverService) FindSitePosition(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string) (int, string, string, error) {
 	req := SearchRequest{
 		Query:   query,
-		Page:    1,
+		Page:    0,
 		Device:  device,
 		OS:      os,
 		Ads:     ads,
@@ -237,7 +231,7 @@ func (s *XMLRiverService) isSiteMatch(resultURL, siteDomain string) bool {
 func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, subdomains bool) (int, string, string, error) {
 	req := SearchRequest{
 		Query:   query,
-		Page:    1,
+		Page:    0,
 		Device:  device,
 		OS:      os,
 		Ads:     ads,
