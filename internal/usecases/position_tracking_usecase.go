@@ -208,7 +208,7 @@ func (uc *PositionTrackingUseCase) trackKeywordPosition(
 		return uc.trackWordstatPosition(keyword)
 	}
 
-	position, url, title, err := uc.xmlRiver.FindSitePositionWithSubdomains(keyword.Value, site.Domain, source, pages, device, os, ads, country, lang, subdomains)
+	position, url, title, err := uc.xmlRiver.FindSitePositionWithSubdomains(keyword.Value, site.Domain, source, pages, device, os, ads, country, lang, subdomains, 0)
 	if err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,
@@ -413,7 +413,7 @@ func (uc *PositionTrackingUseCase) trackGoogleKeywordPosition(
 		xmlRiverService = uc.xmlStock
 	}
 
-	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(keyword.Value, site.Domain, entities.GoogleSearch, pages, device, os, ads, country, lang, subdomains)
+	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(keyword.Value, site.Domain, entities.GoogleSearch, pages, device, os, ads, country, lang, subdomains, 0)
 	if err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,
@@ -479,7 +479,7 @@ func (uc *PositionTrackingUseCase) trackYandexKeywordPosition(
 		xmlRiverService = uc.xmlStock
 	}
 
-	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(keyword.Value, site.Domain, entities.YandexSearch, pages, device, os, ads, country, lang, subdomains)
+	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(keyword.Value, site.Domain, entities.YandexSearch, pages, device, os, ads, country, lang, subdomains, lr)
 	if err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,

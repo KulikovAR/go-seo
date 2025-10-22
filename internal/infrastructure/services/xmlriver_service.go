@@ -30,6 +30,7 @@ type SearchRequest struct {
 	Country string
 	Lang    string
 	Domain  string
+	LR      int // ID региона Яндекса
 }
 
 type SearchResponse struct {
@@ -105,7 +106,10 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 		params.Set("country", req.Country)
 	}
 	if req.Lang != "" {
-		params.Set("lr", req.Lang)
+		params.Set("lang", req.Lang)
+	}
+	if req.LR > 0 {
+		params.Set("lr", strconv.Itoa(req.LR))
 	}
 	if req.Domain != "" {
 		params.Set("domain", req.Domain)
@@ -206,7 +210,7 @@ func (s *XMLRiverService) findSitePositionInternal(req SearchRequest, siteDomain
 	return 0, "", "", nil
 }
 
-func (s *XMLRiverService) FindSitePosition(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string) (int, string, string, error) {
+func (s *XMLRiverService) FindSitePosition(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, lr int) (int, string, string, error) {
 	req := SearchRequest{
 		Query:   query,
 		Page:    0,
@@ -215,6 +219,7 @@ func (s *XMLRiverService) FindSitePosition(query, siteDomain, source string, max
 		Ads:     ads,
 		Country: country,
 		Lang:    lang,
+		LR:      lr,
 	}
 
 	return s.findSitePositionInternal(req, siteDomain, source, maxPages)
@@ -229,7 +234,7 @@ func (s *XMLRiverService) isSiteMatch(resultURL, siteDomain string) bool {
 
 	return resultDomain == siteDomainExtracted
 }
-func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, subdomains bool) (int, string, string, error) {
+func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, subdomains bool, lr int) (int, string, string, error) {
 	req := SearchRequest{
 		Query:   query,
 		Page:    0,
@@ -238,6 +243,7 @@ func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, sour
 		Ads:     ads,
 		Country: country,
 		Lang:    lang,
+		LR:      lr,
 	}
 
 	return s.findSitePositionInternalWithSubdomains(req, siteDomain, source, maxPages, subdomains)

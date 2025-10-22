@@ -62,6 +62,7 @@ func (h *PositionHandler) TrackGooglePositions(c *gin.Context) {
 		req.Lang,
 		req.Pages,
 		req.Subdomains,
+		0, // LR не используется для Google
 	)
 
 	count, err := h.positionTrackingUseCase.TrackGooglePositions(
@@ -146,6 +147,7 @@ func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
 		req.Lang,
 		req.Pages,
 		req.Subdomains,
+		req.LR,
 	)
 
 	count, err := h.positionTrackingUseCase.TrackYandexPositions(
@@ -213,7 +215,7 @@ func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 	}
 
 	// Логируем параметры запроса
-	logger.LogTrackSiteParams(
+	logger.LogTrackSiteParamsWithRegions(
 		req.SiteID,
 		"wordstat",
 		"",
@@ -223,6 +225,7 @@ func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 		"",
 		0,
 		false,
+		req.Regions,
 	)
 
 	count, err := h.positionTrackingUseCase.TrackWordstatPositions(

@@ -27,9 +27,20 @@ func init() {
 	ErrorLogger = log.New(file, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
-func LogTrackSiteParams(siteID int, source, device, os string, ads bool, country, lang string, pages int, subdomains bool) {
-	InfoLogger.Printf("TrackSite request - SiteID: %d, Source: %s, Device: %s, OS: %s, Ads: %t, Country: %s, Lang: %s, Pages: %d, Subdomains: %t",
-		siteID, source, device, os, ads, country, lang, pages, subdomains)
+func LogTrackSiteParams(siteID int, source, device, os string, ads bool, country, lang string, pages int, subdomains bool, lr int) {
+	InfoLogger.Printf("TrackSite request - SiteID: %d, Source: %s, Device: %s, OS: %s, Ads: %t, Country: %s, Lang: %s, Pages: %d, Subdomains: %t, LR: %d",
+		siteID, source, device, os, ads, country, lang, pages, subdomains, lr)
+}
+
+func LogTrackSiteParamsWithRegions(siteID int, source, device, os string, ads bool, country, lang string, pages int, subdomains bool, regions *int) {
+	var regionsStr string
+	if regions != nil {
+		regionsStr = fmt.Sprintf("%d", *regions)
+	} else {
+		regionsStr = "nil"
+	}
+	InfoLogger.Printf("TrackSite request - SiteID: %d, Source: %s, Device: %s, OS: %s, Ads: %t, Country: %s, Lang: %s, Pages: %d, Subdomains: %t, Regions: %s",
+		siteID, source, device, os, ads, country, lang, pages, subdomains, regionsStr)
 }
 
 func LogXMLRiverURL(url string, params map[string]string) {
