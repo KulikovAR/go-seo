@@ -23,3 +23,7 @@ type Position struct {
 	Keyword Keyword `gorm:"foreignKey:KeywordID"`
 	Site    Site    `gorm:"foreignKey:SiteID"`
 }
+
+func (Position) TableName() string {
+	return "positions"
+}

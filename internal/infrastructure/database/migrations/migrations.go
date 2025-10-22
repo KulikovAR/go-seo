@@ -33,5 +33,19 @@ func CreateTables(db *gorm.DB) error {
 		return err
 	}
 
+	if err := db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_positions_keyword_site_source 
+		ON positions (keyword_id, site_id, source);
+	`).Error; err != nil {
+		return err
+	}
+
+	if err := db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_positions_source_date 
+		ON positions (source, date DESC);
+	`).Error; err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -164,15 +165,40 @@ func (uc *PositionTrackingUseCase) TrackWordstatPositions(siteID int, xmlUserID,
 		}
 	}
 
+	if len(keywords) > 100 {
+		return 0, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: "Too many keywords for site. Maximum 100 keywords allowed per request.",
+			Err:     fmt.Errorf("site has %d keywords, maximum allowed is 100", len(keywords)),
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	defer cancel()
+
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var count int
 	var firstError error
 
+	semaphore := make(chan struct{}, 10)
+
 	for _, keyword := range keywords {
 		wg.Add(1)
 		go func(kw *entities.Keyword) {
 			defer wg.Done()
+
+			select {
+			case semaphore <- struct{}{}:
+				defer func() { <-semaphore }()
+			case <-ctx.Done():
+				mu.Lock()
+				if firstError == nil {
+					firstError = ctx.Err()
+				}
+				mu.Unlock()
+				return
+			}
 
 			err := uc.trackWordstatKeywordPosition(kw, xmlUserID, xmlAPIKey, xmlBaseURL, regions)
 

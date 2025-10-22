@@ -7,6 +7,7 @@ import (
 
 type PositionRepository interface {
 	Create(position *entities.Position) error
+	CreateBatch(positions []*entities.Position) error
 	GetByID(id int) (*entities.Position, error)
 	GetByKeywordAndSite(keywordID, siteID int) ([]*entities.Position, error)
 	GetBySiteID(siteID int) ([]*entities.Position, error)

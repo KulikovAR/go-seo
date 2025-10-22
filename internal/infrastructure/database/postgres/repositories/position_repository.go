@@ -3,7 +3,7 @@ package repositories
 import (
 	"go-seo/internal/domain/entities"
 	"go-seo/internal/domain/repositories"
-	"go-seo/internal/infrastructure/database/postgres/models"
+	positionModels "go-seo/internal/infrastructure/database/postgres/models"
 	"time"
 
 	"gorm.io/gorm"
@@ -18,7 +18,7 @@ func NewPositionRepository(db *gorm.DB) repositories.PositionRepository {
 }
 
 func (r *positionRepository) Create(position *entities.Position) error {
-	model := &models.Position{
+	model := &positionModels.Position{
 		KeywordID: position.KeywordID,
 		SiteID:    position.SiteID,
 		Rank:      position.Rank,
@@ -34,7 +34,7 @@ func (r *positionRepository) Create(position *entities.Position) error {
 		Date:      position.Date,
 	}
 
-	if err := r.db.Create(model).Error; err != nil {
+	if err := r.db.Select("keyword_id", "site_id", "rank", "url", "title", "source", "device", "os", "ads", "country", "lang", "pages", "date").Create(model).Error; err != nil {
 		return err
 	}
 
@@ -42,8 +42,43 @@ func (r *positionRepository) Create(position *entities.Position) error {
 	return nil
 }
 
+func (r *positionRepository) CreateBatch(positions []*entities.Position) error {
+	if len(positions) == 0 {
+		return nil
+	}
+
+	models := make([]*positionModels.Position, len(positions))
+	for i, position := range positions {
+		models[i] = &positionModels.Position{
+			KeywordID: position.KeywordID,
+			SiteID:    position.SiteID,
+			Rank:      position.Rank,
+			URL:       position.URL,
+			Title:     position.Title,
+			Source:    position.Source,
+			Device:    position.Device,
+			OS:        position.OS,
+			Ads:       position.Ads,
+			Country:   position.Country,
+			Lang:      position.Lang,
+			Pages:     position.Pages,
+			Date:      position.Date,
+		}
+	}
+
+	if err := r.db.CreateInBatches(models, 100).Error; err != nil {
+		return err
+	}
+
+	for i, model := range models {
+		positions[i].ID = model.ID
+	}
+
+	return nil
+}
+
 func (r *positionRepository) GetByID(id int) (*entities.Position, error) {
-	var model models.Position
+	var model positionModels.Position
 	if err := r.db.Preload("Keyword").Preload("Site").First(&model, id).Error; err != nil {
 		return nil, err
 	}
@@ -52,7 +87,7 @@ func (r *positionRepository) GetByID(id int) (*entities.Position, error) {
 }
 
 func (r *positionRepository) GetByKeywordAndSite(keywordID, siteID int) ([]*entities.Position, error) {
-	var models []models.Position
+	var models []positionModels.Position
 	if err := r.db.Where("keyword_id = ? AND site_id = ?", keywordID, siteID).
 		Order("date DESC").
 		Find(&models).Error; err != nil {
@@ -68,7 +103,7 @@ func (r *positionRepository) GetByKeywordAndSite(keywordID, siteID int) ([]*enti
 }
 
 func (r *positionRepository) GetBySiteID(siteID int) ([]*entities.Position, error) {
-	var models []models.Position
+	var models []positionModels.Position
 	if err := r.db.Where("site_id = ?", siteID).
 		Order("date DESC").
 		Find(&models).Error; err != nil {
@@ -83,7 +118,7 @@ func (r *positionRepository) GetBySiteID(siteID int) ([]*entities.Position, erro
 	return positions, nil
 }
 func (r *positionRepository) GetBySiteIDAndSource(siteID int, source string) ([]*entities.Position, error) {
-	var models []models.Position
+	var models []positionModels.Position
 	if err := r.db.Where("site_id = ? AND source = ?", siteID, source).
 		Order("date DESC").
 		Find(&models).Error; err != nil {
@@ -99,7 +134,7 @@ func (r *positionRepository) GetBySiteIDAndSource(siteID int, source string) ([]
 }
 
 func (r *positionRepository) GetByKeywordAndSiteAndSource(keywordID, siteID int, source string) ([]*entities.Position, error) {
-	var models []models.Position
+	var models []positionModels.Position
 	if err := r.db.Where("keyword_id = ? AND site_id = ? AND source = ?", keywordID, siteID, source).
 		Order("date DESC").
 		Find(&models).Error; err != nil {
@@ -123,7 +158,7 @@ func (r *positionRepository) GetBySiteIDWithDateRange(siteID int, dateFrom, date
 		query = query.Where("date <= ?", *dateTo)
 	}
 
-	var models []models.Position
+	var models []positionModels.Position
 	if err := query.Order("date DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
@@ -146,7 +181,7 @@ func (r *positionRepository) GetBySiteIDAndSourceWithDateRange(siteID int, sourc
 		query = query.Where("date <= ?", *dateTo)
 	}
 
-	var models []models.Position
+	var models []positionModels.Position
 	if err := query.Order("date DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
@@ -169,7 +204,7 @@ func (r *positionRepository) GetByKeywordAndSiteWithDateRange(keywordID, siteID 
 		query = query.Where("date <= ?", *dateTo)
 	}
 
-	var models []models.Position
+	var models []positionModels.Position
 	if err := query.Order("date DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
@@ -192,7 +227,7 @@ func (r *positionRepository) GetByKeywordAndSiteAndSourceWithDateRange(keywordID
 		query = query.Where("date <= ?", *dateTo)
 	}
 
-	var models []models.Position
+	var models []positionModels.Position
 	if err := query.Order("date DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
@@ -206,7 +241,7 @@ func (r *positionRepository) GetByKeywordAndSiteAndSourceWithDateRange(keywordID
 }
 
 func (r *positionRepository) GetLatestByKeywordAndSite(keywordID, siteID int) (*entities.Position, error) {
-	var model models.Position
+	var model positionModels.Position
 	if err := r.db.Where("keyword_id = ? AND site_id = ?", keywordID, siteID).
 		Order("date DESC").
 		First(&model).Error; err != nil {
@@ -217,7 +252,7 @@ func (r *positionRepository) GetLatestByKeywordAndSite(keywordID, siteID int) (*
 }
 
 func (r *positionRepository) GetAll() ([]*entities.Position, error) {
-	var models []models.Position
+	var models []positionModels.Position
 	if err := r.db.Preload("Keyword").Preload("Site").
 		Order("date DESC").
 		Find(&models).Error; err != nil {
@@ -233,40 +268,39 @@ func (r *positionRepository) GetAll() ([]*entities.Position, error) {
 }
 
 func (r *positionRepository) Update(position *entities.Position) error {
-	model := &models.Position{
-		ID:        position.ID,
-		KeywordID: position.KeywordID,
-		SiteID:    position.SiteID,
-		Rank:      position.Rank,
-		URL:       position.URL,
-		Title:     position.Title,
-		Source:    position.Source,
-		Device:    position.Device,
-		OS:        position.OS,
-		Ads:       position.Ads,
-		Country:   position.Country,
-		Lang:      position.Lang,
-		Pages:     position.Pages,
-		Date:      position.Date,
-	}
-
-	return r.db.Save(model).Error
+	return r.db.Model(&positionModels.Position{}).
+		Where("id = ?", position.ID).
+		Updates(positionModels.Position{
+			KeywordID: position.KeywordID,
+			SiteID:    position.SiteID,
+			Rank:      position.Rank,
+			URL:       position.URL,
+			Title:     position.Title,
+			Source:    position.Source,
+			Device:    position.Device,
+			OS:        position.OS,
+			Ads:       position.Ads,
+			Country:   position.Country,
+			Lang:      position.Lang,
+			Pages:     position.Pages,
+			Date:      position.Date,
+		}).Error
 }
 
 func (r *positionRepository) Delete(id int) error {
-	return r.db.Delete(&models.Position{}, id).Error
+	return r.db.Delete(&positionModels.Position{}, id).Error
 }
 
 func (r *positionRepository) DeleteBySiteID(siteID int) error {
-	return r.db.Where("site_id = ?", siteID).Delete(&models.Position{}).Error
+	return r.db.Where("site_id = ?", siteID).Delete(&positionModels.Position{}).Error
 }
 
 func (r *positionRepository) DeleteByKeywordID(keywordID int) error {
-	return r.db.Where("keyword_id = ?", keywordID).Delete(&models.Position{}).Error
+	return r.db.Where("keyword_id = ?", keywordID).Delete(&positionModels.Position{}).Error
 }
 
 func (r *positionRepository) GetTodayByKeywordAndSiteAndSource(keywordID, siteID int, source string) (*entities.Position, error) {
-	var model models.Position
+	var model positionModels.Position
 
 	now := time.Now()
 	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
@@ -310,7 +344,7 @@ func (r *positionRepository) GetHistoryBySiteIDWithOnePerDay(siteID int, dateFro
 		query = query.Where("date <= ?", *dateTo)
 	}
 
-	var models []models.Position
+	var models []positionModels.Position
 	if err := query.Order("keyword_id, DATE(date) DESC, date DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
@@ -335,7 +369,7 @@ func (r *positionRepository) GetHistoryBySiteIDAndSourceWithOnePerDay(siteID int
 		query = query.Where("date <= ?", *dateTo)
 	}
 
-	var models []models.Position
+	var models []positionModels.Position
 	if err := query.Order("keyword_id, DATE(date) DESC, date DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
@@ -360,7 +394,7 @@ func (r *positionRepository) GetHistoryByKeywordAndSiteWithOnePerDay(keywordID, 
 		query = query.Where("date <= ?", *dateTo)
 	}
 
-	var models []models.Position
+	var models []positionModels.Position
 	if err := query.Order("DATE(date) DESC, date DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
@@ -385,7 +419,7 @@ func (r *positionRepository) GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(ke
 		query = query.Where("date <= ?", *dateTo)
 	}
 
-	var models []models.Position
+	var models []positionModels.Position
 	if err := query.Order("DATE(date) DESC, date DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
@@ -399,7 +433,7 @@ func (r *positionRepository) GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(ke
 }
 
 func (r *positionRepository) GetLatestBySiteID(siteID int) ([]*entities.Position, error) {
-	var models []models.Position
+	var models []positionModels.Position
 
 	// Используем оконную функцию для получения последней записи по каждому keyword_id
 	query := `
@@ -422,7 +456,7 @@ func (r *positionRepository) GetLatestBySiteID(siteID int) ([]*entities.Position
 }
 
 func (r *positionRepository) GetLatestBySiteIDAndSource(siteID int, source string) ([]*entities.Position, error) {
-	var models []models.Position
+	var models []positionModels.Position
 
 	// Используем оконную функцию для получения последней записи по каждому keyword_id и source
 	query := `
@@ -444,7 +478,7 @@ func (r *positionRepository) GetLatestBySiteIDAndSource(siteID int, source strin
 	return positions, nil
 }
 
-func (r *positionRepository) toDomain(model *models.Position) *entities.Position {
+func (r *positionRepository) toDomain(model *positionModels.Position) *entities.Position {
 	position := &entities.Position{
 		ID:        model.ID,
 		KeywordID: model.KeywordID,

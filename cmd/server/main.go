@@ -2,10 +2,12 @@ package main
 
 import (
 	"log"
+	"net/http"
+	"time"
 
 	_ "go-seo/docs"
 
-	"go-seo/internal/delivery/http"
+	httpDelivery "go-seo/internal/delivery/http"
 	"go-seo/internal/infrastructure/config"
 	"go-seo/internal/infrastructure/database/postgres"
 	"go-seo/internal/infrastructure/services"
@@ -79,10 +81,18 @@ func main() {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	http.SetupRoutes(r, useCases)
+	httpDelivery.SetupRoutes(r, useCases)
+
+	srv := &http.Server{
+		Addr:         ":" + cfg.Server.Port,
+		Handler:      r,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
 
 	log.Printf("Server starting on port %s", cfg.Server.Port)
-	if err := r.Run(":" + cfg.Server.Port); err != nil {
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal("Failed to start server:", err)
 	}
 }
