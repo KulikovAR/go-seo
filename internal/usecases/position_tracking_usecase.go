@@ -165,14 +165,6 @@ func (uc *PositionTrackingUseCase) TrackWordstatPositions(siteID int, xmlUserID,
 		}
 	}
 
-	if len(keywords) > 100 {
-		return 0, &DomainError{
-			Code:    ErrorPositionFetch,
-			Message: "Too many keywords for site. Maximum 100 keywords allowed per request.",
-			Err:     fmt.Errorf("site has %d keywords, maximum allowed is 100", len(keywords)),
-		}
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 	defer cancel()
 
