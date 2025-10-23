@@ -40,6 +40,24 @@ func (r *keywordRepository) GetByID(id int) (*entities.Keyword, error) {
 	return r.toDomain(&model), nil
 }
 
+func (r *keywordRepository) GetByIDs(ids []int) ([]*entities.Keyword, error) {
+	if len(ids) == 0 {
+		return []*entities.Keyword{}, nil
+	}
+
+	var models []models.Keyword
+	if err := r.db.Where("id IN ?", ids).Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	keywords := make([]*entities.Keyword, len(models))
+	for i, model := range models {
+		keywords[i] = r.toDomain(&model)
+	}
+
+	return keywords, nil
+}
+
 func (r *keywordRepository) GetByValueAndSite(value string, siteID int) (*entities.Keyword, error) {
 	var model models.Keyword
 	if err := r.db.Where("value = ? AND site_id = ?", value, siteID).First(&model).Error; err != nil {

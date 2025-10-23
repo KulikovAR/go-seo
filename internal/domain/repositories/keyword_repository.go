@@ -5,6 +5,7 @@ import "go-seo/internal/domain/entities"
 type KeywordRepository interface {
 	Create(keyword *entities.Keyword) error
 	GetByID(id int) (*entities.Keyword, error)
+	GetByIDs(ids []int) ([]*entities.Keyword, error)
 	GetByValueAndSite(value string, siteID int) (*entities.Keyword, error)
 	GetBySiteID(siteID int) ([]*entities.Keyword, error)
 	GetAll() ([]*entities.Keyword, error)
