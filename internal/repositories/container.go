@@ -8,17 +8,23 @@ import (
 )
 
 type Container struct {
-	Keyword  repositories.KeywordRepository
-	Site     repositories.SiteRepository
-	Position repositories.PositionRepository
+	Keyword        repositories.KeywordRepository
+	Site           repositories.SiteRepository
+	Position       repositories.PositionRepository
+	TrackingJob    repositories.TrackingJobRepository
+	TrackingTask   repositories.TrackingTaskRepository
+	TrackingResult repositories.TrackingResultRepository
 }
 
 func NewContainer(db *gorm.DB) *Container {
 	postgresRepos := postgresRepos.NewRepositoryContainer(db)
 
 	return &Container{
-		Keyword:  postgresRepos.Keyword,
-		Site:     postgresRepos.Site,
-		Position: postgresRepos.Position,
+		Keyword:        postgresRepos.Keyword,
+		Site:           postgresRepos.Site,
+		Position:       postgresRepos.Position,
+		TrackingJob:    postgresRepos.TrackingJob,
+		TrackingTask:   postgresRepos.TrackingTask,
+		TrackingResult: postgresRepos.TrackingResult,
 	}
 }

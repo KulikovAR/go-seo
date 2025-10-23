@@ -70,7 +70,16 @@ func main() {
 	}
 	defer wordstatService.Close()
 
-	useCases := usecases.NewContainer(repos, xmlRiverService, xmlStockService, wordstatService)
+	kafkaService, err := services.NewKafkaService(cfg.Kafka.Brokers)
+	if err != nil {
+		log.Fatal("Failed to create Kafka service:", err)
+	}
+	defer kafkaService.Close()
+
+	idGenerator := services.NewIDGeneratorService()
+	retryService := services.NewRetryService(5, 10*time.Second)
+
+	useCases := usecases.NewContainer(repos, xmlRiverService, xmlStockService, wordstatService, kafkaService, idGenerator, retryService, 10, 50)
 
 	r := gin.Default()
 

@@ -14,6 +14,7 @@ type Config struct {
 	Server   ServerConfig
 	XMLRiver XMLRiverConfig
 	XMLStock XMLStockConfig
+	Kafka    KafkaConfig
 }
 
 type DatabaseConfig struct {
@@ -40,6 +41,10 @@ type XMLStockConfig struct {
 	UserID  string
 	APIKey  string
 	BaseURL string
+}
+
+type KafkaConfig struct {
+	Brokers []string
 }
 
 func Load() (*Config, error) {
@@ -69,6 +74,9 @@ func Load() (*Config, error) {
 			UserID:  getEnv("XMLSTOCK_USER_ID", ""),
 			APIKey:  getEnv("XMLSTOCK_API_KEY", ""),
 			BaseURL: getEnv("XMLSTOCK_BASE_URL", "https://xmlstock.com"),
+		},
+		Kafka: KafkaConfig{
+			Brokers: getEnvAsStringSlice("KAFKA_BROKERS", []string{"localhost:9092"}),
 		},
 	}, nil
 }

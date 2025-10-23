@@ -128,3 +128,10 @@ type TrackPositionsResponse struct {
 	Message string `json:"message"`
 	Count   int    `json:"count"`
 }
+
+// Async tracking response with task ID
+type AsyncTrackPositionsResponse struct {
+	Message string `json:"message"`
+	TaskID  string `json:"task_id"`
+	Status  string `json:"status"`
+}

@@ -12,7 +12,7 @@ import (
 func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 	siteHandler := handlers.NewSiteHandler(useCases.Site)
 	keywordHandler := handlers.NewKeywordHandler(useCases.Keyword)
-	positionHandler := handlers.NewPositionHandler(useCases.PositionTracking)
+	positionHandler := handlers.NewPositionHandler(useCases.PositionTracking, useCases.AsyncPositionTracking)
 
 	api := r.Group("/api")
 	{

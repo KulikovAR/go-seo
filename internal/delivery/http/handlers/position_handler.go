@@ -13,12 +13,14 @@ import (
 )
 
 type PositionHandler struct {
-	positionTrackingUseCase *usecases.PositionTrackingUseCase
+	positionTrackingUseCase      *usecases.PositionTrackingUseCase
+	asyncPositionTrackingUseCase *usecases.AsyncPositionTrackingUseCase
 }
 
-func NewPositionHandler(positionTrackingUseCase *usecases.PositionTrackingUseCase) *PositionHandler {
+func NewPositionHandler(positionTrackingUseCase *usecases.PositionTrackingUseCase, asyncPositionTrackingUseCase *usecases.AsyncPositionTrackingUseCase) *PositionHandler {
 	return &PositionHandler{
-		positionTrackingUseCase: positionTrackingUseCase,
+		positionTrackingUseCase:      positionTrackingUseCase,
+		asyncPositionTrackingUseCase: asyncPositionTrackingUseCase,
 	}
 }
 
@@ -62,10 +64,10 @@ func (h *PositionHandler) TrackGooglePositions(c *gin.Context) {
 		req.Lang,
 		req.Pages,
 		req.Subdomains,
-		0, // LR не используется для Google
+		0,
 	)
 
-	count, err := h.positionTrackingUseCase.TrackGooglePositions(
+	taskID, err := h.asyncPositionTrackingUseCase.StartAsyncGoogleTracking(
 		req.SiteID,
 		req.Device,
 		req.OS,
@@ -96,14 +98,15 @@ func (h *PositionHandler) TrackGooglePositions(c *gin.Context) {
 		}
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
-			Message: "Failed to track Google positions",
+			Message: "Failed to start Google tracking",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.TrackPositionsResponse{
-		Message: "Google positions tracked successfully",
-		Count:   count,
+	c.JSON(http.StatusOK, dto.AsyncTrackPositionsResponse{
+		Message: "Google tracking started successfully",
+		TaskID:  taskID,
+		Status:  "pending",
 	})
 }
 
@@ -150,7 +153,7 @@ func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
 		req.LR,
 	)
 
-	count, err := h.positionTrackingUseCase.TrackYandexPositions(
+	taskID, err := h.asyncPositionTrackingUseCase.StartAsyncYandexTracking(
 		req.SiteID,
 		req.Device,
 		req.OS,
@@ -182,14 +185,15 @@ func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
 		}
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
-			Message: "Failed to track Yandex positions",
+			Message: "Failed to start Yandex tracking",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.TrackPositionsResponse{
-		Message: "Yandex positions tracked successfully",
-		Count:   count,
+	c.JSON(http.StatusOK, dto.AsyncTrackPositionsResponse{
+		Message: "Yandex tracking started successfully",
+		TaskID:  taskID,
+		Status:  "pending",
 	})
 }
 
@@ -228,7 +232,7 @@ func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 		req.Regions,
 	)
 
-	count, err := h.positionTrackingUseCase.TrackWordstatPositions(
+	taskID, err := h.asyncPositionTrackingUseCase.StartAsyncWordstatTracking(
 		req.SiteID,
 		req.XMLUserID,
 		req.XMLAPIKey,
@@ -246,14 +250,15 @@ func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 		}
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
-			Message: "Failed to track Wordstat positions",
+			Message: "Failed to start Wordstat tracking",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.TrackPositionsResponse{
-		Message: "Wordstat positions tracked successfully",
-		Count:   count,
+	c.JSON(http.StatusOK, dto.AsyncTrackPositionsResponse{
+		Message: "Wordstat tracking started successfully",
+		TaskID:  taskID,
+		Status:  "pending",
 	})
 }
 
