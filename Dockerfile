@@ -16,6 +16,9 @@ RUN go mod download
 # Копирование исходного кода
 COPY . .
 
+# Обновление зависимостей и создание go.sum
+RUN go mod tidy
+
 # Сборка приложения
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main cmd/server/main.go
 
