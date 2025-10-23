@@ -1,19 +1,18 @@
 package services
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"time"
+
+	"github.com/IBM/sarama"
 )
 
 type KafkaService struct {
-	brokers    []string
-	httpClient *http.Client
-	enabled    bool
+	producer sarama.SyncProducer
+	admin    sarama.ClusterAdmin
+	enabled  bool
 }
 
 type TaskStatusMessage struct {
@@ -39,16 +38,12 @@ func NewKafkaService(brokers []string) (*KafkaService, error) {
 	enabled := len(brokers) > 0 && brokers[0] != ""
 
 	service := &KafkaService{
-		brokers: brokers,
-		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
-		},
 		enabled: enabled,
 	}
 
 	if enabled {
-		if err := service.checkConnection(); err != nil {
-			log.Printf("Warning: Kafka connection failed: %v. Service will work in log-only mode.", err)
+		if err := service.initKafka(brokers); err != nil {
+			log.Printf("Warning: Kafka initialization failed: %v. Service will work in log-only mode.", err)
 			service.enabled = false
 		} else {
 			log.Printf("Kafka service initialized with brokers: %v", brokers)
@@ -61,25 +56,26 @@ func NewKafkaService(brokers []string) (*KafkaService, error) {
 	return service, nil
 }
 
-func (k *KafkaService) checkConnection() error {
-	if len(k.brokers) == 0 {
-		return fmt.Errorf("no brokers configured")
-	}
+func (k *KafkaService) initKafka(brokers []string) error {
+	config := sarama.NewConfig()
+	config.Producer.Return.Successes = true
+	config.Producer.RequiredAcks = sarama.WaitForAll
+	config.Producer.Retry.Max = 3
+	config.Producer.Timeout = 10 * time.Second
 
-	broker := k.brokers[0]
-	if broker == "" {
-		return fmt.Errorf("empty broker address")
-	}
-
-	resp, err := k.httpClient.Get(broker + "/topics")
+	producer, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
-		return fmt.Errorf("failed to connect to Kafka: %w", err)
+		return fmt.Errorf("failed to create producer: %w", err)
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Kafka returned status: %d", resp.StatusCode)
+	admin, err := sarama.NewClusterAdmin(brokers, config)
+	if err != nil {
+		producer.Close()
+		return fmt.Errorf("failed to create admin client: %w", err)
 	}
+
+	k.producer = producer
+	k.admin = admin
 
 	return nil
 }
@@ -97,59 +93,37 @@ func (k *KafkaService) createTopicsIfNotExist() {
 }
 
 func (k *KafkaService) createTopic(topicName string) error {
-	exists, err := k.topicExists(topicName)
+	topics, err := k.admin.ListTopics()
 	if err != nil {
-		return fmt.Errorf("failed to check if topic exists: %w", err)
+		return fmt.Errorf("failed to list topics: %w", err)
 	}
 
-	if exists {
+	if _, exists := topics[topicName]; exists {
 		log.Printf("Topic %s already exists", topicName)
 		return nil
 	}
 
-	topicConfig := map[string]interface{}{
-		"name": topicName,
-		"configs": map[string]string{
-			"cleanup.policy": "delete",
-			"retention.ms":   "604800000",
+	topicDetail := &sarama.TopicDetail{
+		NumPartitions:     3,
+		ReplicationFactor: 1,
+		ConfigEntries: map[string]*string{
+			"cleanup.policy":   stringPtr("delete"),
+			"retention.ms":     stringPtr("604800000"),
+			"compression.type": stringPtr("snappy"),
 		},
 	}
 
-	jsonData, err := json.Marshal(topicConfig)
-	if err != nil {
-		return fmt.Errorf("failed to marshal topic config: %w", err)
-	}
-
-	req, err := http.NewRequest("POST", k.brokers[0]+"/topics", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := k.httpClient.Do(req)
+	err = k.admin.CreateTopic(topicName, topicDetail, false)
 	if err != nil {
 		return fmt.Errorf("failed to create topic: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed to create topic, status: %d, body: %s", resp.StatusCode, string(body))
 	}
 
 	log.Printf("Successfully created topic: %s", topicName)
 	return nil
 }
 
-func (k *KafkaService) topicExists(topicName string) (bool, error) {
-	resp, err := k.httpClient.Get(k.brokers[0] + "/topics/" + topicName)
-	if err != nil {
-		return false, err
-	}
-	defer resp.Body.Close()
-
-	return resp.StatusCode == http.StatusOK, nil
+func stringPtr(s string) *string {
+	return &s
 }
 
 func (k *KafkaService) SendTaskStatus(message *TaskStatusMessage) error {
@@ -185,43 +159,33 @@ func (k *KafkaService) sendMessage(topic string, message interface{}) error {
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
-	kafkaMsg := map[string]interface{}{
-		"records": []map[string]interface{}{
+	kafkaMessage := &sarama.ProducerMessage{
+		Topic: topic,
+		Value: sarama.StringEncoder(jsonData),
+		Headers: []sarama.RecordHeader{
 			{
-				"value": string(jsonData),
+				Key:   []byte("content-type"),
+				Value: []byte("application/json"),
 			},
 		},
 	}
 
-	kafkaData, err := json.Marshal(kafkaMsg)
-	if err != nil {
-		return fmt.Errorf("failed to marshal kafka message: %w", err)
-	}
-
-	url := fmt.Sprintf("%s/topics/%s", k.brokers[0], topic)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(kafkaData))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/vnd.kafka.json.v2+json")
-
-	resp, err := k.httpClient.Do(req)
+	partition, offset, err := k.producer.SendMessage(kafkaMessage)
 	if err != nil {
 		return fmt.Errorf("failed to send message: %w", err)
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed to send message, status: %d, body: %s", resp.StatusCode, string(body))
-	}
-
-	log.Printf("Successfully sent message to topic %s", topic)
+	log.Printf("Successfully sent message to topic %s, partition %d, offset %d", topic, partition, offset)
 	return nil
 }
 
 func (k *KafkaService) Close() error {
+	if k.producer != nil {
+		k.producer.Close()
+	}
+	if k.admin != nil {
+		k.admin.Close()
+	}
 	log.Println("Kafka service closed")
 	return nil
 }
