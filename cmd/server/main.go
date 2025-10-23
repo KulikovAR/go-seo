@@ -79,7 +79,7 @@ func main() {
 	idGenerator := services.NewIDGeneratorService()
 	retryService := services.NewRetryService(5, 10*time.Second)
 
-	useCases := usecases.NewContainer(repos, xmlRiverService, xmlStockService, wordstatService, kafkaService, idGenerator, retryService, 10, 50)
+	useCases := usecases.NewContainer(repos, xmlRiverService, xmlStockService, wordstatService, kafkaService, idGenerator, retryService, cfg.Async.WorkerCount, cfg.Async.BatchSize)
 
 	r := gin.Default()
 

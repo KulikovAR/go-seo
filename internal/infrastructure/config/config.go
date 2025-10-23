@@ -15,6 +15,7 @@ type Config struct {
 	XMLRiver XMLRiverConfig
 	XMLStock XMLStockConfig
 	Kafka    KafkaConfig
+	Async    AsyncConfig
 }
 
 type DatabaseConfig struct {
@@ -47,6 +48,11 @@ type KafkaConfig struct {
 	Brokers []string
 }
 
+type AsyncConfig struct {
+	WorkerCount int
+	BatchSize   int
+}
+
 func Load() (*Config, error) {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
@@ -77,6 +83,10 @@ func Load() (*Config, error) {
 		},
 		Kafka: KafkaConfig{
 			Brokers: getEnvAsStringSlice("KAFKA_BROKERS", []string{"localhost:9092"}),
+		},
+		Async: AsyncConfig{
+			WorkerCount: getEnvAsInt("WORKER_COUNT", 20),
+			BatchSize:   getEnvAsInt("BATCH_SIZE", 100),
 		},
 	}, nil
 }
