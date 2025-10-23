@@ -16,5 +16,8 @@ RUN go mod download
 # Копирование исходного кода
 COPY . .
 
+# Обновление зависимостей и создание go.sum
+RUN go mod tidy
+
 # Команда по умолчанию (будет переопределена в docker-compose.yml)
 CMD ["go", "run", "cmd/migrate/main.go"]
