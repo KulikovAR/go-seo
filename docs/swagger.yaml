@@ -1,4 +1,38 @@
+basePath: /
 definitions:
+  dto.CombinedPositionItem:
+    properties:
+      date:
+        type: string
+      id:
+        type: integer
+      keyword:
+        type: string
+      keyword_id:
+        type: integer
+      positions:
+        description: Позиции из Google/Yandex - массив позиций
+        items:
+          $ref: '#/definitions/dto.PositionData'
+        type: array
+      site_id:
+        type: integer
+      wordstat:
+        allOf:
+        - $ref: '#/definitions/dto.PositionData'
+        description: Wordstat позиции - отдельный ключ
+    type: object
+  dto.CombinedPositionsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.CombinedPositionItem'
+        type: array
+      meta:
+        $ref: '#/definitions/dto.MetaInfo'
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
+    type: object
   dto.CreateKeywordRequest:
     properties:
       site_id:
@@ -42,6 +76,101 @@ definitions:
       value:
         type: string
     type: object
+  dto.MetaInfo:
+    properties:
+      cached:
+        type: boolean
+      query_time_ms:
+        type: integer
+    type: object
+  dto.PaginationInfo:
+    properties:
+      current_page:
+        type: integer
+      from:
+        type: integer
+      has_more:
+        type: boolean
+      last_page:
+        type: integer
+      per_page:
+        type: integer
+      to:
+        type: integer
+      total:
+        type: integer
+    type: object
+  dto.PositionData:
+    properties:
+      date:
+        type: string
+      rank:
+        type: integer
+      source:
+        type: string
+    type: object
+  dto.PositionDistribution:
+    properties:
+      not_found:
+        type: integer
+      top_3:
+        type: integer
+      top_10:
+        type: integer
+      top_20:
+        type: integer
+    type: object
+  dto.PositionHistoryItem:
+    properties:
+      country:
+        type: string
+      date:
+        type: string
+      device:
+        type: string
+      id:
+        type: integer
+      keyword:
+        type: string
+      keyword_id:
+        type: integer
+      lang:
+        type: string
+      position:
+        type: integer
+      rank:
+        type: integer
+      site_id:
+        type: integer
+      source:
+        type: string
+    type: object
+  dto.PositionHistoryResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.PositionHistoryItem'
+        type: array
+      meta:
+        $ref: '#/definitions/dto.MetaInfo'
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
+    type: object
+  dto.PositionRanges:
+    properties:
+      "1_3":
+        type: integer
+      "4_10":
+        type: integer
+      "11_30":
+        type: integer
+      "31_50":
+        type: integer
+      "51_100":
+        type: integer
+      100_plus:
+        type: integer
+    type: object
   dto.PositionResponse:
     properties:
       ads:
@@ -77,6 +206,45 @@ definitions:
       url:
         type: string
     type: object
+  dto.PositionStatisticsRequest:
+    properties:
+      date_from:
+        type: string
+      date_to:
+        type: string
+      site_id:
+        type: integer
+      source:
+        enum:
+        - google
+        - yandex
+        - wordstat
+        type: string
+    required:
+    - date_from
+    - date_to
+    - site_id
+    - source
+    type: object
+  dto.PositionStatisticsResponse:
+    properties:
+      keywords_count:
+        type: integer
+      not_visible:
+        type: integer
+      position_distribution:
+        $ref: '#/definitions/dto.PositionDistribution'
+      position_ranges:
+        $ref: '#/definitions/dto.PositionRanges'
+      total_positions:
+        type: integer
+      trends:
+        $ref: '#/definitions/dto.Trends'
+      visibility_stats:
+        $ref: '#/definitions/dto.VisibilityStats'
+      visible:
+        type: integer
+    type: object
   dto.SiteResponse:
     properties:
       domain:
@@ -101,9 +269,6 @@ definitions:
         - tablet
         - mobile
         type: string
-      domain:
-        description: ID домена Google
-        type: integer
       filter:
         description: 'Скрывать похожие результаты: 0 или 1'
         type: integer
@@ -144,8 +309,6 @@ definitions:
       xml_user_id:
         type: string
     required:
-    - device
-    - pages
     - site_id
     type: object
   dto.TrackPositionsResponse:
@@ -157,6 +320,9 @@ definitions:
     type: object
   dto.TrackWordstatPositionsRequest:
     properties:
+      regions:
+        description: ID региона Яндекса, nullable
+        type: integer
       site_id:
         type: integer
       xml_api_key:
@@ -179,9 +345,6 @@ definitions:
         - desktop
         - tablet
         - mobile
-        type: string
-      domain:
-        description: 'Домен Яндекса: ru, com, ua, com.tr, by, kz'
         type: string
       filter:
         description: 'Скрывать похожие результаты: 0 или 1'
@@ -229,12 +392,41 @@ definitions:
       xml_user_id:
         type: string
     required:
-    - device
-    - pages
     - site_id
     type: object
+  dto.Trends:
+    properties:
+      declined:
+        type: integer
+      improved:
+        type: integer
+      stable:
+        type: integer
+    type: object
+  dto.VisibilityStats:
+    properties:
+      avg_position:
+        type: number
+      best_position:
+        type: integer
+      median_position:
+        type: integer
+      worst_position:
+        type: integer
+    type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API для отслеживания позиций сайтов в поисковых системах
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Go SEO API
+  version: "1.0"
 paths:
   /api/keywords:
     get:
@@ -319,9 +511,65 @@ paths:
       summary: Delete a keyword
       tags:
       - keywords
+  /api/positions/combined:
+    get:
+      description: Get combined positions data from Google/Yandex and Wordstat sources
+        with pagination support
+      parameters:
+      - description: Site ID
+        in: query
+        name: site_id
+        required: true
+        type: integer
+      - description: Source filter (optional) - google or yandex
+        enum:
+        - google
+        - yandex
+        in: query
+        name: source
+        type: string
+      - description: Include Wordstat data (optional) - true or false
+        in: query
+        name: wordstat
+        type: boolean
+      - description: Start date filter (optional) - YYYY-MM-DD format
+        in: query
+        name: date_from
+        type: string
+      - description: End date filter (optional) - YYYY-MM-DD format
+        in: query
+        name: date_to
+        type: string
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 50, max: 100)'
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CombinedPositionsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get combined positions with pagination
+      tags:
+      - positions
   /api/positions/history:
     get:
-      description: Get positions history for specific site and optional keyword
+      description: Get positions history for specific site and optional keyword with
+        pagination support
       parameters:
       - description: Site ID
         in: query
@@ -348,15 +596,25 @@ paths:
         in: query
         name: date_to
         type: string
+      - description: Get only latest data for each keyword (optional) - true or false
+        in: query
+        name: last
+        type: boolean
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 50, max: 100)'
+        in: query
+        name: per_page
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/dto.PositionResponse'
-            type: array
+            $ref: '#/definitions/dto.PositionHistoryResponse'
         "400":
           description: Bad Request
           schema:
@@ -365,7 +623,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
-      summary: Get positions history
+      summary: Get positions history with pagination
       tags:
       - positions
   /api/positions/latest:
@@ -385,6 +643,37 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Get latest positions
+      tags:
+      - positions
+  /api/positions/statistics:
+    post:
+      consumes:
+      - application/json
+      description: Get position statistics for specific site and source within date
+        range
+      parameters:
+      - description: Statistics parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PositionStatisticsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PositionStatisticsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get position statistics
       tags:
       - positions
   /api/positions/track-google:

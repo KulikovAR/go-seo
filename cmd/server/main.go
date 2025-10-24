@@ -38,7 +38,6 @@ func main() {
 
 	repos := repositories.NewContainer(db.DB)
 
-	// XMLRiver сервис для Wordstat
 	xmlRiverService, err := services.NewXMLRiverService(
 		cfg.XMLRiver.BaseURL,
 		cfg.XMLRiver.UserID,
@@ -49,7 +48,6 @@ func main() {
 	}
 	defer xmlRiverService.Close()
 
-	// XMLStock сервис для Google/Yandex
 	xmlStockService, err := services.NewXMLRiverService(
 		cfg.XMLStock.BaseURL,
 		cfg.XMLStock.UserID,

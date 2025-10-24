@@ -37,6 +37,8 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 			positions.POST("/track-wordstat", positionHandler.TrackWordstatPositions)
 			positions.GET("/history", positionHandler.GetPositionsHistory)
 			positions.GET("/latest", positionHandler.GetLatestPositions)
+			positions.POST("/statistics", positionHandler.GetPositionStatistics)
+			positions.GET("/combined", positionHandler.GetCombinedPositions)
 		}
 	}
 

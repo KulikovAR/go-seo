@@ -266,10 +266,8 @@ func (uc *PositionTrackingUseCase) GetPositionsHistory(siteID int, keywordID *in
 	var positions []*entities.Position
 	var err error
 
-	// Если запрашиваются только последние данные
 	if last {
 		if keywordID != nil && source != nil {
-			// Для конкретного ключевого слова и источника возвращаем последнюю запись
 			position, err := uc.positionRepo.GetLatestByKeywordAndSite(*keywordID, siteID)
 			if err != nil {
 				return nil, &DomainError{
@@ -284,7 +282,6 @@ func (uc *PositionTrackingUseCase) GetPositionsHistory(siteID int, keywordID *in
 				positions = []*entities.Position{}
 			}
 		} else if keywordID != nil {
-			// Для конкретного ключевого слова возвращаем последнюю запись
 			position, err := uc.positionRepo.GetLatestByKeywordAndSite(*keywordID, siteID)
 			if err != nil {
 				return nil, &DomainError{
@@ -299,14 +296,10 @@ func (uc *PositionTrackingUseCase) GetPositionsHistory(siteID int, keywordID *in
 				positions = []*entities.Position{}
 			}
 		} else if source != nil {
-			// Для конкретного источника возвращаем последние данные по каждому ключевому слову
 			positions, err = uc.positionRepo.GetLatestBySiteIDAndSource(siteID, *source)
 		} else {
-			// Для сайта возвращаем последние данные по каждому ключевому слову
 			positions, err = uc.positionRepo.GetLatestBySiteID(siteID)
 		}
-	} else {
-		// Обычная логика получения истории
 		if keywordID != nil && source != nil {
 			positions, err = uc.positionRepo.GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(*keywordID, siteID, *source, dateFrom, dateTo)
 		} else if keywordID != nil {
@@ -336,6 +329,65 @@ func (uc *PositionTrackingUseCase) GetPositionsHistory(siteID int, keywordID *in
 	return positions, nil
 }
 
+func (uc *PositionTrackingUseCase) GetPositionsHistoryPaginated(siteID int, keywordID *int, source *string, dateFrom, dateTo *time.Time, last bool, page, perPage int) ([]*entities.Position, int64, error) {
+	positions, total, err := uc.positionRepo.GetPositionsHistoryPaginated(siteID, keywordID, source, dateFrom, dateTo, last, page, perPage)
+	if err != nil {
+		return nil, 0, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: "Failed to fetch positions history",
+			Err:     err,
+		}
+	}
+
+	for _, pos := range positions {
+		if pos.Keyword == nil {
+			keyword, err := uc.keywordRepo.GetByID(pos.KeywordID)
+			if err == nil {
+				pos.Keyword = keyword
+			}
+		}
+	}
+
+	return positions, total, nil
+}
+
+func (uc *PositionTrackingUseCase) GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time) (*entities.PositionStatistics, error) {
+	site, err := uc.siteRepo.GetByID(siteID)
+	if err != nil {
+		return nil, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: "Site not found",
+			Err:     err,
+		}
+	}
+	if site == nil {
+		return nil, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: "Site not found",
+			Err:     fmt.Errorf("site with ID %d not found", siteID),
+		}
+	}
+
+	if source != "google" && source != "yandex" && source != "wordstat" {
+		return nil, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: "Invalid source. Must be 'google', 'yandex' or 'wordstat'",
+			Err:     fmt.Errorf("invalid source: %s", source),
+		}
+	}
+
+	stats, err := uc.positionRepo.GetPositionStatistics(siteID, source, dateFrom, dateTo)
+	if err != nil {
+		return nil, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: "Failed to fetch position statistics",
+			Err:     err,
+		}
+	}
+
+	return stats, nil
+}
+
 func (uc *PositionTrackingUseCase) GetLatestPositions() ([]*entities.Position, error) {
 	sites, err := uc.siteRepo.GetAll()
 	if err != nil {
@@ -363,6 +415,39 @@ func (uc *PositionTrackingUseCase) GetLatestPositions() ([]*entities.Position, e
 	}
 
 	return latestPositions, nil
+}
+
+func (uc *PositionTrackingUseCase) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, dateFrom, dateTo *time.Time, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if perPage <= 0 {
+		perPage = 50
+	}
+	if perPage > 100 {
+		perPage = 100
+	}
+
+	if source != nil {
+		if *source != "google" && *source != "yandex" {
+			return nil, 0, &DomainError{
+				Code:    ErrorPositionFetch,
+				Message: "source must be either 'google' or 'yandex'",
+				Err:     fmt.Errorf("invalid source: %s", *source),
+			}
+		}
+	}
+
+	combinedPositions, total, err := uc.positionRepo.GetCombinedPositionsPaginated(siteID, source, includeWordstat, dateFrom, dateTo, page, perPage)
+	if err != nil {
+		return nil, 0, &DomainError{
+			Code:    ErrorPositionFetch,
+			Message: "Failed to fetch combined positions",
+			Err:     err,
+		}
+	}
+
+	return combinedPositions, total, nil
 }
 
 func (uc *PositionTrackingUseCase) trackWordstatPosition(keyword *entities.Keyword) error {

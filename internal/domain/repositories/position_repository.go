@@ -33,7 +33,12 @@ type PositionRepository interface {
 	GetHistoryByKeywordAndSiteWithOnePerDay(keywordID, siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error)
 	GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(keywordID, siteID int, source string, dateFrom, dateTo *time.Time) ([]*entities.Position, error)
 
-	// Методы для получения последних данных по каждому ключевому слову
 	GetLatestBySiteID(siteID int) ([]*entities.Position, error)
 	GetLatestBySiteIDAndSource(siteID int, source string) ([]*entities.Position, error)
+
+	GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time) (*entities.PositionStatistics, error)
+
+	GetPositionsHistoryPaginated(siteID int, keywordID *int, source *string, dateFrom, dateTo *time.Time, last bool, page, perPage int) ([]*entities.Position, int64, error)
+
+	GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, dateFrom, dateTo *time.Time, page, perPage int) ([]*entities.CombinedPosition, int64, error)
 }

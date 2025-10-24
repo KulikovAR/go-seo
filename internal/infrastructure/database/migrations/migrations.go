@@ -120,5 +120,20 @@ func CreateTables(db *gorm.DB) error {
 		return err
 	}
 
+	if err := db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_positions_stats_main 
+		ON positions (site_id, source, date DESC, rank);
+	`).Error; err != nil {
+		return err
+	}
+
+	if err := db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_positions_trends 
+		ON positions (keyword_id, date DESC, rank) 
+		WHERE date >= CURRENT_DATE - INTERVAL '30 days';
+	`).Error; err != nil {
+		return err
+	}
+
 	return nil
 }

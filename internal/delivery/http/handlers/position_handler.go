@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"go-seo/internal/delivery/http/dto"
@@ -24,17 +23,6 @@ func NewPositionHandler(positionTrackingUseCase *usecases.PositionTrackingUseCas
 	}
 }
 
-// TrackGooglePositions godoc
-// @Summary Track Google positions for specific site
-// @Description Track Google positions for specific site and its keywords. Can include subdomains in search.
-// @Tags positions
-// @Accept json
-// @Produce json
-// @Param request body dto.TrackGooglePositionsRequest true "Google tracking parameters"
-// @Success 200 {object} dto.TrackPositionsResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /api/positions/track-google [post]
 func (h *PositionHandler) TrackGooglePositions(c *gin.Context) {
 	var req dto.TrackGooglePositionsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -53,7 +41,6 @@ func (h *PositionHandler) TrackGooglePositions(c *gin.Context) {
 		return
 	}
 
-	// Логируем параметры запроса
 	logger.LogTrackSiteParams(
 		req.SiteID,
 		"google",
@@ -110,17 +97,6 @@ func (h *PositionHandler) TrackGooglePositions(c *gin.Context) {
 	})
 }
 
-// TrackYandexPositions godoc
-// @Summary Track Yandex positions for specific site
-// @Description Track Yandex positions for specific site and its keywords. Can include subdomains in search.
-// @Tags positions
-// @Accept json
-// @Produce json
-// @Param request body dto.TrackYandexPositionsRequest true "Yandex tracking parameters"
-// @Success 200 {object} dto.TrackPositionsResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /api/positions/track-yandex [post]
 func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
 	var req dto.TrackYandexPositionsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -139,7 +115,6 @@ func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
 		return
 	}
 
-	// Логируем параметры запроса
 	logger.LogTrackSiteParams(
 		req.SiteID,
 		"yandex",
@@ -197,17 +172,6 @@ func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
 	})
 }
 
-// TrackWordstatPositions godoc
-// @Summary Track Wordstat positions for specific site
-// @Description Track Wordstat positions for specific site and its keywords.
-// @Tags positions
-// @Accept json
-// @Produce json
-// @Param request body dto.TrackWordstatPositionsRequest true "Wordstat tracking parameters"
-// @Success 200 {object} dto.TrackPositionsResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /api/positions/track-wordstat [post]
 func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 	var req dto.TrackWordstatPositionsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -262,74 +226,41 @@ func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 	})
 }
 
-// GetPositionsHistory godoc
-// @Summary Get positions history
-// @Description Get positions history for specific site and optional keyword
-// @Tags positions
-// @Produce json
-// @Param site_id query int true "Site ID"
-// @Param keyword_id query int false "Keyword ID (optional)"
-// @Param source query string false "Source filter (optional) - google, yandex or wordstat" Enums(google,yandex,wordstat)
-// @Param date_from query string false "Start date filter (optional) - YYYY-MM-DD format"
-// @Param date_to query string false "End date filter (optional) - YYYY-MM-DD format"
-// @Param last query bool false "Get only latest data for each keyword (optional) - true or false"
-// @Success 200 {array} dto.PositionResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /api/positions/history [get]
 func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
-	siteIDStr := c.Query("site_id")
-	keywordIDStr := c.Query("keyword_id")
-	sourceStr := c.Query("source")
-	dateFromStr := c.Query("date_from")
-	dateToStr := c.Query("date_to")
-	lastStr := c.Query("last")
+	startTime := time.Now()
 
-	if siteIDStr == "" {
+	var req dto.PositionHistoryRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "validation_error",
-			Message: "site_id parameter is required",
+			Message: err.Error(),
 		})
 		return
 	}
 
-	siteID, err := strconv.Atoi(siteIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
-			Error:   "validation_error",
-			Message: "Invalid site_id parameter",
-		})
-		return
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PerPage <= 0 {
+		req.PerPage = 50
+	}
+	if req.PerPage > 100 {
+		req.PerPage = 100
 	}
 
-	var keywordID *int
-	if keywordIDStr != "" {
-		id, err := strconv.Atoi(keywordIDStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
-				Error:   "validation_error",
-				Message: "Invalid keyword_id parameter",
-			})
-			return
-		}
-		keywordID = &id
-	}
-
-	var source *string
-	if sourceStr != "" {
-		if sourceStr != "google" && sourceStr != "yandex" && sourceStr != "wordstat" {
+	if req.Source != nil {
+		if *req.Source != "google" && *req.Source != "yandex" && *req.Source != "wordstat" {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 				Error:   "validation_error",
 				Message: "source must be either 'google', 'yandex' or 'wordstat'",
 			})
 			return
 		}
-		source = &sourceStr
 	}
 
 	var dateFrom, dateTo *time.Time
-	if dateFromStr != "" {
-		parsed, err := time.Parse("2006-01-02", dateFromStr)
+	if req.DateFrom != nil {
+		parsed, err := time.Parse("2006-01-02", *req.DateFrom)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 				Error:   "validation_error",
@@ -339,8 +270,8 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 		}
 		dateFrom = &parsed
 	}
-	if dateToStr != "" {
-		parsed, err := time.Parse("2006-01-02", dateToStr)
+	if req.DateTo != nil {
+		parsed, err := time.Parse("2006-01-02", *req.DateTo)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 				Error:   "validation_error",
@@ -352,19 +283,12 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 	}
 
 	var last bool
-	if lastStr != "" {
-		parsed, err := strconv.ParseBool(lastStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
-				Error:   "validation_error",
-				Message: "Invalid last parameter. Use true or false",
-			})
-			return
-		}
-		last = parsed
+	if req.Last != nil {
+		last = *req.Last
 	}
 
-	positions, err := h.positionTrackingUseCase.GetPositionsHistory(siteID, keywordID, source, dateFrom, dateTo, last)
+	positions, total, err := h.positionTrackingUseCase.GetPositionsHistoryPaginated(
+		req.SiteID, req.KeywordID, req.Source, dateFrom, dateTo, last, req.Page, req.PerPage)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
@@ -380,42 +304,277 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 		return
 	}
 
-	var response []dto.PositionResponse
+	lastPage := int((total + int64(req.PerPage) - 1) / int64(req.PerPage))
+	from := (req.Page-1)*req.PerPage + 1
+	to := from + len(positions) - 1
+	if len(positions) == 0 {
+		from = 0
+		to = 0
+	}
+	hasMore := req.Page < lastPage
+
+	var data []dto.PositionHistoryItem
 	for _, pos := range positions {
 		keywordValue := ""
 		if pos.Keyword != nil {
 			keywordValue = pos.Keyword.Value
 		}
-		response = append(response, dto.PositionResponse{
+		data = append(data, dto.PositionHistoryItem{
 			ID:        pos.ID,
-			KeywordID: pos.KeywordID,
 			SiteID:    pos.SiteID,
+			KeywordID: pos.KeywordID,
+			Keyword:   keywordValue,
 			Rank:      pos.Rank,
-			URL:       pos.URL,
-			Title:     pos.Title,
+			Date:      pos.Date,
 			Source:    pos.Source,
 			Device:    pos.Device,
-			OS:        pos.OS,
-			Ads:       pos.Ads,
 			Country:   pos.Country,
 			Lang:      pos.Lang,
-			Pages:     pos.Pages,
-			Date:      pos.Date,
-			Keyword:   keywordValue,
 		})
+	}
+
+	queryTimeMs := int(time.Since(startTime).Milliseconds())
+
+	response := dto.PositionHistoryResponse{
+		Data: data,
+		Pagination: dto.PaginationInfo{
+			CurrentPage: req.Page,
+			PerPage:     req.PerPage,
+			Total:       int(total),
+			LastPage:    lastPage,
+			From:        from,
+			To:          to,
+			HasMore:     hasMore,
+		},
+		Meta: dto.MetaInfo{
+			QueryTimeMs: queryTimeMs,
+		},
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
-// GetLatestPositions godoc
-// @Summary Get latest positions
-// @Description Get latest positions for all sites and keywords
-// @Tags positions
-// @Produce json
-// @Success 200 {array} dto.PositionResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /api/positions/latest [get]
+func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
+	startTime := time.Now()
+
+	var req dto.CombinedPositionsRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PerPage <= 0 {
+		req.PerPage = 50
+	}
+	if req.PerPage > 100 {
+		req.PerPage = 100
+	}
+
+	if req.Source != nil {
+		if *req.Source != "google" && *req.Source != "yandex" {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "source must be either 'google' or 'yandex'",
+			})
+			return
+		}
+	}
+
+	var dateFrom, dateTo *time.Time
+	if req.DateFrom != nil {
+		parsed, err := time.Parse("2006-01-02", *req.DateFrom)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "Invalid date_from parameter. Use YYYY-MM-DD format",
+			})
+			return
+		}
+		dateFrom = &parsed
+	}
+	if req.DateTo != nil {
+		parsed, err := time.Parse("2006-01-02", *req.DateTo)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "Invalid date_to parameter. Use YYYY-MM-DD format",
+			})
+			return
+		}
+		dateTo = &parsed
+	}
+
+	var includeWordstat bool
+	if req.Wordstat != nil {
+		includeWordstat = *req.Wordstat
+	}
+
+	combinedPositions, total, err := h.positionTrackingUseCase.GetCombinedPositionsPaginated(
+		req.SiteID, req.Source, includeWordstat, dateFrom, dateTo, req.Page, req.PerPage)
+	if err != nil {
+		if usecases.IsDomainError(err) {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   usecases.GetDomainErrorCode(err),
+				Message: err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "internal_error",
+			Message: "Failed to fetch combined positions",
+		})
+		return
+	}
+
+	lastPage := int((total + int64(req.PerPage) - 1) / int64(req.PerPage))
+	from := (req.Page-1)*req.PerPage + 1
+	to := from + len(combinedPositions) - 1
+	if len(combinedPositions) == 0 {
+		from = 0
+		to = 0
+	}
+	hasMore := req.Page < lastPage
+
+	var data []dto.CombinedPositionItem
+	for _, pos := range combinedPositions {
+		keywordValue := ""
+		if pos.Keyword != nil {
+			keywordValue = pos.Keyword.Value
+		}
+
+		item := dto.CombinedPositionItem{
+			ID:        pos.ID,
+			SiteID:    pos.SiteID,
+			KeywordID: pos.KeywordID,
+			Keyword:   keywordValue,
+			Date:      pos.Date,
+		}
+
+		for _, position := range pos.Positions {
+			item.Positions = append(item.Positions, dto.PositionData{
+				Rank:   position.Rank,
+				Source: position.Source,
+				Date:   position.Date,
+			})
+		}
+
+		if pos.Wordstat != nil {
+			item.Wordstat = &dto.PositionData{
+				Rank:   pos.Wordstat.Rank,
+				Source: pos.Wordstat.Source,
+				Date:   pos.Wordstat.Date,
+			}
+		}
+
+		data = append(data, item)
+	}
+
+	queryTimeMs := int(time.Since(startTime).Milliseconds())
+
+	response := dto.CombinedPositionsResponse{
+		Data: data,
+		Pagination: dto.PaginationInfo{
+			CurrentPage: req.Page,
+			PerPage:     req.PerPage,
+			Total:       int(total),
+			LastPage:    lastPage,
+			From:        from,
+			To:          to,
+			HasMore:     hasMore,
+		},
+		Meta: dto.MetaInfo{
+			QueryTimeMs: queryTimeMs,
+		},
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (h *PositionHandler) GetPositionStatistics(c *gin.Context) {
+	var req dto.PositionStatisticsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	dateFrom, err := time.Parse("2006-01-02", req.DateFrom)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "Invalid date_from format. Use YYYY-MM-DD",
+		})
+		return
+	}
+
+	dateTo, err := time.Parse("2006-01-02", req.DateTo)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "Invalid date_to format. Use YYYY-MM-DD",
+		})
+		return
+	}
+
+	stats, err := h.positionTrackingUseCase.GetPositionStatistics(req.SiteID, req.Source, dateFrom, dateTo)
+	if err != nil {
+		if usecases.IsDomainError(err) {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   usecases.GetDomainErrorCode(err),
+				Message: err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "internal_error",
+			Message: "Failed to fetch position statistics",
+		})
+		return
+	}
+
+	response := dto.PositionStatisticsResponse{
+		TotalPositions: stats.TotalPositions,
+		KeywordsCount:  stats.KeywordsCount,
+		Visible:        stats.Visible,
+		NotVisible:     stats.NotVisible,
+		PositionDistribution: dto.PositionDistribution{
+			Top3:     stats.PositionDistribution.Top3,
+			Top10:    stats.PositionDistribution.Top10,
+			Top20:    stats.PositionDistribution.Top20,
+			NotFound: stats.PositionDistribution.NotFound,
+		},
+		PositionRanges: dto.PositionRanges{
+			Range1_3:     stats.PositionRanges.Range1_3,
+			Range4_10:    stats.PositionRanges.Range4_10,
+			Range11_30:   stats.PositionRanges.Range11_30,
+			Range31_50:   stats.PositionRanges.Range31_50,
+			Range51_100:  stats.PositionRanges.Range51_100,
+			Range100Plus: stats.PositionRanges.Range100Plus,
+		},
+		VisibilityStats: dto.VisibilityStats{
+			AvgPosition:    stats.VisibilityStats.AvgPosition,
+			MedianPosition: stats.VisibilityStats.MedianPosition,
+			BestPosition:   stats.VisibilityStats.BestPosition,
+			WorstPosition:  stats.VisibilityStats.WorstPosition,
+		},
+		Trends: dto.Trends{
+			Improved: stats.Trends.Improved,
+			Declined: stats.Trends.Declined,
+			Stable:   stats.Trends.Stable,
+		},
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
 func (h *PositionHandler) GetLatestPositions(c *gin.Context) {
 	positions, err := h.positionTrackingUseCase.GetLatestPositions()
 	if err != nil {

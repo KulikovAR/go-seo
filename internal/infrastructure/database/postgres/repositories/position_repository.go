@@ -435,7 +435,6 @@ func (r *positionRepository) GetHistoryByKeywordAndSiteAndSourceWithOnePerDay(ke
 func (r *positionRepository) GetLatestBySiteID(siteID int) ([]*entities.Position, error) {
 	var models []positionModels.Position
 
-	// Используем оконную функцию для получения последней записи по каждому keyword_id
 	query := `
 		SELECT DISTINCT ON (keyword_id) *
 		FROM positions 
@@ -458,7 +457,6 @@ func (r *positionRepository) GetLatestBySiteID(siteID int) ([]*entities.Position
 func (r *positionRepository) GetLatestBySiteIDAndSource(siteID int, source string) ([]*entities.Position, error) {
 	var models []positionModels.Position
 
-	// Используем оконную функцию для получения последней записи по каждому keyword_id и source
 	query := `
 		SELECT DISTINCT ON (keyword_id) *
 		FROM positions 
@@ -511,4 +509,406 @@ func (r *positionRepository) toDomain(model *positionModels.Position) *entities.
 	}
 
 	return position
+}
+
+func (r *positionRepository) GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time) (*entities.PositionStatistics, error) {
+	var stats entities.PositionStatistics
+
+	var result struct {
+		TotalPositions int     `json:"total_positions"`
+		KeywordsCount  int     `json:"keywords_count"`
+		AvgPosition    float64 `json:"avg_position"`
+		MinPosition    int     `json:"min_position"`
+		MaxPosition    int     `json:"max_position"`
+		Top3           int     `json:"top_3"`
+		Top10          int     `json:"top_10"`
+		Top20          int     `json:"top_20"`
+		NotFound       int     `json:"not_found"`
+	}
+
+	query := `
+		SELECT 
+			COUNT(*) as total_positions,
+			COUNT(DISTINCT keyword_id) as keywords_count,
+			AVG(rank) as avg_position,
+			MIN(rank) as min_position,
+			MAX(rank) as max_position,
+			(SELECT COUNT(*) FROM positions p2 WHERE p2.site_id = ? AND p2.source = ? AND p2.date >= ? AND p2.date <= ? AND p2.rank <= 3) as top_3,
+			(SELECT COUNT(*) FROM positions p2 WHERE p2.site_id = ? AND p2.source = ? AND p2.date >= ? AND p2.date <= ? AND p2.rank <= 10) as top_10,
+			(SELECT COUNT(*) FROM positions p2 WHERE p2.site_id = ? AND p2.source = ? AND p2.date >= ? AND p2.date <= ? AND p2.rank <= 20) as top_20,
+			(SELECT COUNT(*) FROM positions p2 WHERE p2.site_id = ? AND p2.source = ? AND p2.date >= ? AND p2.date <= ? AND p2.rank > 100) as not_found
+		FROM positions 
+		WHERE site_id = ? AND source = ? AND date >= ? AND date <= ?
+	`
+
+	if err := r.db.Raw(query, siteID, source, dateFrom, dateTo, siteID, source, dateFrom, dateTo, siteID, source, dateFrom, dateTo, siteID, source, dateFrom, dateTo, siteID, source, dateFrom, dateTo).Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	stats.TotalPositions = result.TotalPositions
+	stats.KeywordsCount = result.KeywordsCount
+	stats.VisibilityStats.AvgPosition = result.AvgPosition
+	stats.VisibilityStats.BestPosition = result.MinPosition
+	stats.VisibilityStats.WorstPosition = result.MaxPosition
+	var top3, top10, top20, notFound, visible, notVisible int64
+	var range1_3, range4_10, range11_30, range31_50, range51_100, range100Plus int64
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 3).
+		Count(&top3).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 10).
+		Count(&top10).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 20).
+		Count(&top20).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank > ?", siteID, source, dateFrom, dateTo, 100).
+		Count(&notFound).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank > ?", siteID, source, dateFrom, dateTo, 0).
+		Count(&visible).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank = ?", siteID, source, dateFrom, dateTo, 0).
+		Count(&notVisible).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank >= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 1, 3).
+		Count(&range1_3).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank >= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 4, 10).
+		Count(&range4_10).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank >= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 11, 30).
+		Count(&range11_30).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank >= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 31, 50).
+		Count(&range31_50).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank >= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 51, 100).
+		Count(&range51_100).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Model(&positionModels.Position{}).
+		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank > ?", siteID, source, dateFrom, dateTo, 100).
+		Count(&range100Plus).Error; err != nil {
+		return nil, err
+	}
+
+	stats.TotalPositions = result.TotalPositions
+	stats.KeywordsCount = result.KeywordsCount
+	stats.Visible = int(visible)
+	stats.NotVisible = int(notVisible)
+	stats.VisibilityStats.AvgPosition = result.AvgPosition
+	stats.VisibilityStats.BestPosition = result.MinPosition
+	stats.VisibilityStats.WorstPosition = result.MaxPosition
+	stats.PositionDistribution = entities.PositionDistribution{
+		Top3:     int(top3),
+		Top10:    int(top10),
+		Top20:    int(top20),
+		NotFound: int(notFound),
+	}
+
+	stats.PositionRanges = entities.PositionRanges{
+		Range1_3:     int(range1_3),
+		Range4_10:    int(range4_10),
+		Range11_30:   int(range11_30),
+		Range31_50:   int(range31_50),
+		Range51_100:  int(range51_100),
+		Range100Plus: int(range100Plus),
+	}
+
+	stats.VisibilityStats.MedianPosition = int(result.AvgPosition)
+
+	var trends struct {
+		Improved int `json:"improved"`
+		Declined int `json:"declined"`
+		Stable   int `json:"stable"`
+	}
+
+	trendsQuery := `
+		WITH recent_data AS (
+			SELECT keyword_id, rank, date
+			FROM positions 
+			WHERE site_id = ? AND source = ? 
+			  AND date >= ? AND date <= ?
+			  AND date >= CURRENT_DATE - INTERVAL '30 days'
+		),
+		keyword_changes AS (
+			SELECT 
+				keyword_id,
+				(SELECT rank FROM recent_data rd2 
+				 WHERE rd2.keyword_id = rd1.keyword_id 
+				 ORDER BY rd2.date ASC LIMIT 1) as first_rank,
+				(SELECT rank FROM recent_data rd3 
+				 WHERE rd3.keyword_id = rd1.keyword_id 
+				 ORDER BY rd3.date DESC LIMIT 1) as last_rank
+			FROM recent_data rd1
+			GROUP BY keyword_id
+		)
+		SELECT 
+			COUNT(CASE WHEN last_rank < first_rank THEN 1 END) as improved,
+			COUNT(CASE WHEN last_rank > first_rank THEN 1 END) as declined,
+			COUNT(CASE WHEN last_rank = first_rank THEN 1 END) as stable
+		FROM keyword_changes
+		WHERE first_rank IS NOT NULL AND last_rank IS NOT NULL
+	`
+
+	if err := r.db.Raw(trendsQuery, siteID, source, dateFrom, dateTo).Scan(&trends).Error; err != nil {
+		trends.Improved = 0
+		trends.Declined = 0
+		trends.Stable = 0
+	}
+
+	stats.Trends = entities.Trends{
+		Improved: trends.Improved,
+		Declined: trends.Declined,
+		Stable:   trends.Stable,
+	}
+
+	return &stats, nil
+}
+
+func (r *positionRepository) GetPositionsHistoryPaginated(siteID int, keywordID *int, source *string, dateFrom, dateTo *time.Time, last bool, page, perPage int) ([]*entities.Position, int64, error) {
+	var positions []*entities.Position
+	var total int64
+	var err error
+
+	if page <= 0 {
+		page = 1
+	}
+	if perPage <= 0 {
+		perPage = 50
+	}
+	if perPage > 100 {
+		perPage = 100
+	}
+
+	offset := (page - 1) * perPage
+
+	if last {
+		if keywordID != nil && source != nil {
+			position, err := r.GetLatestByKeywordAndSite(*keywordID, siteID)
+			if err != nil {
+				return nil, 0, err
+			}
+			if position != nil && position.Source == *source {
+				positions = []*entities.Position{position}
+				total = 1
+			} else {
+				positions = []*entities.Position{}
+				total = 0
+			}
+		} else if keywordID != nil {
+			position, err := r.GetLatestByKeywordAndSite(*keywordID, siteID)
+			if err != nil {
+				return nil, 0, err
+			}
+			if position != nil {
+				positions = []*entities.Position{position}
+				total = 1
+			} else {
+				positions = []*entities.Position{}
+				total = 0
+			}
+		} else if source != nil {
+			positions, err = r.GetLatestBySiteIDAndSource(siteID, *source)
+			if err != nil {
+				return nil, 0, err
+			}
+			total = int64(len(positions))
+		} else {
+			positions, err = r.GetLatestBySiteID(siteID)
+			if err != nil {
+				return nil, 0, err
+			}
+			total = int64(len(positions))
+		}
+		var query *gorm.DB
+		var countQuery *gorm.DB
+
+		if keywordID != nil && source != nil {
+			query = r.db.Where("keyword_id = ? AND site_id = ? AND source = ?", *keywordID, siteID, *source)
+			countQuery = r.db.Model(&positionModels.Position{}).Where("keyword_id = ? AND site_id = ? AND source = ?", *keywordID, siteID, *source)
+		} else if keywordID != nil {
+			query = r.db.Where("keyword_id = ? AND site_id = ?", *keywordID, siteID)
+			countQuery = r.db.Model(&positionModels.Position{}).Where("keyword_id = ? AND site_id = ?", *keywordID, siteID)
+		} else if source != nil {
+			query = r.db.Where("site_id = ? AND source = ?", siteID, *source)
+			countQuery = r.db.Model(&positionModels.Position{}).Where("site_id = ? AND source = ?", siteID, *source)
+		} else {
+			query = r.db.Where("site_id = ?", siteID)
+			countQuery = r.db.Model(&positionModels.Position{}).Where("site_id = ?", siteID)
+		}
+
+		if dateFrom != nil {
+			query = query.Where("date >= ?", *dateFrom)
+			countQuery = countQuery.Where("date >= ?", *dateFrom)
+		}
+		if dateTo != nil {
+			query = query.Where("date <= ?", *dateTo)
+			countQuery = countQuery.Where("date <= ?", *dateTo)
+		}
+
+		if err := countQuery.Count(&total).Error; err != nil {
+			return nil, 0, err
+		}
+
+		var models []positionModels.Position
+		if err := query.Preload("Keyword").
+			Order("date DESC").
+			Offset(offset).
+			Limit(perPage).
+			Find(&models).Error; err != nil {
+			return nil, 0, err
+		}
+
+		positions = make([]*entities.Position, len(models))
+		for i, model := range models {
+			positions[i] = r.toDomain(&model)
+		}
+	}
+
+	return positions, total, nil
+}
+
+func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, dateFrom, dateTo *time.Time, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
+	offset := (page - 1) * perPage
+
+	var keywords []positionModels.Keyword
+	query := r.db.Where("site_id = ?", siteID)
+
+	var totalKeywords int64
+	if err := query.Model(&positionModels.Keyword{}).Count(&totalKeywords).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Order("id").Offset(offset).Limit(perPage).Find(&keywords).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if len(keywords) == 0 {
+		return []*entities.CombinedPosition{}, totalKeywords, nil
+	}
+
+	keywordMap := make(map[int]*entities.Keyword)
+	for _, kw := range keywords {
+		keywordMap[kw.ID] = &entities.Keyword{
+			ID:     kw.ID,
+			Value:  kw.Value,
+			SiteID: kw.SiteID,
+		}
+	}
+
+	var allCombinedPositions []*entities.CombinedPosition
+
+	for _, keyword := range keywords {
+		keywordID := keyword.ID
+
+		var positions []positionModels.Position
+
+		query := r.db.Where("site_id = ? AND keyword_id = ?", siteID, keywordID)
+
+		if source != nil {
+			if *source == "google" {
+				query = query.Where("source = ?", "google")
+			} else if *source == "yandex" {
+				query = query.Where("source = ?", "yandex")
+			}
+			if !includeWordstat {
+				query = query.Where("source IN ?", []string{"google", "yandex"})
+			}
+		}
+
+		if dateFrom != nil {
+			query = query.Where("date >= ?", *dateFrom)
+		}
+		if dateTo != nil {
+			query = query.Where("date <= ?", *dateTo)
+		}
+
+		if err := query.Order("date DESC").Find(&positions).Error; err != nil {
+			return nil, 0, err
+		}
+
+		var googleYandexPositions []*entities.Position
+		var wordstatPosition *entities.Position
+
+		for _, model := range positions {
+			position := r.toDomain(&model)
+
+			if position.Source == "wordstat" {
+				if wordstatPosition == nil {
+					wordstatPosition = position
+				}
+			} else {
+				googleYandexPositions = append(googleYandexPositions, position)
+			}
+		}
+
+		if includeWordstat && wordstatPosition == nil {
+			var wordstatModel positionModels.Position
+			wordstatQuery := r.db.Where("site_id = ? AND keyword_id = ? AND source = ?", siteID, keywordID, "wordstat")
+
+			if dateFrom != nil {
+				wordstatQuery = wordstatQuery.Where("date >= ?", *dateFrom)
+			}
+			if dateTo != nil {
+				wordstatQuery = wordstatQuery.Where("date <= ?", *dateTo)
+			}
+
+			if err := wordstatQuery.Order("date DESC").First(&wordstatModel).Error; err == nil {
+				wordstatPosition = r.toDomain(&wordstatModel)
+			}
+		}
+
+		var latestDate time.Time
+		if len(positions) > 0 {
+			latestDate = positions[0].Date
+		}
+
+		combined := &entities.CombinedPosition{
+			ID:        keywordID,
+			SiteID:    siteID,
+			KeywordID: keywordID,
+			Keyword:   keywordMap[keywordID],
+			Date:      latestDate,
+			Positions: googleYandexPositions,
+			Wordstat:  wordstatPosition,
+		}
+
+		allCombinedPositions = append(allCombinedPositions, combined)
+	}
+
+	return allCombinedPositions, totalKeywords, nil
 }

@@ -9,7 +9,16 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -141,16 +150,97 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/positions/history": {
+        "/api/positions/combined": {
             "get": {
-                "description": "Get positions history for specific site and optional keyword",
+                "description": "Get combined positions data from Google/Yandex and Wordstat sources with pagination support",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "positions"
                 ],
-                "summary": "Get positions history",
+                "summary": "Get combined positions with pagination",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Site ID",
+                        "name": "site_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "google",
+                            "yandex"
+                        ],
+                        "type": "string",
+                        "description": "Source filter (optional) - google or yandex",
+                        "name": "source",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include Wordstat data (optional) - true or false",
+                        "name": "wordstat",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date filter (optional) - YYYY-MM-DD format",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date filter (optional) - YYYY-MM-DD format",
+                        "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page (default: 50, max: 100)",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CombinedPositionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/positions/history": {
+            "get": {
+                "description": "Get positions history for specific site and optional keyword with pagination support",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "positions"
+                ],
+                "summary": "Get positions history with pagination",
                 "parameters": [
                     {
                         "type": "integer",
@@ -187,16 +277,31 @@ const docTemplate = `{
                         "description": "End date filter (optional) - YYYY-MM-DD format",
                         "name": "date_to",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Get only latest data for each keyword (optional) - true or false",
+                        "name": "last",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page (default: 50, max: 100)",
+                        "name": "per_page",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dto.PositionResponse"
-                            }
+                            "$ref": "#/definitions/dto.PositionHistoryResponse"
                         }
                     },
                     "400": {
@@ -232,6 +337,52 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/dto.PositionResponse"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/positions/statistics": {
+            "post": {
+                "description": "Get position statistics for specific site and source within date range",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "positions"
+                ],
+                "summary": "Get position statistics",
+                "parameters": [
+                    {
+                        "description": "Statistics parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PositionStatisticsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PositionStatisticsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
@@ -508,6 +659,58 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.CombinedPositionItem": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "keyword": {
+                    "type": "string"
+                },
+                "keyword_id": {
+                    "type": "integer"
+                },
+                "positions": {
+                    "description": "Позиции из Google/Yandex - массив позиций",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PositionData"
+                    }
+                },
+                "site_id": {
+                    "type": "integer"
+                },
+                "wordstat": {
+                    "description": "Wordstat позиции - отдельный ключ",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.PositionData"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.CombinedPositionsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CombinedPositionItem"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
+                }
+            }
+        },
         "dto.CreateKeywordRequest": {
             "type": "object",
             "required": [
@@ -575,6 +778,152 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.MetaInfo": {
+            "type": "object",
+            "properties": {
+                "cached": {
+                    "type": "boolean"
+                },
+                "query_time_ms": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.PaginationInfo": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer"
+                },
+                "from": {
+                    "type": "integer"
+                },
+                "has_more": {
+                    "type": "boolean"
+                },
+                "last_page": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                },
+                "to": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.PositionData": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "rank": {
+                    "type": "integer"
+                },
+                "source": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PositionDistribution": {
+            "type": "object",
+            "properties": {
+                "not_found": {
+                    "type": "integer"
+                },
+                "top_10": {
+                    "type": "integer"
+                },
+                "top_20": {
+                    "type": "integer"
+                },
+                "top_3": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.PositionHistoryItem": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "device": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "keyword": {
+                    "type": "string"
+                },
+                "keyword_id": {
+                    "type": "integer"
+                },
+                "lang": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "integer"
+                },
+                "rank": {
+                    "type": "integer"
+                },
+                "site_id": {
+                    "type": "integer"
+                },
+                "source": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PositionHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PositionHistoryItem"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
+                }
+            }
+        },
+        "dto.PositionRanges": {
+            "type": "object",
+            "properties": {
+                "100_plus": {
+                    "type": "integer"
+                },
+                "11_30": {
+                    "type": "integer"
+                },
+                "1_3": {
+                    "type": "integer"
+                },
+                "31_50": {
+                    "type": "integer"
+                },
+                "4_10": {
+                    "type": "integer"
+                },
+                "51_100": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.PositionResponse": {
             "type": "object",
             "properties": {
@@ -628,6 +977,63 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PositionStatisticsRequest": {
+            "type": "object",
+            "required": [
+                "date_from",
+                "date_to",
+                "site_id",
+                "source"
+            ],
+            "properties": {
+                "date_from": {
+                    "type": "string"
+                },
+                "date_to": {
+                    "type": "string"
+                },
+                "site_id": {
+                    "type": "integer"
+                },
+                "source": {
+                    "type": "string",
+                    "enum": [
+                        "google",
+                        "yandex",
+                        "wordstat"
+                    ]
+                }
+            }
+        },
+        "dto.PositionStatisticsResponse": {
+            "type": "object",
+            "properties": {
+                "keywords_count": {
+                    "type": "integer"
+                },
+                "not_visible": {
+                    "type": "integer"
+                },
+                "position_distribution": {
+                    "$ref": "#/definitions/dto.PositionDistribution"
+                },
+                "position_ranges": {
+                    "$ref": "#/definitions/dto.PositionRanges"
+                },
+                "total_positions": {
+                    "type": "integer"
+                },
+                "trends": {
+                    "$ref": "#/definitions/dto.Trends"
+                },
+                "visibility_stats": {
+                    "$ref": "#/definitions/dto.VisibilityStats"
+                },
+                "visible": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.SiteResponse": {
             "type": "object",
             "properties": {
@@ -645,8 +1051,6 @@ const docTemplate = `{
         "dto.TrackGooglePositionsRequest": {
             "type": "object",
             "required": [
-                "device",
-                "pages",
                 "site_id"
             ],
             "properties": {
@@ -667,10 +1071,6 @@ const docTemplate = `{
                         "tablet",
                         "mobile"
                     ]
-                },
-                "domain": {
-                    "description": "ID домена Google",
-                    "type": "integer"
                 },
                 "filter": {
                     "description": "Скрывать похожие результаты: 0 или 1",
@@ -745,6 +1145,10 @@ const docTemplate = `{
                 "site_id"
             ],
             "properties": {
+                "regions": {
+                    "description": "ID региона Яндекса, nullable",
+                    "type": "integer"
+                },
                 "site_id": {
                     "type": "integer"
                 },
@@ -762,8 +1166,6 @@ const docTemplate = `{
         "dto.TrackYandexPositionsRequest": {
             "type": "object",
             "required": [
-                "device",
-                "pages",
                 "site_id"
             ],
             "properties": {
@@ -780,10 +1182,6 @@ const docTemplate = `{
                         "tablet",
                         "mobile"
                     ]
-                },
-                "domain": {
-                    "description": "Домен Яндекса: ru, com, ua, com.tr, by, kz",
-                    "type": "string"
                 },
                 "filter": {
                     "description": "Скрывать похожие результаты: 0 или 1",
@@ -848,18 +1246,49 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "dto.Trends": {
+            "type": "object",
+            "properties": {
+                "declined": {
+                    "type": "integer"
+                },
+                "improved": {
+                    "type": "integer"
+                },
+                "stable": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.VisibilityStats": {
+            "type": "object",
+            "properties": {
+                "avg_position": {
+                    "type": "number"
+                },
+                "best_position": {
+                    "type": "integer"
+                },
+                "median_position": {
+                    "type": "integer"
+                },
+                "worst_position": {
+                    "type": "integer"
+                }
+            }
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "localhost:8087",
+	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Go SEO API",
+	Description:      "API для отслеживания позиций сайтов в поисковых системах",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
