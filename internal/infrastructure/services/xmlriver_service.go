@@ -42,6 +42,12 @@ type Response struct {
 	Date    string  `xml:"date,attr"`
 	Found   int     `xml:"found"`
 	Results Results `xml:"results"`
+	Error   *Error  `xml:"error,omitempty"`
+}
+
+type Error struct {
+	Code    string `xml:"code,attr"`
+	Message string `xml:",chardata"`
 }
 
 type Results struct {
@@ -153,6 +159,13 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	var searchResp SearchResponse
 	if err := xml.Unmarshal(bodyBytes, &searchResp); err != nil {
 		return nil, fmt.Errorf("failed to parse XML response: %w", err)
+	}
+
+	// Проверяем наличие ошибки в ответе
+	if searchResp.Response.Error != nil {
+		return nil, fmt.Errorf("Yandex API error %s: %s",
+			searchResp.Response.Error.Code,
+			searchResp.Response.Error.Message)
 	}
 
 	return &searchResp, nil
