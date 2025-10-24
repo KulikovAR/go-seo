@@ -1,38 +1,4 @@
-basePath: /
 definitions:
-  dto.CombinedPositionItem:
-    properties:
-      date:
-        type: string
-      id:
-        type: integer
-      keyword:
-        type: string
-      keyword_id:
-        type: integer
-      positions:
-        description: Позиции из Google/Yandex - массив позиций
-        items:
-          $ref: '#/definitions/dto.PositionData'
-        type: array
-      site_id:
-        type: integer
-      wordstat:
-        allOf:
-        - $ref: '#/definitions/dto.PositionData'
-        description: Wordstat позиции - отдельный ключ
-    type: object
-  dto.CombinedPositionsResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/dto.CombinedPositionItem'
-        type: array
-      meta:
-        $ref: '#/definitions/dto.MetaInfo'
-      pagination:
-        $ref: '#/definitions/dto.PaginationInfo'
-    type: object
   dto.CreateKeywordRequest:
     properties:
       site_id:
@@ -100,151 +66,6 @@ definitions:
       total:
         type: integer
     type: object
-  dto.PositionData:
-    properties:
-      date:
-        type: string
-      rank:
-        type: integer
-      source:
-        type: string
-    type: object
-  dto.PositionDistribution:
-    properties:
-      not_found:
-        type: integer
-      top_3:
-        type: integer
-      top_10:
-        type: integer
-      top_20:
-        type: integer
-    type: object
-  dto.PositionHistoryItem:
-    properties:
-      country:
-        type: string
-      date:
-        type: string
-      device:
-        type: string
-      id:
-        type: integer
-      keyword:
-        type: string
-      keyword_id:
-        type: integer
-      lang:
-        type: string
-      position:
-        type: integer
-      rank:
-        type: integer
-      site_id:
-        type: integer
-      source:
-        type: string
-    type: object
-  dto.PositionHistoryResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/dto.PositionHistoryItem'
-        type: array
-      meta:
-        $ref: '#/definitions/dto.MetaInfo'
-      pagination:
-        $ref: '#/definitions/dto.PaginationInfo'
-    type: object
-  dto.PositionRanges:
-    properties:
-      "1_3":
-        type: integer
-      "4_10":
-        type: integer
-      "11_30":
-        type: integer
-      "31_50":
-        type: integer
-      "51_100":
-        type: integer
-      100_plus:
-        type: integer
-    type: object
-  dto.PositionResponse:
-    properties:
-      ads:
-        type: boolean
-      country:
-        type: string
-      date:
-        type: string
-      device:
-        type: string
-      id:
-        type: integer
-      keyword:
-        type: string
-      keyword_id:
-        type: integer
-      lang:
-        type: string
-      os:
-        type: string
-      pages:
-        type: integer
-      rank:
-        type: integer
-      site:
-        type: string
-      site_id:
-        type: integer
-      source:
-        type: string
-      title:
-        type: string
-      url:
-        type: string
-    type: object
-  dto.PositionStatisticsRequest:
-    properties:
-      date_from:
-        type: string
-      date_to:
-        type: string
-      site_id:
-        type: integer
-      source:
-        enum:
-        - google
-        - yandex
-        - wordstat
-        type: string
-    required:
-    - date_from
-    - date_to
-    - site_id
-    - source
-    type: object
-  dto.PositionStatisticsResponse:
-    properties:
-      keywords_count:
-        type: integer
-      not_visible:
-        type: integer
-      position_distribution:
-        $ref: '#/definitions/dto.PositionDistribution'
-      position_ranges:
-        $ref: '#/definitions/dto.PositionRanges'
-      total_positions:
-        type: integer
-      trends:
-        $ref: '#/definitions/dto.Trends'
-      visibility_stats:
-        $ref: '#/definitions/dto.VisibilityStats'
-      visible:
-        type: integer
-    type: object
   dto.SiteResponse:
     properties:
       domain:
@@ -254,179 +75,47 @@ definitions:
       keywords_count:
         type: integer
     type: object
-  dto.TrackGooglePositionsRequest:
+  dto.TrackingJobItem:
     properties:
-      ads:
-        type: boolean
-      ai:
-        description: 'Парсинг блока "Обзор от ИИ": 0 или 1'
-        type: integer
-      country:
+      completed_at:
         type: string
-      device:
-        enum:
-        - desktop
-        - tablet
-        - mobile
+      completed_tasks:
+        type: integer
+      created_at:
         type: string
-      filter:
-        description: 'Скрывать похожие результаты: 0 или 1'
-        type: integer
-      highlights:
-        description: 'Подсветка ключевых слов: 0 или 1'
-        type: integer
-      lang:
+      error:
         type: string
-      loc:
-        description: ID местоположения
+      failed_tasks:
         type: integer
-      nfpr:
-        description: 'Отменить исправление запроса: 0 или 1'
-        type: integer
-      os:
-        enum:
-        - ios
-        - android
+      id:
         type: string
-      pages:
-        maximum: 10
-        minimum: 1
-        type: integer
-      raw:
-        description: 'Полный HTML код страницы: "page"'
-        type: string
-      site_id:
-        type: integer
-      subdomains:
-        type: boolean
-      tbs:
-        description: Google-specific parameters
-        type: string
-      xml_api_key:
-        type: string
-      xml_base_url:
-        type: string
-      xml_user_id:
-        type: string
-    required:
-    - site_id
-    type: object
-  dto.TrackPositionsResponse:
-    properties:
-      count:
-        type: integer
-      message:
-        type: string
-    type: object
-  dto.TrackWordstatPositionsRequest:
-    properties:
-      regions:
-        description: ID региона Яндекса, nullable
-        type: integer
-      site_id:
-        type: integer
-      xml_api_key:
-        type: string
-      xml_base_url:
-        type: string
-      xml_user_id:
-        type: string
-    required:
-    - site_id
-    type: object
-  dto.TrackYandexPositionsRequest:
-    properties:
-      ads:
-        type: boolean
-      country:
-        type: string
-      device:
-        enum:
-        - desktop
-        - tablet
-        - mobile
-        type: string
-      filter:
-        description: 'Скрывать похожие результаты: 0 или 1'
-        type: integer
-      groupby:
-        description: Yandex-specific parameters
-        type: integer
-      highlights:
-        description: 'Подсветка ключевых слов: 0 или 1'
-        type: integer
-      inindex:
-        description: 'Проверка индексации: 0 или 1'
-        type: integer
-      lang:
-        type: string
-      lr:
-        description: ID региона Яндекса
-        type: integer
-      os:
-        enum:
-        - ios
-        - android
-        type: string
-      pages:
-        maximum: 10
-        minimum: 1
-        type: integer
-      raw:
-        description: 'Полный HTML код страницы: "page"'
-        type: string
-      site_id:
-        type: integer
-      strict:
-        description: 'Режим строгого соответствия: 0 или 1'
-        type: integer
-      subdomains:
-        type: boolean
-      within:
-        description: 'Фильтр по периоду: 77, 1, 2, 0'
-        type: integer
-      xml_api_key:
-        type: string
-      xml_base_url:
-        type: string
-      xml_user_id:
-        type: string
-    required:
-    - site_id
-    type: object
-  dto.Trends:
-    properties:
-      declined:
-        type: integer
-      improved:
-        type: integer
-      stable:
-        type: integer
-    type: object
-  dto.VisibilityStats:
-    properties:
-      avg_position:
+      progress:
+        description: Процент выполнения
         type: number
-      best_position:
+      site_id:
         type: integer
-      median_position:
+      source:
+        type: string
+      status:
+        type: string
+      total_tasks:
         type: integer
-      worst_position:
-        type: integer
+      updated_at:
+        type: string
     type: object
-host: localhost:8080
+  dto.TrackingJobsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.TrackingJobItem'
+        type: array
+      meta:
+        $ref: '#/definitions/dto.MetaInfo'
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
+    type: object
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: API для отслеживания позиций сайтов в поисковых системах
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: Go SEO API
-  version: "1.0"
+  contact: {}
 paths:
   /api/keywords:
     get:
@@ -511,263 +200,6 @@ paths:
       summary: Delete a keyword
       tags:
       - keywords
-  /api/positions/combined:
-    get:
-      description: Get combined positions data from Google/Yandex and Wordstat sources
-        with pagination support
-      parameters:
-      - description: Site ID
-        in: query
-        name: site_id
-        required: true
-        type: integer
-      - description: Source filter (optional) - google or yandex
-        enum:
-        - google
-        - yandex
-        in: query
-        name: source
-        type: string
-      - description: Include Wordstat data (optional) - true or false
-        in: query
-        name: wordstat
-        type: boolean
-      - description: Start date filter (optional) - YYYY-MM-DD format
-        in: query
-        name: date_from
-        type: string
-      - description: End date filter (optional) - YYYY-MM-DD format
-        in: query
-        name: date_to
-        type: string
-      - description: 'Page number (default: 1)'
-        in: query
-        name: page
-        type: integer
-      - description: 'Items per page (default: 50, max: 100)'
-        in: query
-        name: per_page
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.CombinedPositionsResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Get combined positions with pagination
-      tags:
-      - positions
-  /api/positions/history:
-    get:
-      description: Get positions history for specific site and optional keyword with
-        pagination support
-      parameters:
-      - description: Site ID
-        in: query
-        name: site_id
-        required: true
-        type: integer
-      - description: Keyword ID (optional)
-        in: query
-        name: keyword_id
-        type: integer
-      - description: Source filter (optional) - google, yandex or wordstat
-        enum:
-        - google
-        - yandex
-        - wordstat
-        in: query
-        name: source
-        type: string
-      - description: Start date filter (optional) - YYYY-MM-DD format
-        in: query
-        name: date_from
-        type: string
-      - description: End date filter (optional) - YYYY-MM-DD format
-        in: query
-        name: date_to
-        type: string
-      - description: Get only latest data for each keyword (optional) - true or false
-        in: query
-        name: last
-        type: boolean
-      - description: 'Page number (default: 1)'
-        in: query
-        name: page
-        type: integer
-      - description: 'Items per page (default: 50, max: 100)'
-        in: query
-        name: per_page
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.PositionHistoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Get positions history with pagination
-      tags:
-      - positions
-  /api/positions/latest:
-    get:
-      description: Get latest positions for all sites and keywords
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/dto.PositionResponse'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Get latest positions
-      tags:
-      - positions
-  /api/positions/statistics:
-    post:
-      consumes:
-      - application/json
-      description: Get position statistics for specific site and source within date
-        range
-      parameters:
-      - description: Statistics parameters
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.PositionStatisticsRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.PositionStatisticsResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Get position statistics
-      tags:
-      - positions
-  /api/positions/track-google:
-    post:
-      consumes:
-      - application/json
-      description: Track Google positions for specific site and its keywords. Can
-        include subdomains in search.
-      parameters:
-      - description: Google tracking parameters
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.TrackGooglePositionsRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.TrackPositionsResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Track Google positions for specific site
-      tags:
-      - positions
-  /api/positions/track-wordstat:
-    post:
-      consumes:
-      - application/json
-      description: Track Wordstat positions for specific site and its keywords.
-      parameters:
-      - description: Wordstat tracking parameters
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.TrackWordstatPositionsRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.TrackPositionsResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Track Wordstat positions for specific site
-      tags:
-      - positions
-  /api/positions/track-yandex:
-    post:
-      consumes:
-      - application/json
-      description: Track Yandex positions for specific site and its keywords. Can
-        include subdomains in search.
-      parameters:
-      - description: Yandex tracking parameters
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.TrackYandexPositionsRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.TrackPositionsResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Track Yandex positions for specific site
-      tags:
-      - positions
   /api/sites:
     get:
       description: Get list of tracked sites. If ids parameter is provided, returns
@@ -851,4 +283,45 @@ paths:
       summary: Delete a site
       tags:
       - sites
+  /api/tracking-jobs:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает постраничный список джобов отслеживания позиций с возможностью
+        фильтрации по сайту и статусу
+      parameters:
+      - description: ID сайта для фильтрации
+        in: query
+        name: site_id
+        type: integer
+      - description: Статус джоба (pending, running, completed, failed, cancelled)
+        in: query
+        name: status
+        type: string
+      - description: Номер страницы (по умолчанию 1)
+        in: query
+        name: page
+        type: integer
+      - description: Количество записей на странице (по умолчанию 20, максимум 100)
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TrackingJobsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Получить список джобов с пагинацией
+      tags:
+      - tracking-jobs
 swagger: "2.0"
