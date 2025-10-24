@@ -13,6 +13,7 @@ type TrackingJobRepository interface {
 	UpdateProgress(id string, completed, failed int) error
 	GetBySiteID(siteID int) ([]*entities.TrackingJob, error)
 	GetByStatus(status entities.TrackingTaskStatus) ([]*entities.TrackingJob, error)
+	GetJobsWithPagination(page, perPage int, siteID *int, status *entities.TrackingTaskStatus) ([]*entities.TrackingJob, int64, error)
 	Delete(id string) error
 }
 
@@ -39,4 +40,3 @@ type TrackingResultRepository interface {
 	Delete(id string) error
 	DeleteByJobID(jobID string) error
 }
-

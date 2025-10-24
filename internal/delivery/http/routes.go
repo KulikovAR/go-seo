@@ -13,6 +13,7 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 	siteHandler := handlers.NewSiteHandler(useCases.Site)
 	keywordHandler := handlers.NewKeywordHandler(useCases.Keyword)
 	positionHandler := handlers.NewPositionHandler(useCases.PositionTracking, useCases.AsyncPositionTracking)
+	trackingJobHandler := handlers.NewTrackingJobHandler(useCases.TrackingJob)
 
 	api := r.Group("/api")
 	{
@@ -39,6 +40,11 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 			positions.GET("/latest", positionHandler.GetLatestPositions)
 			positions.POST("/statistics", positionHandler.GetPositionStatistics)
 			positions.GET("/combined", positionHandler.GetCombinedPositions)
+		}
+
+		trackingJobs := api.Group("/tracking-jobs")
+		{
+			trackingJobs.GET("", trackingJobHandler.GetTrackingJobs)
 		}
 	}
 

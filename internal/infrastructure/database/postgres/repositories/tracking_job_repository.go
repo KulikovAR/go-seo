@@ -146,6 +146,51 @@ func (r *TrackingJobRepository) GetByStatus(status entities.TrackingTaskStatus) 
 	return jobs, nil
 }
 
+func (r *TrackingJobRepository) GetJobsWithPagination(page, perPage int, siteID *int, status *entities.TrackingTaskStatus) ([]*entities.TrackingJob, int64, error) {
+	var jobModels []models.TrackingJob
+	var total int64
+
+	query := r.db.Model(&models.TrackingJob{})
+
+	// Применяем фильтры
+	if siteID != nil {
+		query = query.Where("site_id = ?", *siteID)
+	}
+	if status != nil {
+		query = query.Where("status = ?", string(*status))
+	}
+
+	// Получаем общее количество записей
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Применяем пагинацию и сортировку
+	offset := (page - 1) * perPage
+	if err := query.Order("created_at DESC").Offset(offset).Limit(perPage).Find(&jobModels).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var jobs []*entities.TrackingJob
+	for _, model := range jobModels {
+		jobs = append(jobs, &entities.TrackingJob{
+			ID:             model.ID,
+			SiteID:         model.SiteID,
+			Source:         model.Source,
+			Status:         entities.TrackingTaskStatus(model.Status),
+			CreatedAt:      model.CreatedAt,
+			UpdatedAt:      model.UpdatedAt,
+			CompletedAt:    model.CompletedAt,
+			TotalTasks:     model.TotalTasks,
+			CompletedTasks: model.CompletedTasks,
+			FailedTasks:    model.FailedTasks,
+			Error:          model.Error,
+		})
+	}
+
+	return jobs, total, nil
+}
+
 func (r *TrackingJobRepository) Delete(id string) error {
 	return r.db.Delete(&models.TrackingJob{}, "id = ?", id).Error
 }

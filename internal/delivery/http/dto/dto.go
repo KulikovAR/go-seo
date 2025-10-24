@@ -250,6 +250,34 @@ type CombinedPositionItem struct {
 	Wordstat *PositionData `json:"wordstat"`
 }
 
+type TrackingJobsRequest struct {
+	SiteID  *int    `form:"site_id"`
+	Status  *string `form:"status" binding:"omitempty,oneof=pending running completed failed cancelled"`
+	Page    int     `form:"page" binding:"omitempty,min=1"`
+	PerPage int     `form:"per_page" binding:"omitempty,min=1,max=100"`
+}
+
+type TrackingJobsResponse struct {
+	Data       []TrackingJobItem `json:"data"`
+	Pagination PaginationInfo    `json:"pagination"`
+	Meta       MetaInfo          `json:"meta"`
+}
+
+type TrackingJobItem struct {
+	ID             string     `json:"id"`
+	SiteID         int        `json:"site_id"`
+	Source         string     `json:"source"`
+	Status         string     `json:"status"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
+	CompletedAt    *time.Time `json:"completed_at,omitempty"`
+	TotalTasks     int        `json:"total_tasks"`
+	CompletedTasks int        `json:"completed_tasks"`
+	FailedTasks    int        `json:"failed_tasks"`
+	Error          string     `json:"error,omitempty"`
+	Progress       float64    `json:"progress"` // Процент выполнения
+}
+
 type PositionData struct {
 	Rank   int       `json:"rank"`
 	Source string    `json:"source"`

@@ -656,6 +656,67 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/tracking-jobs": {
+            "get": {
+                "description": "Возвращает постраничный список джобов отслеживания позиций с возможностью фильтрации по сайту и статусу",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tracking-jobs"
+                ],
+                "summary": "Получить список джобов с пагинацией",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID сайта для фильтрации",
+                        "name": "site_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Статус джоба (pending, running, completed, failed, cancelled)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Номер страницы (по умолчанию 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Количество записей на странице (по умолчанию 20, максимум 100)",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TrackingJobsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1275,6 +1336,65 @@ const docTemplate = `{
                 },
                 "worst_position": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.TrackingJobItem": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "type": "string"
+                },
+                "completed_tasks": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "failed_tasks": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "progress": {
+                    "description": "Процент выполнения",
+                    "type": "number"
+                },
+                "site_id": {
+                    "type": "integer"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "total_tasks": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TrackingJobsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.TrackingJobItem"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
                 }
             }
         }
