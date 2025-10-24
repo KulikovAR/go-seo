@@ -127,13 +127,13 @@ func CreateTables(db *gorm.DB) error {
 		return err
 	}
 
-	if err := db.Exec(`
-		CREATE INDEX IF NOT EXISTS idx_positions_trends 
-		ON positions (keyword_id, date DESC, rank) 
-		WHERE date >= CURRENT_DATE - INTERVAL '30 days';
-	`).Error; err != nil {
-		return err
-	}
+	//if err := db.Exec(`
+	//	CREATE INDEX IF NOT EXISTS idx_positions_trends
+	//	ON positions (keyword_id, date DESC, rank)
+	//	WHERE date >= CURRENT_DATE - INTERVAL '30 days';
+	//`).Error; err != nil {
+	//	return err
+	//} - пока без этого, ждем переезда на 16 версию
 
 	return nil
 }
