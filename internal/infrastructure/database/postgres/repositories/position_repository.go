@@ -522,9 +522,6 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 				keyword_id,
 				CASE 
 					WHEN rank = 0 THEN 'not_found'
-					WHEN rank BETWEEN 1 AND 3 THEN 'top_3'
-					WHEN rank BETWEEN 4 AND 10 THEN 'top_10'
-					WHEN rank BETWEEN 11 AND 20 THEN 'top_20'
 					WHEN rank BETWEEN 1 AND 3 THEN 'range_1_3'
 					WHEN rank BETWEEN 4 AND 10 THEN 'range_4_10'
 					WHEN rank BETWEEN 11 AND 30 THEN 'range_11_30'
@@ -545,16 +542,16 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 				AVG(CASE WHEN rank > 0 THEN rank END) as avg_position,
 				MIN(CASE WHEN rank > 0 THEN rank END) as best_position,
 				MAX(CASE WHEN rank > 0 THEN rank END) as worst_position,
-				COUNT(CASE WHEN position_category = 'top_3' THEN 1 END) as top_3,
-				COUNT(CASE WHEN position_category = 'top_10' THEN 1 END) as top_10,
-				COUNT(CASE WHEN position_category = 'top_20' THEN 1 END) as top_20,
-				COUNT(CASE WHEN position_category = 'not_found' THEN 1 END) as not_found,
-				COUNT(CASE WHEN position_category = 'range_1_3' THEN 1 END) as range_1_3,
-				COUNT(CASE WHEN position_category = 'range_4_10' THEN 1 END) as range_4_10,
-				COUNT(CASE WHEN position_category = 'range_11_30' THEN 1 END) as range_11_30,
-				COUNT(CASE WHEN position_category = 'range_31_50' THEN 1 END) as range_31_50,
-				COUNT(CASE WHEN position_category = 'range_51_100' THEN 1 END) as range_51_100,
-				COUNT(CASE WHEN position_category = 'range_100_plus' THEN 1 END) as range_100_plus
+				COUNT(CASE WHEN rank BETWEEN 1 AND 3 THEN 1 END) as top_3,
+				COUNT(CASE WHEN rank BETWEEN 1 AND 10 THEN 1 END) as top_10,
+				COUNT(CASE WHEN rank BETWEEN 1 AND 20 THEN 1 END) as top_20,
+				COUNT(CASE WHEN rank = 0 THEN 1 END) as not_found,
+				COUNT(CASE WHEN rank BETWEEN 1 AND 3 THEN 1 END) as range_1_3,
+				COUNT(CASE WHEN rank BETWEEN 4 AND 10 THEN 1 END) as range_4_10,
+				COUNT(CASE WHEN rank BETWEEN 11 AND 30 THEN 1 END) as range_11_30,
+				COUNT(CASE WHEN rank BETWEEN 31 AND 50 THEN 1 END) as range_31_50,
+				COUNT(CASE WHEN rank BETWEEN 51 AND 100 THEN 1 END) as range_51_100,
+				COUNT(CASE WHEN rank > 100 THEN 1 END) as range_100_plus
 			FROM position_stats
 		)
 		SELECT * FROM aggregated_stats
