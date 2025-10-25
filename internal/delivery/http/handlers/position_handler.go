@@ -23,6 +23,15 @@ func NewPositionHandler(positionTrackingUseCase *usecases.PositionTrackingUseCas
 	}
 }
 
+// @Summary Track Google positions
+// @Description Start async Google position tracking for site keywords
+// @Accept json
+// @Produce json
+// @Param request body dto.TrackGooglePositionsRequest true "Google tracking parameters"
+// @Success 200 {object} dto.AsyncTrackPositionsResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/track-google [post]
 func (h *PositionHandler) TrackGooglePositions(c *gin.Context) {
 	var req dto.TrackGooglePositionsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -97,6 +106,15 @@ func (h *PositionHandler) TrackGooglePositions(c *gin.Context) {
 	})
 }
 
+// @Summary Track Yandex positions
+// @Description Start async Yandex position tracking for site keywords
+// @Accept json
+// @Produce json
+// @Param request body dto.TrackYandexPositionsRequest true "Yandex tracking parameters"
+// @Success 200 {object} dto.AsyncTrackPositionsResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/track-yandex [post]
 func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
 	var req dto.TrackYandexPositionsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -172,6 +190,15 @@ func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
 	})
 }
 
+// @Summary Track Wordstat positions
+// @Description Start async Wordstat position tracking for site keywords
+// @Accept json
+// @Produce json
+// @Param request body dto.TrackWordstatPositionsRequest true "Wordstat tracking parameters"
+// @Success 200 {object} dto.AsyncTrackPositionsResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/track-wordstat [post]
 func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 	var req dto.TrackWordstatPositionsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -226,6 +253,22 @@ func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 	})
 }
 
+// @Summary Get positions history
+// @Description Get paginated positions history with filtering options
+// @Accept json
+// @Produce json
+// @Param site_id query int true "Site ID"
+// @Param keyword_id query int false "Keyword ID"
+// @Param source query string false "Source (google, yandex, wordstat)"
+// @Param date_from query string false "Start date (YYYY-MM-DD)"
+// @Param date_to query string false "End date (YYYY-MM-DD)"
+// @Param last query bool false "Get only last positions"
+// @Param page query int false "Page number (default 1)"
+// @Param per_page query int false "Items per page (default 50, max 100)"
+// @Success 200 {object} dto.PositionHistoryResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/history [get]
 func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 	startTime := time.Now()
 
@@ -354,6 +397,21 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// @Summary Get combined positions
+// @Description Get paginated combined positions from multiple sources
+// @Accept json
+// @Produce json
+// @Param site_id query int true "Site ID"
+// @Param source query string false "Source (google, yandex)"
+// @Param wordstat query bool false "Include Wordstat data"
+// @Param date_from query string false "Start date (YYYY-MM-DD)"
+// @Param date_to query string false "End date (YYYY-MM-DD)"
+// @Param page query int false "Page number (default 1)"
+// @Param per_page query int false "Items per page (default 50, max 100)"
+// @Success 200 {object} dto.CombinedPositionsResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/combined [get]
 func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
 	startTime := time.Now()
 
@@ -496,6 +554,15 @@ func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// @Summary Get position statistics
+// @Description Get position statistics for a site within date range
+// @Accept json
+// @Produce json
+// @Param request body dto.PositionStatisticsRequest true "Statistics parameters"
+// @Success 200 {object} dto.PositionStatisticsResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/statistics [post]
 func (h *PositionHandler) GetPositionStatistics(c *gin.Context) {
 	var req dto.PositionStatisticsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -575,6 +642,14 @@ func (h *PositionHandler) GetPositionStatistics(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// @Summary Get latest positions
+// @Description Get latest positions for all keywords
+// @Accept json
+// @Produce json
+// @Success 200 {array} dto.PositionResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/positions/latest [get]
 func (h *PositionHandler) GetLatestPositions(c *gin.Context) {
 	positions, err := h.positionTrackingUseCase.GetLatestPositions()
 	if err != nil {
