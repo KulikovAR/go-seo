@@ -514,142 +514,88 @@ func (r *positionRepository) toDomain(model *positionModels.Position) *entities.
 func (r *positionRepository) GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time) (*entities.PositionStatistics, error) {
 	var stats entities.PositionStatistics
 
+	// Основной оптимизированный запрос для получения всех статистик за один раз
+	query := `
+		WITH position_stats AS (
+			SELECT 
+				rank,
+				keyword_id,
+				CASE 
+					WHEN rank = 0 THEN 'not_found'
+					WHEN rank BETWEEN 1 AND 3 THEN 'top_3'
+					WHEN rank BETWEEN 4 AND 10 THEN 'top_10'
+					WHEN rank BETWEEN 11 AND 20 THEN 'top_20'
+					WHEN rank BETWEEN 1 AND 3 THEN 'range_1_3'
+					WHEN rank BETWEEN 4 AND 10 THEN 'range_4_10'
+					WHEN rank BETWEEN 11 AND 30 THEN 'range_11_30'
+					WHEN rank BETWEEN 31 AND 50 THEN 'range_31_50'
+					WHEN rank BETWEEN 51 AND 100 THEN 'range_51_100'
+					WHEN rank > 100 THEN 'range_100_plus'
+					ELSE 'not_found'
+				END as position_category
+			FROM positions 
+			WHERE site_id = ? AND source = ? AND date >= ? AND date <= ?
+		),
+		aggregated_stats AS (
+			SELECT 
+				COUNT(*) as total_positions,
+				COUNT(DISTINCT keyword_id) as keywords_count,
+				COUNT(CASE WHEN rank > 0 THEN 1 END) as visible,
+				COUNT(CASE WHEN rank = 0 THEN 1 END) as not_visible,
+				AVG(CASE WHEN rank > 0 THEN rank END) as avg_position,
+				MIN(CASE WHEN rank > 0 THEN rank END) as best_position,
+				MAX(CASE WHEN rank > 0 THEN rank END) as worst_position,
+				COUNT(CASE WHEN position_category = 'top_3' THEN 1 END) as top_3,
+				COUNT(CASE WHEN position_category = 'top_10' THEN 1 END) as top_10,
+				COUNT(CASE WHEN position_category = 'top_20' THEN 1 END) as top_20,
+				COUNT(CASE WHEN position_category = 'not_found' THEN 1 END) as not_found,
+				COUNT(CASE WHEN position_category = 'range_1_3' THEN 1 END) as range_1_3,
+				COUNT(CASE WHEN position_category = 'range_4_10' THEN 1 END) as range_4_10,
+				COUNT(CASE WHEN position_category = 'range_11_30' THEN 1 END) as range_11_30,
+				COUNT(CASE WHEN position_category = 'range_31_50' THEN 1 END) as range_31_50,
+				COUNT(CASE WHEN position_category = 'range_51_100' THEN 1 END) as range_51_100,
+				COUNT(CASE WHEN position_category = 'range_100_plus' THEN 1 END) as range_100_plus
+			FROM position_stats
+		)
+		SELECT * FROM aggregated_stats
+	`
+
 	var result struct {
 		TotalPositions int     `json:"total_positions"`
 		KeywordsCount  int     `json:"keywords_count"`
+		Visible        int     `json:"visible"`
+		NotVisible     int     `json:"not_visible"`
 		AvgPosition    float64 `json:"avg_position"`
-		MinPosition    int     `json:"min_position"`
-		MaxPosition    int     `json:"max_position"`
+		BestPosition   int     `json:"best_position"`
+		WorstPosition  int     `json:"worst_position"`
 		Top3           int     `json:"top_3"`
 		Top10          int     `json:"top_10"`
 		Top20          int     `json:"top_20"`
 		NotFound       int     `json:"not_found"`
+		Range1_3       int     `json:"range_1_3"`
+		Range4_10      int     `json:"range_4_10"`
+		Range11_30     int     `json:"range_11_30"`
+		Range31_50     int     `json:"range_31_50"`
+		Range51_100    int     `json:"range_51_100"`
+		Range100Plus   int     `json:"range_100_plus"`
 	}
 
-	query := `
-		SELECT 
-			COUNT(*) as total_positions,
-			COUNT(DISTINCT keyword_id) as keywords_count,
-			AVG(rank) as avg_position,
-			MIN(rank) as min_position,
-			MAX(rank) as max_position,
-			(SELECT COUNT(*) FROM positions p2 WHERE p2.site_id = ? AND p2.source = ? AND p2.date >= ? AND p2.date <= ? AND p2.rank <= 3) as top_3,
-			(SELECT COUNT(*) FROM positions p2 WHERE p2.site_id = ? AND p2.source = ? AND p2.date >= ? AND p2.date <= ? AND p2.rank <= 10) as top_10,
-			(SELECT COUNT(*) FROM positions p2 WHERE p2.site_id = ? AND p2.source = ? AND p2.date >= ? AND p2.date <= ? AND p2.rank <= 20) as top_20,
-			(SELECT COUNT(*) FROM positions p2 WHERE p2.site_id = ? AND p2.source = ? AND p2.date >= ? AND p2.date <= ? AND p2.rank > 100) as not_found
+	if err := r.db.Raw(query, siteID, source, dateFrom, dateTo).Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	// Получаем медианную позицию отдельным запросом
+	var medianPosition float64
+	medianQuery := `
+		SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY rank) as median_position
 		FROM positions 
-		WHERE site_id = ? AND source = ? AND date >= ? AND date <= ?
+		WHERE site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank > 0
 	`
-
-	if err := r.db.Raw(query, siteID, source, dateFrom, dateTo, siteID, source, dateFrom, dateTo, siteID, source, dateFrom, dateTo, siteID, source, dateFrom, dateTo, siteID, source, dateFrom, dateTo).Scan(&result).Error; err != nil {
-		return nil, err
+	if err := r.db.Raw(medianQuery, siteID, source, dateFrom, dateTo).Scan(&medianPosition).Error; err != nil {
+		medianPosition = 0
 	}
 
-	stats.TotalPositions = result.TotalPositions
-	stats.KeywordsCount = result.KeywordsCount
-	stats.VisibilityStats.AvgPosition = result.AvgPosition
-	stats.VisibilityStats.BestPosition = result.MinPosition
-	stats.VisibilityStats.WorstPosition = result.MaxPosition
-	var top3, top10, top20, notFound, visible, notVisible int64
-	var range1_3, range4_10, range11_30, range31_50, range51_100, range100Plus int64
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 3).
-		Count(&top3).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 10).
-		Count(&top10).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 20).
-		Count(&top20).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank > ?", siteID, source, dateFrom, dateTo, 100).
-		Count(&notFound).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank > ?", siteID, source, dateFrom, dateTo, 0).
-		Count(&visible).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank = ?", siteID, source, dateFrom, dateTo, 0).
-		Count(&notVisible).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank >= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 1, 3).
-		Count(&range1_3).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank >= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 4, 10).
-		Count(&range4_10).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank >= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 11, 30).
-		Count(&range11_30).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank >= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 31, 50).
-		Count(&range31_50).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank >= ? AND rank <= ?", siteID, source, dateFrom, dateTo, 51, 100).
-		Count(&range51_100).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.db.Model(&positionModels.Position{}).
-		Where("site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank > ?", siteID, source, dateFrom, dateTo, 100).
-		Count(&range100Plus).Error; err != nil {
-		return nil, err
-	}
-
-	stats.TotalPositions = result.TotalPositions
-	stats.KeywordsCount = result.KeywordsCount
-	stats.Visible = int(visible)
-	stats.NotVisible = int(notVisible)
-	stats.VisibilityStats.AvgPosition = result.AvgPosition
-	stats.VisibilityStats.BestPosition = result.MinPosition
-	stats.VisibilityStats.WorstPosition = result.MaxPosition
-	stats.PositionDistribution = entities.PositionDistribution{
-		Top3:     int(top3),
-		Top10:    int(top10),
-		Top20:    int(top20),
-		NotFound: int(notFound),
-	}
-
-	stats.PositionRanges = entities.PositionRanges{
-		Range1_3:     int(range1_3),
-		Range4_10:    int(range4_10),
-		Range11_30:   int(range11_30),
-		Range31_50:   int(range31_50),
-		Range51_100:  int(range51_100),
-		Range100Plus: int(range100Plus),
-	}
-
-	stats.VisibilityStats.MedianPosition = int(result.AvgPosition)
-
+	// Получаем тренды
 	var trends struct {
 		Improved int `json:"improved"`
 		Declined int `json:"declined"`
@@ -688,6 +634,33 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 		trends.Improved = 0
 		trends.Declined = 0
 		trends.Stable = 0
+	}
+
+	// Заполняем структуру статистики
+	stats.TotalPositions = result.TotalPositions
+	stats.KeywordsCount = result.KeywordsCount
+	stats.Visible = result.Visible
+	stats.NotVisible = result.NotVisible
+	stats.VisibilityStats.AvgPosition = result.AvgPosition
+	stats.VisibilityStats.BestPosition = result.BestPosition
+	stats.VisibilityStats.WorstPosition = result.WorstPosition
+	stats.VisibilityStats.MedianPosition = int(medianPosition)
+
+	stats.PositionDistribution = entities.PositionDistribution{
+		Top3:     result.Top3,
+		Top10:    result.Top10,
+		Top20:    result.Top20,
+		NotFound: result.NotFound,
+	}
+
+	stats.PositionRanges = entities.PositionRanges{
+		Range1_3:     result.Range1_3,
+		Range4_10:    result.Range4_10,
+		Range11_30:   result.Range11_30,
+		Range31_50:   result.Range31_50,
+		Range51_100:  result.Range51_100,
+		Range100Plus: result.Range100Plus,
+		NotFound:     result.NotFound,
 	}
 
 	stats.Trends = entities.Trends{

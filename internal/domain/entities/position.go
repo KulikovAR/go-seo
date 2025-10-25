@@ -47,6 +47,7 @@ type PositionRanges struct {
 	Range31_50   int
 	Range51_100  int
 	Range100Plus int
+	NotFound     int
 }
 
 type VisibilityStats struct {

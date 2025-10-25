@@ -625,6 +625,7 @@ func (h *PositionHandler) GetPositionStatistics(c *gin.Context) {
 			Range31_50:   stats.PositionRanges.Range31_50,
 			Range51_100:  stats.PositionRanges.Range51_100,
 			Range100Plus: stats.PositionRanges.Range100Plus,
+			NotFound:     stats.PositionRanges.NotFound,
 		},
 		VisibilityStats: dto.VisibilityStats{
 			AvgPosition:    stats.VisibilityStats.AvgPosition,

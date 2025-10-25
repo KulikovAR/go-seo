@@ -207,6 +207,7 @@ type PositionRanges struct {
 	Range31_50   int `json:"31_50"`
 	Range51_100  int `json:"51_100"`
 	Range100Plus int `json:"100_plus"`
+	NotFound     int `json:"not_found"`
 }
 
 type VisibilityStats struct {
