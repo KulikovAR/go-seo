@@ -514,47 +514,40 @@ func (r *positionRepository) toDomain(model *positionModels.Position) *entities.
 func (r *positionRepository) GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time) (*entities.PositionStatistics, error) {
 	var stats entities.PositionStatistics
 
-	// Основной оптимизированный запрос для получения всех статистик за один раз
+	// Упрощенный SQL запрос без CTE
 	query := `
-		WITH position_stats AS (
-			SELECT 
-				rank,
-				keyword_id,
-				CASE 
-					WHEN rank = 0 THEN 'not_found'
-					WHEN rank BETWEEN 1 AND 3 THEN 'range_1_3'
-					WHEN rank BETWEEN 4 AND 10 THEN 'range_4_10'
-					WHEN rank BETWEEN 11 AND 30 THEN 'range_11_30'
-					WHEN rank BETWEEN 31 AND 50 THEN 'range_31_50'
-					WHEN rank BETWEEN 51 AND 100 THEN 'range_51_100'
-					WHEN rank > 100 THEN 'range_100_plus'
-					ELSE 'not_found'
-				END as position_category
-			FROM positions 
-			WHERE site_id = ? AND source = ? AND date >= ? AND date <= ?
-		),
-		aggregated_stats AS (
-			SELECT 
-				COUNT(*) as total_positions,
-				COUNT(DISTINCT keyword_id) as keywords_count,
-				COUNT(CASE WHEN rank > 0 THEN 1 END) as visible,
-				COUNT(CASE WHEN rank = 0 THEN 1 END) as not_visible,
-				AVG(CASE WHEN rank > 0 THEN rank END) as avg_position,
-				MIN(CASE WHEN rank > 0 THEN rank END) as best_position,
-				MAX(CASE WHEN rank > 0 THEN rank END) as worst_position,
-				COUNT(CASE WHEN rank BETWEEN 1 AND 3 THEN 1 END) as top_3,
-				COUNT(CASE WHEN rank BETWEEN 1 AND 10 THEN 1 END) as top_10,
-				COUNT(CASE WHEN rank BETWEEN 1 AND 20 THEN 1 END) as top_20,
-				COUNT(CASE WHEN rank = 0 THEN 1 END) as not_found,
-				COUNT(CASE WHEN rank BETWEEN 1 AND 3 THEN 1 END) as range_1_3,
-				COUNT(CASE WHEN rank BETWEEN 4 AND 10 THEN 1 END) as range_4_10,
-				COUNT(CASE WHEN rank BETWEEN 11 AND 30 THEN 1 END) as range_11_30,
-				COUNT(CASE WHEN rank BETWEEN 31 AND 50 THEN 1 END) as range_31_50,
-				COUNT(CASE WHEN rank BETWEEN 51 AND 100 THEN 1 END) as range_51_100,
-				COUNT(CASE WHEN rank > 100 THEN 1 END) as range_100_plus
-			FROM position_stats
-		)
-		SELECT * FROM aggregated_stats
+		SELECT 
+			-- Общие статистики
+			COUNT(*) as total_positions,
+			COUNT(DISTINCT keyword_id) as keywords_count,
+			
+			-- Видимость
+			COUNT(CASE WHEN rank > 0 THEN 1 END) as visible,
+			COUNT(CASE WHEN rank = 0 THEN 1 END) as not_visible,
+			
+			-- Статистики позиций (только для видимых)
+			ROUND(AVG(CASE WHEN rank > 0 THEN rank END), 2) as avg_position,
+			MIN(CASE WHEN rank > 0 THEN rank END) as best_position,
+			MAX(CASE WHEN rank > 0 THEN rank END) as worst_position,
+			
+			-- Распределение позиций (PositionDistribution)
+			COUNT(CASE WHEN rank BETWEEN 1 AND 3 THEN 1 END) as top_3,
+			COUNT(CASE WHEN rank BETWEEN 1 AND 10 THEN 1 END) as top_10,
+			COUNT(CASE WHEN rank BETWEEN 1 AND 20 THEN 1 END) as top_20,
+			COUNT(CASE WHEN rank = 0 THEN 1 END) as not_found,
+			
+			-- Диапазоны позиций (PositionRanges)
+			COUNT(CASE WHEN rank BETWEEN 1 AND 3 THEN 1 END) as range_1_3_count,
+			COUNT(CASE WHEN rank BETWEEN 4 AND 10 THEN 1 END) as range_4_10_count,
+			COUNT(CASE WHEN rank BETWEEN 11 AND 30 THEN 1 END) as range_11_30_count,
+			COUNT(CASE WHEN rank BETWEEN 31 AND 50 THEN 1 END) as range_31_50_count,
+			COUNT(CASE WHEN rank BETWEEN 51 AND 100 THEN 1 END) as range_51_100_count,
+			COUNT(CASE WHEN rank > 100 THEN 1 END) as range_100_plus_count
+		FROM positions 
+		WHERE site_id = $1 
+		  AND source = $2 
+		  AND date >= $3::date 
+		  AND date <= $4::date
 	`
 
 	var result struct {
@@ -569,16 +562,45 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 		Top10          int     `json:"top_10"`
 		Top20          int     `json:"top_20"`
 		NotFound       int     `json:"not_found"`
-		Range1_3       int     `json:"range_1_3"`
-		Range4_10      int     `json:"range_4_10"`
-		Range11_30     int     `json:"range_11_30"`
-		Range31_50     int     `json:"range_31_50"`
-		Range51_100    int     `json:"range_51_100"`
-		Range100Plus   int     `json:"range_100_plus"`
+		Range1_3       int     `json:"range_1_3_count"`
+		Range4_10      int     `json:"range_4_10_count"`
+		Range11_30     int     `json:"range_11_30_count"`
+		Range31_50     int     `json:"range_31_50_count"`
+		Range51_100    int     `json:"range_51_100_count"`
+		Range100Plus   int     `json:"range_100_plus_count"`
 	}
 
-	if err := r.db.Raw(query, siteID, source, dateFrom, dateTo).Scan(&result).Error; err != nil {
+	// Выполняем запрос с использованием Rows для детального контроля
+	rows, err := r.db.Raw(query, siteID, source, dateFrom, dateTo).Rows()
+	if err != nil {
 		return nil, err
+	}
+	defer rows.Close()
+
+	// Читаем результаты вручную
+	if rows.Next() {
+		err := rows.Scan(
+			&result.TotalPositions,
+			&result.KeywordsCount,
+			&result.Visible,
+			&result.NotVisible,
+			&result.AvgPosition,
+			&result.BestPosition,
+			&result.WorstPosition,
+			&result.Top3,
+			&result.Top10,
+			&result.Top20,
+			&result.NotFound,
+			&result.Range1_3,
+			&result.Range4_10,
+			&result.Range11_30,
+			&result.Range31_50,
+			&result.Range51_100,
+			&result.Range100Plus,
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Получаем медианную позицию отдельным запросом
@@ -586,7 +608,7 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 	medianQuery := `
 		SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY rank) as median_position
 		FROM positions 
-		WHERE site_id = ? AND source = ? AND date >= ? AND date <= ? AND rank > 0
+		WHERE site_id = $1 AND source = $2 AND date >= $3::date AND date <= $4::date AND rank > 0
 	`
 	if err := r.db.Raw(medianQuery, siteID, source, dateFrom, dateTo).Scan(&medianPosition).Error; err != nil {
 		medianPosition = 0
@@ -603,8 +625,8 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 		WITH recent_data AS (
 			SELECT keyword_id, rank, date
 			FROM positions 
-			WHERE site_id = ? AND source = ? 
-			  AND date >= ? AND date <= ?
+			WHERE site_id = $1 AND source = $2 
+			  AND date >= $3::date AND date <= $4::date
 			  AND date >= CURRENT_DATE - INTERVAL '30 days'
 		),
 		keyword_changes AS (
