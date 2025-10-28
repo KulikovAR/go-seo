@@ -336,6 +336,25 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 
 	job.Status = entities.TaskStatusRunning
 	uc.jobRepo.UpdateStatus(jobID, entities.TaskStatusRunning)
+	uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", 0)
+
+	progressDone := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				j, err := uc.jobRepo.GetByID(jobID)
+				if err == nil && j.TotalTasks > 0 {
+					p := (j.CompletedTasks + j.FailedTasks) * 100 / j.TotalTasks
+					uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", p)
+				}
+			case <-progressDone:
+				return
+			}
+		}
+	}()
 
 	tasks, err := uc.taskRepo.GetByJobID(jobID)
 	if err != nil {
@@ -371,7 +390,12 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 	}
 	uc.jobRepo.Update(job)
 
-	uc.kafkaService.SendJobStatus(jobID, string(job.Status), job.Error)
+	close(progressDone)
+	if job.Status == entities.TaskStatusCompleted {
+		uc.kafkaService.SendJobStatus(jobID, string(job.Status), job.Error, 100)
+	} else {
+		uc.kafkaService.SendJobStatus(jobID, string(job.Status), job.Error)
+	}
 }
 
 func (uc *AsyncPositionTrackingUseCase) createBatches(tasks []*entities.TrackingTask, batchSize int) [][]*entities.TrackingTask {
@@ -986,4 +1010,9 @@ func (uc *AsyncPositionTrackingUseCase) updateJobProgress(jobID string, success 
 	}
 
 	uc.jobRepo.UpdateProgress(jobID, job.CompletedTasks, job.FailedTasks)
+
+	if job.TotalTasks > 0 {
+		progress := (job.CompletedTasks + job.FailedTasks) * 100 / job.TotalTasks
+		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", progress)
+	}
 }

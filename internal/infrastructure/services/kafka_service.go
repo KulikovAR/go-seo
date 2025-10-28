@@ -136,10 +136,15 @@ func (k *KafkaService) SendTaskStatus(message *TaskStatusMessage) error {
 	return k.sendMessage("tracking-status", message)
 }
 
-func (k *KafkaService) SendJobStatus(jobID string, status string, errorMsg string) error {
+func (k *KafkaService) SendJobStatus(jobID string, status string, errorMsg string, percent ...int) error {
 	if !k.enabled {
-		log.Printf("Kafka job message sent (log-only) - JobID: %s, Status: %s, Error: %s",
-			jobID, status, errorMsg)
+		if len(percent) > 0 {
+			log.Printf("Kafka job message sent (log-only) - JobID: %s, Status: %s, Error: %s, Percent: %d",
+				jobID, status, errorMsg, percent[0])
+		} else {
+			log.Printf("Kafka job message sent (log-only) - JobID: %s, Status: %s, Error: %s",
+				jobID, status, errorMsg)
+		}
 		return nil
 	}
 
@@ -148,6 +153,10 @@ func (k *KafkaService) SendJobStatus(jobID string, status string, errorMsg strin
 		"status":    status,
 		"error":     errorMsg,
 		"timestamp": time.Now(),
+	}
+
+	if len(percent) > 0 {
+		message["percent"] = percent[0]
 	}
 
 	return k.sendMessage("tracking-jobs", message)
