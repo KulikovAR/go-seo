@@ -829,16 +829,13 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 
 		var positions []positionModels.Position
 
-		query := r.db.Where("site_id = ? AND keyword_id = ?", siteID, keywordID)
+		query := r.db.Where("site_id = ? AND keyword_id = ? AND source != ?", siteID, keywordID, "wordstat")
 
 		if source != nil {
 			if *source == "google" {
 				query = query.Where("source = ?", "google")
 			} else if *source == "yandex" {
 				query = query.Where("source = ?", "yandex")
-			}
-			if !includeWordstat {
-				query = query.Where("source IN ?", []string{"google", "yandex"})
 			}
 		}
 
@@ -861,21 +858,14 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 		}
 
 		var googleYandexPositions []*entities.Position
-		var wordstatPosition *entities.Position
-
 		for _, model := range positions {
 			position := r.toDomain(&model)
-
-			if position.Source == "wordstat" {
-				if wordstatPosition == nil {
-					wordstatPosition = position
-				}
-			} else {
-				googleYandexPositions = append(googleYandexPositions, position)
-			}
+			googleYandexPositions = append(googleYandexPositions, position)
 		}
 
-		if includeWordstat && wordstatPosition == nil {
+		var wordstatPosition *entities.Position
+
+		if includeWordstat {
 			var wordstatModel positionModels.Position
 			wordstatQuery := r.db.Where("site_id = ? AND keyword_id = ? AND source = ?", siteID, keywordID, "wordstat")
 
@@ -886,17 +876,13 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 				wordstatQuery = wordstatQuery.Where("date <= ?", *dateTo)
 			}
 
-			// Фильтрация по рангу для wordstat в SQL
-			if rankFrom != nil {
-				wordstatQuery = wordstatQuery.Where("rank >= ?", *rankFrom)
-			}
-			if rankTo != nil {
-				wordstatQuery = wordstatQuery.Where("rank <= ?", *rankTo)
-			}
-
 			if err := wordstatQuery.Order("date DESC").First(&wordstatModel).Error; err == nil {
 				wordstatPosition = r.toDomain(&wordstatModel)
 			}
+		}
+
+		if len(googleYandexPositions) == 0 {
+			continue
 		}
 
 		var latestDate time.Time
@@ -917,7 +903,7 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 		allCombinedPositions = append(allCombinedPositions, combined)
 	}
 
-	return allCombinedPositions, totalKeywords, nil
+	return allCombinedPositions, int64(len(allCombinedPositions)), nil
 }
 
 func (r *positionRepository) GetLastUpdateDateBySiteIDExcludingSource(siteID int, excludeSource string) (*time.Time, error) {
