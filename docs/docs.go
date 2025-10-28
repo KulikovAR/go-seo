@@ -185,6 +185,18 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "description": "Minimum rank filter",
+                        "name": "rank_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Maximum rank filter",
+                        "name": "rank_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
                         "description": "Page number (default 1)",
                         "name": "page",
                         "in": "query"
@@ -966,6 +978,9 @@ const docTemplate = `{
                 },
                 "51_100": {
                     "type": "integer"
+                },
+                "not_found": {
+                    "type": "integer"
                 }
             }
         },
@@ -1090,6 +1105,9 @@ const docTemplate = `{
                 },
                 "keywords_count": {
                     "type": "integer"
+                },
+                "last_position_update": {
+                    "type": "string"
                 }
             }
         },

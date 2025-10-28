@@ -97,9 +97,10 @@ func (h *SiteHandler) CreateSite(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, dto.SiteResponse{
-		ID:            site.ID,
-		Domain:        site.Domain,
-		KeywordsCount: 0, // Новый сайт не имеет ключевых слов
+		ID:                 site.ID,
+		Domain:             site.Domain,
+		KeywordsCount:      0, // Новый сайт не имеет ключевых слов
+		LastPositionUpdate: nil, // Новый сайт не имеет позиций
 	})
 }
 
@@ -210,10 +211,18 @@ func (h *SiteHandler) GetSites(c *gin.Context) {
 			keywordsCount = 0
 		}
 
+		// Получаем дату последней позиции (исключая wordstat)
+		lastPositionUpdate, err := h.siteUseCase.GetLastPositionUpdateDate(site.ID)
+		if err != nil {
+			// Если не удалось получить дату, используем nil
+			lastPositionUpdate = nil
+		}
+
 		response[i] = dto.SiteResponse{
-			ID:            site.ID,
-			Domain:        site.Domain,
-			KeywordsCount: keywordsCount,
+			ID:                 site.ID,
+			Domain:             site.Domain,
+			KeywordsCount:      keywordsCount,
+			LastPositionUpdate: lastPositionUpdate,
 		}
 	}
 

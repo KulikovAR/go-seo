@@ -175,6 +175,8 @@ definitions:
         type: integer
       100_plus:
         type: integer
+      not_found:
+        type: integer
     type: object
   dto.PositionResponse:
     properties:
@@ -258,6 +260,8 @@ definitions:
         type: integer
       keywords_count:
         type: integer
+      last_position_update:
+        type: string
     type: object
   dto.TrackGooglePositionsRequest:
     properties:
@@ -564,6 +568,14 @@ paths:
         in: query
         name: date_to
         type: string
+      - description: Minimum rank filter
+        in: query
+        name: rank_from
+        type: integer
+      - description: Maximum rank filter
+        in: query
+        name: rank_to
+        type: integer
       - description: Page number (default 1)
         in: query
         name: page

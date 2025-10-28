@@ -1,6 +1,9 @@
 package usecases
 
-import "go-seo/internal/domain/entities"
+import (
+	"go-seo/internal/domain/entities"
+	"time"
+)
 
 // Интерфейсы для тестирования
 type SiteUseCaseInterface interface {
@@ -9,6 +12,7 @@ type SiteUseCaseInterface interface {
 	GetAllSites() ([]*entities.Site, error)
 	GetSitesByIDs(ids []int) ([]*entities.Site, error)
 	GetKeywordsCount(siteID int) (int, error)
+	GetLastPositionUpdateDate(siteID int) (*time.Time, error)
 }
 
 type KeywordUseCaseInterface interface {

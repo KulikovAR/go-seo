@@ -794,7 +794,7 @@ func (r *positionRepository) GetPositionsHistoryPaginated(siteID int, keywordID 
 	return positions, total, nil
 }
 
-func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, dateFrom, dateTo *time.Time, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
+func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, dateFrom, dateTo *time.Time, rankFrom, rankTo *int, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
 	offset := (page - 1) * perPage
 
 	var keywords []positionModels.Keyword
@@ -849,6 +849,13 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 			query = query.Where("date <= ?", *dateTo)
 		}
 
+		if rankFrom != nil {
+			query = query.Where("rank >= ?", *rankFrom)
+		}
+		if rankTo != nil {
+			query = query.Where("rank <= ?", *rankTo)
+		}
+
 		if err := query.Order("date DESC").Find(&positions).Error; err != nil {
 			return nil, 0, err
 		}
@@ -879,6 +886,14 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 				wordstatQuery = wordstatQuery.Where("date <= ?", *dateTo)
 			}
 
+			// Фильтрация по рангу для wordstat в SQL
+			if rankFrom != nil {
+				wordstatQuery = wordstatQuery.Where("rank >= ?", *rankFrom)
+			}
+			if rankTo != nil {
+				wordstatQuery = wordstatQuery.Where("rank <= ?", *rankTo)
+			}
+
 			if err := wordstatQuery.Order("date DESC").First(&wordstatModel).Error; err == nil {
 				wordstatPosition = r.toDomain(&wordstatModel)
 			}
@@ -903,4 +918,21 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 	}
 
 	return allCombinedPositions, totalKeywords, nil
+}
+
+func (r *positionRepository) GetLastUpdateDateBySiteIDExcludingSource(siteID int, excludeSource string) (*time.Time, error) {
+	var model positionModels.Position
+
+	err := r.db.Where("site_id = ? AND source != ?", siteID, excludeSource).
+		Order("date DESC").
+		First(&model).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &model.Date, nil
 }

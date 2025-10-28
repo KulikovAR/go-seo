@@ -7,9 +7,10 @@ type CreateSiteRequest struct {
 }
 
 type SiteResponse struct {
-	ID            int    `json:"id"`
-	Domain        string `json:"domain"`
-	KeywordsCount int    `json:"keywords_count"`
+	ID                 int        `json:"id"`
+	Domain             string     `json:"domain"`
+	KeywordsCount      int        `json:"keywords_count"`
+	LastPositionUpdate *time.Time `json:"last_position_update,omitempty"`
 }
 
 type DeleteSiteResponse struct {
@@ -229,6 +230,8 @@ type CombinedPositionsRequest struct {
 	Wordstat *bool   `form:"wordstat"`
 	DateFrom *string `form:"date_from"`
 	DateTo   *string `form:"date_to"`
+	RankFrom *int    `form:"rank_from" binding:"omitempty,min=0"`
+	RankTo   *int    `form:"rank_to" binding:"omitempty,min=0"`
 	Page     int     `form:"page" binding:"omitempty,min=1"`
 	PerPage  int     `form:"per_page" binding:"omitempty,min=1,max=100"`
 }

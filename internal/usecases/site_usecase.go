@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"time"
+
 	"go-seo/internal/domain/entities"
 	"go-seo/internal/domain/repositories"
 	"go-seo/internal/infrastructure/database"
@@ -118,4 +120,17 @@ func (uc *SiteUseCase) GetKeywordsCount(siteID int) (int, error) {
 	}
 
 	return count, nil
+}
+
+func (uc *SiteUseCase) GetLastPositionUpdateDate(siteID int) (*time.Time, error) {
+	date, err := uc.positionRepo.GetLastUpdateDateBySiteIDExcludingSource(siteID, "wordstat")
+	if err != nil {
+		return nil, &DomainError{
+			Code:    ErrorSiteFetch,
+			Message: "Failed to get last position update date",
+			Err:     err,
+		}
+	}
+
+	return date, nil
 }
