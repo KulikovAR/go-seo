@@ -867,11 +867,23 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 		}
 
 		// Сортируем keywords по позиции
+		// rank=0 означает "не найдено" и должен быть внизу при asc, вверху при desc
 		sort.Slice(keywordsWithPositions, func(i, j int) bool {
+			posI := keywordsWithPositions[i].position
+			posJ := keywordsWithPositions[j].position
+
+			// Если позиция = 0, это означает "не найдено" (максимально большая)
+			if posI == 0 {
+				posI = 999999
+			}
+			if posJ == 0 {
+				posJ = 999999
+			}
+
 			if sortType == "asc" {
-				return keywordsWithPositions[i].position < keywordsWithPositions[j].position
+				return posI < posJ
 			} else {
-				return keywordsWithPositions[i].position > keywordsWithPositions[j].position
+				return posI > posJ
 			}
 		})
 
