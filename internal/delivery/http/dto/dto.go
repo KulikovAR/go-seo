@@ -230,6 +230,8 @@ type CombinedPositionsRequest struct {
 	Wordstat *bool   `form:"wordstat"`
 	DateFrom *string `form:"date_from"`
 	DateTo   *string `form:"date_to"`
+	DateSort *string `form:"date_sort"`
+	SortType *string `form:"sort_type" binding:"omitempty,oneof=asc desc"`
 	RankFrom *int    `form:"rank_from" binding:"omitempty,min=0"`
 	RankTo   *int    `form:"rank_to" binding:"omitempty,min=0"`
 	Page     int     `form:"page" binding:"omitempty,min=1"`

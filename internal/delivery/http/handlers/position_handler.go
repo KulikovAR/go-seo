@@ -406,6 +406,8 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 // @Param wordstat query bool false "Include Wordstat data"
 // @Param date_from query string false "Start date (YYYY-MM-DD)"
 // @Param date_to query string false "End date (YYYY-MM-DD)"
+// @Param date_sort query string false "Date for sorting by position (YYYY-MM-DD). Must be within date_from and date_to range"
+// @Param sort_type query string false "Sort type for positions (asc or desc). Default: asc"
 // @Param rank_from query int false "Minimum rank filter"
 // @Param rank_to query int false "Maximum rank filter"
 // @Param page query int false "Page number (default 1)"
@@ -470,13 +472,56 @@ func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
 		dateTo = &parsed
 	}
 
+	var dateSort *time.Time
+	if req.DateSort != nil {
+		parsed, err := time.Parse("2006-01-02", *req.DateSort)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "Invalid date_sort parameter. Use YYYY-MM-DD format",
+			})
+			return
+		}
+		dateSort = &parsed
+
+		// Проверяем, что date_sort входит в интервал date_from - date_to (если оба переданы)
+		if dateFrom != nil && dateTo != nil {
+			if dateSort.Before(*dateFrom) {
+				c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+					Error:   "validation_error",
+					Message: "date_sort must be greater than or equal to date_from",
+				})
+				return
+			}
+			if dateSort.After(*dateTo) {
+				c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+					Error:   "validation_error",
+					Message: "date_sort must be less than or equal to date_to",
+				})
+				return
+			}
+		}
+	}
+
+	sortType := "asc"
+	if req.SortType != nil {
+		if *req.SortType != "asc" && *req.SortType != "desc" {
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "sort_type must be either 'asc' or 'desc'",
+			})
+			return
+		}
+		sortType = *req.SortType
+	}
+
 	var includeWordstat bool
 	if req.Wordstat != nil {
 		includeWordstat = *req.Wordstat
 	}
 
 	combinedPositions, total, err := h.positionTrackingUseCase.GetCombinedPositionsPaginated(
-		req.SiteID, req.Source, includeWordstat, dateFrom, dateTo, req.RankFrom, req.RankTo, req.Page, req.PerPage)
+		req.SiteID, req.Source, includeWordstat, dateFrom, dateTo, dateSort, sortType, req.RankFrom, req.RankTo, req.Page, req.PerPage)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
