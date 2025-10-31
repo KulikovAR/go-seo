@@ -40,7 +40,7 @@ type PositionRepository interface {
 
 	GetPositionsHistoryPaginated(siteID int, keywordID *int, source *string, dateFrom, dateTo *time.Time, last bool, page, perPage int) ([]*entities.Position, int64, error)
 
-	GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, page, perPage int) ([]*entities.CombinedPosition, int64, error)
+	GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, page, perPage int) ([]*entities.CombinedPosition, int64, error)
 
 	GetLastUpdateDateBySiteIDExcludingSource(siteID int, excludeSource string) (*time.Time, error)
 }

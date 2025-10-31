@@ -404,6 +404,7 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 // @Param site_id query int true "Site ID"
 // @Param source query string false "Source (google, yandex)"
 // @Param wordstat query bool false "Include Wordstat data"
+// @Param wordstat_sort query string false "Sort by Wordstat positions (asc or desc)"
 // @Param date_from query string false "Start date (YYYY-MM-DD)"
 // @Param date_to query string false "End date (YYYY-MM-DD)"
 // @Param date_sort query string false "Date for sorting by position (YYYY-MM-DD). Must be within date_from and date_to range"
@@ -520,8 +521,14 @@ func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
 		includeWordstat = *req.Wordstat
 	}
 
+	var wordstatSort bool
+	if req.WordstatSort != nil {
+		wordstatSort = true
+		sortType = *req.WordstatSort
+	}
+
 	combinedPositions, total, err := h.positionTrackingUseCase.GetCombinedPositionsPaginated(
-		req.SiteID, req.Source, includeWordstat, dateFrom, dateTo, dateSort, sortType, req.RankFrom, req.RankTo, req.Page, req.PerPage)
+		req.SiteID, req.Source, includeWordstat, wordstatSort, dateFrom, dateTo, dateSort, sortType, req.RankFrom, req.RankTo, req.Page, req.PerPage)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{

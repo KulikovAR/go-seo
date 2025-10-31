@@ -795,7 +795,7 @@ func (r *positionRepository) GetPositionsHistoryPaginated(siteID int, keywordID 
 	return positions, total, nil
 }
 
-func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
+func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
 	offset := (page - 1) * perPage
 
 	var allKeywords []positionModels.Keyword
@@ -808,8 +808,85 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 
 	var keywords []positionModels.Keyword
 
-	// Если передан dateSort, нужно отсортировать keywords по позиции за эту дату
-	if dateSort != nil {
+	if wordstatSort {
+		if err := query.Order("id").Find(&allKeywords).Error; err != nil {
+			return nil, 0, err
+		}
+
+		if len(allKeywords) == 0 {
+			return []*entities.CombinedPosition{}, totalKeywords, nil
+		}
+
+		type keywordWithPosition struct {
+			keyword  positionModels.Keyword
+			position int
+		}
+
+		var keywordsWithPositions []keywordWithPosition
+
+		for _, keyword := range allKeywords {
+			keywordID := keyword.ID
+
+			var position int = 0
+
+			wordstatQuery := r.db.Where("site_id = ? AND keyword_id = ? AND source = ?", siteID, keywordID, "wordstat")
+
+			if dateFrom != nil {
+				wordstatQuery = wordstatQuery.Where("date >= ?", *dateFrom)
+			}
+			if dateTo != nil {
+				wordstatQuery = wordstatQuery.Where("date <= ?", *dateTo)
+			}
+
+			var wordstatModel positionModels.Position
+			if err := wordstatQuery.Order("date DESC").First(&wordstatModel).Error; err == nil {
+				position = wordstatModel.Rank
+			}
+
+			keywordsWithPositions = append(keywordsWithPositions, keywordWithPosition{
+				keyword:  keyword,
+				position: position,
+			})
+		}
+
+		sort.Slice(keywordsWithPositions, func(i, j int) bool {
+			posI := keywordsWithPositions[i].position
+			posJ := keywordsWithPositions[j].position
+
+			if posI == 0 && posJ == 0 {
+				return false
+			}
+			if posI == 0 {
+				return false
+			}
+			if posJ == 0 {
+				return true
+			}
+
+			if sortType == "asc" {
+				return posI < posJ
+			} else {
+				return posI > posJ
+			}
+		})
+
+		start := offset
+		end := offset + perPage
+		if start > len(keywordsWithPositions) {
+			start = len(keywordsWithPositions)
+		}
+		if end > len(keywordsWithPositions) {
+			end = len(keywordsWithPositions)
+		}
+
+		if start >= end {
+			return []*entities.CombinedPosition{}, totalKeywords, nil
+		}
+
+		for i := start; i < end; i++ {
+			keywords = append(keywords, keywordsWithPositions[i].keyword)
+		}
+	} else if dateSort != nil {
 		// Получаем все keywords
 		if err := query.Order("id").Find(&allKeywords).Error; err != nil {
 			return nil, 0, err
@@ -819,10 +896,9 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 			return []*entities.CombinedPosition{}, totalKeywords, nil
 		}
 
-		// Создаем структуру для хранения keywordID -> позиция за dateSort
 		type keywordWithPosition struct {
 			keyword  positionModels.Keyword
-			position int // позиция за dateSort, если не найдена - большое число
+			position int
 		}
 
 		var keywordsWithPositions []keywordWithPosition
@@ -830,14 +906,12 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 		for _, keyword := range allKeywords {
 			keywordID := keyword.ID
 
-			// Ищем позицию за dateSort для этого keyword из google/yandex
-			var position int = 999999 // большое число для keywords без позиции
+			var position int = 0
 
 			positionQuery := r.db.Where("site_id = ? AND keyword_id = ? AND source != ? AND DATE(date) = ?",
 				siteID, keywordID, "wordstat", dateSort.Format("2006-01-02"))
 
 			if source != nil {
-				// Если source указан, берем позицию только из этого источника
 				if *source == "google" {
 					positionQuery = positionQuery.Where("source = ?", "google")
 				} else if *source == "yandex" {
@@ -849,12 +923,10 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 					position = positionModel.Rank
 				}
 			} else {
-				// Если source не указан, берем минимальную (лучшую) позицию из google и yandex
 				positionQuery = positionQuery.Where("source IN ?", []string{"google", "yandex"})
 				var positions []positionModels.Position
 				if err := positionQuery.Order("rank ASC").Find(&positions).Error; err == nil {
 					if len(positions) > 0 {
-						// Берем первую позицию (уже отсортирована по rank ASC)
 						position = positions[0].Rank
 					}
 				}
@@ -866,18 +938,18 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 			})
 		}
 
-		// Сортируем keywords по позиции
-		// rank=0 означает "не найдено" и должен быть внизу при asc, вверху при desc
 		sort.Slice(keywordsWithPositions, func(i, j int) bool {
 			posI := keywordsWithPositions[i].position
 			posJ := keywordsWithPositions[j].position
 
-			// Если позиция = 0, это означает "не найдено" (максимально большая)
+			if posI == 0 && posJ == 0 {
+				return false
+			}
 			if posI == 0 {
-				posI = 999999
+				return false
 			}
 			if posJ == 0 {
-				posJ = 999999
+				return true
 			}
 
 			if sortType == "asc" {
