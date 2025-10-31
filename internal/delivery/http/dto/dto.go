@@ -132,6 +132,8 @@ type PositionHistoryItem struct {
 	Keyword   string    `json:"keyword"`
 	Position  int       `json:"position"`
 	Rank      int       `json:"rank"`
+	URL       string    `json:"url"`
+	Title     string    `json:"title"`
 	Date      time.Time `json:"date"`
 	Source    string    `json:"source"`
 	Device    string    `json:"device"`
@@ -287,6 +289,8 @@ type TrackingJobItem struct {
 
 type PositionData struct {
 	Rank   int       `json:"rank"`
+	URL    string    `json:"url"`
+	Title  string    `json:"title"`
 	Source string    `json:"source"`
 	Date   time.Time `json:"date"`
 }

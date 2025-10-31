@@ -368,6 +368,8 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 			KeywordID: pos.KeywordID,
 			Keyword:   keywordValue,
 			Rank:      pos.Rank,
+			URL:       pos.URL,
+			Title:     pos.Title,
 			Date:      pos.Date,
 			Source:    pos.Source,
 			Device:    pos.Device,
@@ -571,6 +573,8 @@ func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
 		for _, position := range pos.Positions {
 			item.Positions = append(item.Positions, dto.PositionData{
 				Rank:   position.Rank,
+				URL:    position.URL,
+				Title:  position.Title,
 				Source: position.Source,
 				Date:   position.Date,
 			})
@@ -579,6 +583,8 @@ func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
 		if pos.Wordstat != nil {
 			item.Wordstat = &dto.PositionData{
 				Rank:   pos.Wordstat.Rank,
+				URL:    pos.Wordstat.URL,
+				Title:  pos.Wordstat.Title,
 				Source: pos.Wordstat.Source,
 				Date:   pos.Wordstat.Date,
 			}
