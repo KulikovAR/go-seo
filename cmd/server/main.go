@@ -53,6 +53,7 @@ func main() {
 		cfg.XMLStock.BaseURL,
 		cfg.XMLStock.UserID,
 		cfg.XMLStock.APIKey,
+		cfg.XMLStock.SoftID,
 	)
 	if err != nil {
 		log.Fatal("Failed to create XMLStock service:", err)
