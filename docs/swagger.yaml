@@ -38,13 +38,23 @@ definitions:
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
     type: object
+  dto.CreateGroupRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
   dto.CreateKeywordRequest:
     properties:
+      group_id:
+        type: integer
       site_id:
         type: integer
       value:
         type: string
     required:
+    - group_id
     - site_id
     - value
     type: object
@@ -72,8 +82,17 @@ definitions:
       message:
         type: string
     type: object
+  dto.GroupResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   dto.KeywordResponse:
     properties:
+      group_id:
+        type: integer
       id:
         type: integer
       site_id:
@@ -113,6 +132,10 @@ definitions:
         type: integer
       source:
         type: string
+      title:
+        type: string
+      url:
+        type: string
     type: object
   dto.PositionDistribution:
     properties:
@@ -148,6 +171,10 @@ definitions:
       site_id:
         type: integer
       source:
+        type: string
+      title:
+        type: string
+      url:
         type: string
     type: object
   dto.PositionHistoryResponse:
@@ -278,6 +305,9 @@ definitions:
         - tablet
         - mobile
         type: string
+      domain:
+        description: ID домена Google для использования
+        type: integer
       filter:
         description: 'Скрывать похожие результаты: 0 или 1'
         type: integer
@@ -288,6 +318,9 @@ definitions:
         type: string
       loc:
         description: ID местоположения
+        type: integer
+      lr:
+        description: ID языка для ограничения поиска
         type: integer
       nfpr:
         description: 'Отменить исправление запроса: 0 или 1'
@@ -444,6 +477,13 @@ definitions:
       stable:
         type: integer
     type: object
+  dto.UpdateGroupRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
   dto.VisibilityStats:
     properties:
       avg_position:
@@ -458,6 +498,121 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/groups:
+    get:
+      description: Get list of all groups
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.GroupResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get all groups
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: Create a new group for organizing keywords
+      parameters:
+      - description: Group data
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Create a new group
+      tags:
+      - groups
+  /api/groups/{id}:
+    delete:
+      description: Delete a group
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Delete a group
+      tags:
+      - groups
+    put:
+      consumes:
+      - application/json
+      description: Update group name
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Group data
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Update a group
+      tags:
+      - groups
   /api/keywords:
     get:
       description: Get list of keywords for a specific site
@@ -560,6 +715,10 @@ paths:
         in: query
         name: wordstat
         type: boolean
+      - description: Sort by Wordstat positions (asc or desc)
+        in: query
+        name: wordstat_sort
+        type: string
       - description: Start date (YYYY-MM-DD)
         in: query
         name: date_from
@@ -567,6 +726,15 @@ paths:
       - description: End date (YYYY-MM-DD)
         in: query
         name: date_to
+        type: string
+      - description: Date for sorting by position (YYYY-MM-DD). Must be within date_from
+          and date_to range
+        in: query
+        name: date_sort
+        type: string
+      - description: 'Sort type for positions (asc or desc). Default: asc'
+        in: query
+        name: sort_type
         type: string
       - description: Minimum rank filter
         in: query

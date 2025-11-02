@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,12 +13,14 @@ import (
 )
 
 type PositionTrackingUseCase struct {
-	siteRepo     repositories.SiteRepository
-	keywordRepo  repositories.KeywordRepository
-	positionRepo repositories.PositionRepository
-	xmlRiver     *services.XMLRiverService
-	xmlStock     *services.XMLRiverService
-	wordstat     *services.WordstatService
+	siteRepo       repositories.SiteRepository
+	keywordRepo    repositories.KeywordRepository
+	positionRepo   repositories.PositionRepository
+	xmlRiver       *services.XMLRiverService
+	xmlStock       *services.XMLRiverService
+	wordstat       *services.WordstatService
+	xmlRiverSoftID string
+	xmlStockSoftID string
 }
 
 func NewPositionTrackingUseCase(
@@ -27,14 +30,18 @@ func NewPositionTrackingUseCase(
 	xmlRiver *services.XMLRiverService,
 	xmlStock *services.XMLRiverService,
 	wordstat *services.WordstatService,
+	xmlRiverSoftID string,
+	xmlStockSoftID string,
 ) *PositionTrackingUseCase {
 	return &PositionTrackingUseCase{
-		siteRepo:     siteRepo,
-		keywordRepo:  keywordRepo,
-		positionRepo: positionRepo,
-		xmlRiver:     xmlRiver,
-		xmlStock:     xmlStock,
-		wordstat:     wordstat,
+		siteRepo:       siteRepo,
+		keywordRepo:    keywordRepo,
+		positionRepo:   positionRepo,
+		xmlRiver:       xmlRiver,
+		xmlStock:       xmlStock,
+		wordstat:       wordstat,
+		xmlRiverSoftID: xmlRiverSoftID,
+		xmlStockSoftID: xmlStockSoftID,
 	}
 }
 
@@ -495,6 +502,18 @@ func (uc *PositionTrackingUseCase) trackWordstatPosition(keyword *entities.Keywo
 	return nil
 }
 
+func (uc *PositionTrackingUseCase) getSoftIDByBaseURL(baseURL string) string {
+	baseURLLower := strings.ToLower(baseURL)
+	if strings.Contains(baseURLLower, "xmlriver") {
+		return uc.xmlRiverSoftID
+	}
+	if strings.Contains(baseURLLower, "xmlstock") {
+		return uc.xmlStockSoftID
+	}
+	// По умолчанию используем XMLRiver soft_id
+	return uc.xmlRiverSoftID
+}
+
 func (uc *PositionTrackingUseCase) trackGoogleKeywordPosition(
 	site *entities.Site,
 	keyword *entities.Keyword,
@@ -511,7 +530,8 @@ func (uc *PositionTrackingUseCase) trackGoogleKeywordPosition(
 	var xmlRiverService *services.XMLRiverService
 	if xmlUserID != "" && xmlAPIKey != "" && xmlBaseURL != "" {
 		var err error
-		xmlRiverService, err = services.NewXMLRiverService(xmlBaseURL, xmlUserID, xmlAPIKey)
+		softID := uc.getSoftIDByBaseURL(xmlBaseURL)
+		xmlRiverService, err = services.NewXMLRiverService(xmlBaseURL, xmlUserID, xmlAPIKey, softID)
 		if err != nil {
 			return &DomainError{
 				Code:    ErrorPositionCreation,
@@ -577,7 +597,8 @@ func (uc *PositionTrackingUseCase) trackYandexKeywordPosition(
 	var xmlRiverService *services.XMLRiverService
 	if xmlUserID != "" && xmlAPIKey != "" && xmlBaseURL != "" {
 		var err error
-		xmlRiverService, err = services.NewXMLRiverService(xmlBaseURL, xmlUserID, xmlAPIKey)
+		softID := uc.getSoftIDByBaseURL(xmlBaseURL)
+		xmlRiverService, err = services.NewXMLRiverService(xmlBaseURL, xmlUserID, xmlAPIKey, softID)
 		if err != nil {
 			return &DomainError{
 				Code:    ErrorPositionCreation,

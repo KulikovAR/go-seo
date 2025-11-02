@@ -18,6 +18,7 @@ type XMLRiverService struct {
 	baseURL string
 	userID  string
 	apiKey  string
+	softID  string
 	client  *http.Client
 }
 
@@ -78,11 +79,12 @@ type Result struct {
 	Type     string `xml:"type"`
 }
 
-func NewXMLRiverService(baseURL, userID, apiKey string) (*XMLRiverService, error) {
+func NewXMLRiverService(baseURL, userID, apiKey, softID string) (*XMLRiverService, error) {
 	return &XMLRiverService{
 		baseURL: baseURL,
 		userID:  userID,
 		apiKey:  apiKey,
+		softID:  softID,
 		client: &http.Client{
 			Timeout: 120 * time.Second,
 		},
@@ -93,6 +95,9 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	params := url.Values{}
 	params.Set("user", s.userID)
 	params.Set("key", s.apiKey)
+	if s.softID != "" {
+		params.Set("soft_id", s.softID)
+	}
 	params.Set("query", req.Query)
 
 	if req.Page > 0 {

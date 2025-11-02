@@ -42,6 +42,7 @@ func main() {
 		cfg.XMLRiver.BaseURL,
 		cfg.XMLRiver.UserID,
 		cfg.XMLRiver.APIKey,
+		cfg.XMLRiver.SoftID,
 	)
 	if err != nil {
 		log.Fatal("Failed to create XMLRiver service:", err)
@@ -77,7 +78,7 @@ func main() {
 	idGenerator := services.NewIDGeneratorService()
 	retryService := services.NewRetryService(5, 10*time.Second)
 
-	useCases := usecases.NewContainer(repos, xmlRiverService, xmlStockService, wordstatService, kafkaService, idGenerator, retryService, cfg.Async.WorkerCount, cfg.Async.BatchSize)
+	useCases := usecases.NewContainer(repos, xmlRiverService, xmlStockService, wordstatService, kafkaService, idGenerator, retryService, cfg.Async.WorkerCount, cfg.Async.BatchSize, cfg.XMLRiver.SoftID, cfg.XMLStock.SoftID)
 
 	r := gin.Default()
 

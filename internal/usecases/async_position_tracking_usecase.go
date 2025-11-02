@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,20 +12,22 @@ import (
 )
 
 type AsyncPositionTrackingUseCase struct {
-	siteRepo     repositories.SiteRepository
-	keywordRepo  repositories.KeywordRepository
-	positionRepo repositories.PositionRepository
-	jobRepo      repositories.TrackingJobRepository
-	taskRepo     repositories.TrackingTaskRepository
-	resultRepo   repositories.TrackingResultRepository
-	xmlRiver     *services.XMLRiverService
-	xmlStock     *services.XMLRiverService
-	wordstat     *services.WordstatService
-	kafkaService *services.KafkaService
-	idGenerator  *services.IDGeneratorService
-	retryService *services.RetryService
-	workerPool   chan struct{}
-	batchSize    int
+	siteRepo       repositories.SiteRepository
+	keywordRepo    repositories.KeywordRepository
+	positionRepo   repositories.PositionRepository
+	jobRepo        repositories.TrackingJobRepository
+	taskRepo       repositories.TrackingTaskRepository
+	resultRepo     repositories.TrackingResultRepository
+	xmlRiver       *services.XMLRiverService
+	xmlStock       *services.XMLRiverService
+	wordstat       *services.WordstatService
+	kafkaService   *services.KafkaService
+	idGenerator    *services.IDGeneratorService
+	retryService   *services.RetryService
+	workerPool     chan struct{}
+	batchSize      int
+	xmlRiverSoftID string
+	xmlStockSoftID string
 }
 
 func NewAsyncPositionTrackingUseCase(
@@ -42,22 +45,26 @@ func NewAsyncPositionTrackingUseCase(
 	retryService *services.RetryService,
 	workerCount int,
 	batchSize int,
+	xmlRiverSoftID string,
+	xmlStockSoftID string,
 ) *AsyncPositionTrackingUseCase {
 	return &AsyncPositionTrackingUseCase{
-		siteRepo:     siteRepo,
-		keywordRepo:  keywordRepo,
-		positionRepo: positionRepo,
-		jobRepo:      jobRepo,
-		taskRepo:     taskRepo,
-		resultRepo:   resultRepo,
-		xmlRiver:     xmlRiver,
-		xmlStock:     xmlStock,
-		wordstat:     wordstat,
-		kafkaService: kafkaService,
-		idGenerator:  idGenerator,
-		retryService: retryService,
-		workerPool:   make(chan struct{}, workerCount),
-		batchSize:    batchSize,
+		siteRepo:       siteRepo,
+		keywordRepo:    keywordRepo,
+		positionRepo:   positionRepo,
+		jobRepo:        jobRepo,
+		taskRepo:       taskRepo,
+		resultRepo:     resultRepo,
+		xmlRiver:       xmlRiver,
+		xmlStock:       xmlStock,
+		wordstat:       wordstat,
+		kafkaService:   kafkaService,
+		idGenerator:    idGenerator,
+		retryService:   retryService,
+		workerPool:     make(chan struct{}, workerCount),
+		batchSize:      batchSize,
+		xmlRiverSoftID: xmlRiverSoftID,
+		xmlStockSoftID: xmlStockSoftID,
 	}
 }
 
@@ -611,7 +618,8 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTaskWithData(task *entities
 	var xmlRiverService *services.XMLRiverService
 	if task.XMLUserID != "" && task.XMLAPIKey != "" && task.XMLBaseURL != "" {
 		var err error
-		xmlRiverService, err = services.NewXMLRiverService(task.XMLBaseURL, task.XMLUserID, task.XMLAPIKey)
+		softID := uc.getSoftIDByBaseURL(task.XMLBaseURL)
+		xmlRiverService, err = services.NewXMLRiverService(task.XMLBaseURL, task.XMLUserID, task.XMLAPIKey, softID)
 		if err != nil {
 			return err
 		}
@@ -669,6 +677,18 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTaskWithData(task *entities
 	return uc.resultRepo.Create(result)
 }
 
+func (uc *AsyncPositionTrackingUseCase) getSoftIDByBaseURL(baseURL string) string {
+	baseURLLower := strings.ToLower(baseURL)
+	if strings.Contains(baseURLLower, "xmlriver") {
+		return uc.xmlRiverSoftID
+	}
+	if strings.Contains(baseURLLower, "xmlstock") {
+		return uc.xmlStockSoftID
+	}
+	// По умолчанию используем XMLRiver soft_id
+	return uc.xmlRiverSoftID
+}
+
 func (uc *AsyncPositionTrackingUseCase) executeGoogleTask(task *entities.TrackingTask) error {
 	site, err := uc.siteRepo.GetByID(task.SiteID)
 	if err != nil {
@@ -683,7 +703,8 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTask(task *entities.Trackin
 	var xmlRiverService *services.XMLRiverService
 	if task.XMLUserID != "" && task.XMLAPIKey != "" && task.XMLBaseURL != "" {
 		var err error
-		xmlRiverService, err = services.NewXMLRiverService(task.XMLBaseURL, task.XMLUserID, task.XMLAPIKey)
+		softID := uc.getSoftIDByBaseURL(task.XMLBaseURL)
+		xmlRiverService, err = services.NewXMLRiverService(task.XMLBaseURL, task.XMLUserID, task.XMLAPIKey, softID)
 		if err != nil {
 			return err
 		}
@@ -746,7 +767,8 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTaskWithData(task *entities
 	var xmlRiverService *services.XMLRiverService
 	if task.XMLUserID != "" && task.XMLAPIKey != "" && task.XMLBaseURL != "" {
 		var err error
-		xmlRiverService, err = services.NewXMLRiverService(task.XMLBaseURL, task.XMLUserID, task.XMLAPIKey)
+		softID := uc.getSoftIDByBaseURL(task.XMLBaseURL)
+		xmlRiverService, err = services.NewXMLRiverService(task.XMLBaseURL, task.XMLUserID, task.XMLAPIKey, softID)
 		if err != nil {
 			return err
 		}
@@ -878,7 +900,8 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTask(task *entities.Trackin
 	var xmlRiverService *services.XMLRiverService
 	if task.XMLUserID != "" && task.XMLAPIKey != "" && task.XMLBaseURL != "" {
 		var err error
-		xmlRiverService, err = services.NewXMLRiverService(task.XMLBaseURL, task.XMLUserID, task.XMLAPIKey)
+		softID := uc.getSoftIDByBaseURL(task.XMLBaseURL)
+		xmlRiverService, err = services.NewXMLRiverService(task.XMLBaseURL, task.XMLUserID, task.XMLAPIKey, softID)
 		if err != nil {
 			return err
 		}

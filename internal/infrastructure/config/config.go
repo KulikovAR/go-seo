@@ -36,12 +36,14 @@ type XMLRiverConfig struct {
 	UserID  string
 	APIKey  string
 	BaseURL string
+	SoftID  string
 }
 
 type XMLStockConfig struct {
 	UserID  string
 	APIKey  string
 	BaseURL string
+	SoftID  string
 }
 
 type KafkaConfig struct {
@@ -75,11 +77,13 @@ func Load() (*Config, error) {
 			UserID:  getEnv("XMLRIVER_USER_ID", ""),
 			APIKey:  getEnv("XMLRIVER_API_KEY", ""),
 			BaseURL: getEnv("XMLRIVER_BASE_URL", "https://xmlriver.com"),
+			SoftID:  getEnv("XMLRIVER_SOFT_ID", "14"),
 		},
 		XMLStock: XMLStockConfig{
 			UserID:  getEnv("XMLSTOCK_USER_ID", ""),
 			APIKey:  getEnv("XMLSTOCK_API_KEY", ""),
 			BaseURL: getEnv("XMLSTOCK_BASE_URL", "https://xmlstock.com"),
+			SoftID:  getEnv("XMLSTOCK_SOFT_ID", "9b1db4389aad91266a6b9c1b7a349e93"),
 		},
 		Kafka: KafkaConfig{
 			Brokers: getEnvAsStringSlice("KAFKA_BROKERS", []string{"localhost:9092"}),

@@ -15,6 +15,180 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/groups": {
+            "get": {
+                "description": "Get list of all groups",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Get all groups",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.GroupResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new group for organizing keywords",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Create a new group",
+                "parameters": [
+                    {
+                        "description": "Group data",
+                        "name": "group",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/groups/{id}": {
+            "put": {
+                "description": "Update group name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Update a group",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Group data",
+                        "name": "group",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a group",
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Delete a group",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/keywords": {
             "get": {
                 "description": "Get list of keywords for a specific site",
@@ -173,6 +347,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Sort by Wordstat positions (asc or desc)",
+                        "name": "wordstat_sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Start date (YYYY-MM-DD)",
                         "name": "date_from",
                         "in": "query"
@@ -181,6 +361,18 @@ const docTemplate = `{
                         "type": "string",
                         "description": "End date (YYYY-MM-DD)",
                         "name": "date_to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date for sorting by position (YYYY-MM-DD). Must be within date_from and date_to range",
+                        "name": "date_sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort type for positions (asc or desc). Default: asc",
+                        "name": "sort_type",
                         "in": "query"
                     },
                     {
@@ -768,13 +960,28 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CreateGroupRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.CreateKeywordRequest": {
             "type": "object",
             "required": [
+                "group_id",
                 "site_id",
                 "value"
             ],
             "properties": {
+                "group_id": {
+                    "type": "integer"
+                },
                 "site_id": {
                     "type": "integer"
                 },
@@ -821,9 +1028,23 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.GroupResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.KeywordResponse": {
             "type": "object",
             "properties": {
+                "group_id": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -883,6 +1104,12 @@ const docTemplate = `{
                 },
                 "source": {
                     "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },
@@ -937,6 +1164,12 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "source": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }
@@ -1135,6 +1368,10 @@ const docTemplate = `{
                         "mobile"
                     ]
                 },
+                "domain": {
+                    "description": "ID домена Google для использования",
+                    "type": "integer"
+                },
                 "filter": {
                     "description": "Скрывать похожие результаты: 0 или 1",
                     "type": "integer"
@@ -1148,6 +1385,10 @@ const docTemplate = `{
                 },
                 "loc": {
                     "description": "ID местоположения",
+                    "type": "integer"
+                },
+                "lr": {
+                    "description": "ID языка для ограничения поиска",
                     "type": "integer"
                 },
                 "nfpr": {
@@ -1369,6 +1610,17 @@ const docTemplate = `{
                 },
                 "stable": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.UpdateGroupRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
                 }
             }
         },
