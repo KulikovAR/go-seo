@@ -17,33 +17,33 @@ const (
 
 // TrackingJob represents a tracking job that contains multiple tasks
 type TrackingJob struct {
-	ID          string            `json:"id"`
-	SiteID      int               `json:"site_id"`
-	Source      string            `json:"source"`
-	Status      TrackingTaskStatus `json:"status"`
-	CreatedAt   time.Time         `json:"created_at"`
-	UpdatedAt   time.Time         `json:"updated_at"`
-	CompletedAt *time.Time        `json:"completed_at,omitempty"`
-	TotalTasks  int               `json:"total_tasks"`
-	CompletedTasks int            `json:"completed_tasks"`
-	FailedTasks int              `json:"failed_tasks"`
-	Error       string           `json:"error,omitempty"`
+	ID             string             `json:"id"`
+	SiteID         int                `json:"site_id"`
+	Source         string             `json:"source"`
+	Status         TrackingTaskStatus `json:"status"`
+	CreatedAt      time.Time          `json:"created_at"`
+	UpdatedAt      time.Time          `json:"updated_at"`
+	CompletedAt    *time.Time         `json:"completed_at,omitempty"`
+	TotalTasks     int                `json:"total_tasks"`
+	CompletedTasks int                `json:"completed_tasks"`
+	FailedTasks    int                `json:"failed_tasks"`
+	Error          string             `json:"error,omitempty"`
 }
 
 // TrackingTask represents a single keyword tracking task
 type TrackingTask struct {
-	ID        string            `json:"id"`
-	JobID     string            `json:"job_id"`
-	KeywordID int               `json:"keyword_id"`
-	SiteID    int               `json:"site_id"`
-	Source    string            `json:"source"`
-	Status    TrackingTaskStatus `json:"status"`
-	CreatedAt time.Time         `json:"created_at"`
-	UpdatedAt time.Time         `json:"updated_at"`
-	CompletedAt *time.Time       `json:"completed_at,omitempty"`
-	RetryCount int              `json:"retry_count"`
-	MaxRetries int              `json:"max_retries"`
-	Error     string            `json:"error,omitempty"`
+	ID          string             `json:"id"`
+	JobID       string             `json:"job_id"`
+	KeywordID   int                `json:"keyword_id"`
+	SiteID      int                `json:"site_id"`
+	Source      string             `json:"source"`
+	Status      TrackingTaskStatus `json:"status"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	CompletedAt *time.Time         `json:"completed_at,omitempty"`
+	RetryCount  int                `json:"retry_count"`
+	MaxRetries  int                `json:"max_retries"`
+	Error       string             `json:"error,omitempty"`
 	// Task-specific parameters
 	Device     string `json:"device,omitempty"`
 	OS         string `json:"os,omitempty"`
@@ -67,6 +67,7 @@ type TrackingTask struct {
 	GroupBy    int    `json:"groupby"`
 	Within     int    `json:"within"`
 	LR         int    `json:"lr"`
+	Domain     string `json:"domain,omitempty"`
 	InIndex    int    `json:"inindex"`
 	Strict     int    `json:"strict"`
 	Regions    *int   `json:"regions,omitempty"`
@@ -92,4 +93,3 @@ type TrackingResult struct {
 	Success   bool      `json:"success"`
 	Error     string    `json:"error,omitempty"`
 }
-

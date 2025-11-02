@@ -64,6 +64,7 @@ func NewAsyncPositionTrackingUseCase(
 func (uc *AsyncPositionTrackingUseCase) StartAsyncGoogleTracking(
 	siteID int, device, os string, ads bool, country, lang string, pages int, subdomains bool,
 	xmlUserID, xmlAPIKey, xmlBaseURL, tbs string, filter, highlights, nfpr, loc, ai int, raw string,
+	lr int, domain string,
 ) (string, error) {
 	site, err := uc.siteRepo.GetByID(siteID)
 	if err != nil {
@@ -135,6 +136,8 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncGoogleTracking(
 			Loc:        loc,
 			AI:         ai,
 			Raw:        raw,
+			LR:         lr,
+			Domain:     domain,
 		}
 		tasks = append(tasks, task)
 	}
@@ -618,7 +621,7 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTaskWithData(task *entities
 
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
 		keyword.Value, site.Domain, entities.GoogleSearch, task.Pages,
-		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, 0,
+		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, task.LR, task.Domain,
 	)
 	if err != nil {
 		return err
@@ -690,7 +693,7 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTask(task *entities.Trackin
 
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
 		keyword.Value, site.Domain, entities.GoogleSearch, task.Pages,
-		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, 0,
+		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, task.LR, task.Domain,
 	)
 	if err != nil {
 		return err
@@ -753,7 +756,7 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTaskWithData(task *entities
 
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
 		keyword.Value, site.Domain, entities.YandexSearch, task.Pages,
-		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, task.LR,
+		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, task.LR, "",
 	)
 	if err != nil {
 		return err
@@ -885,7 +888,7 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTask(task *entities.Trackin
 
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
 		keyword.Value, site.Domain, entities.YandexSearch, task.Pages,
-		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, task.LR,
+		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, task.LR, "",
 	)
 	if err != nil {
 		return err

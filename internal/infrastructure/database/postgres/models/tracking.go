@@ -55,6 +55,7 @@ type TrackingTask struct {
 	GroupBy     int    `gorm:"default:0"`
 	Within      int    `gorm:"default:0"`
 	LR          int    `gorm:"default:0"`
+	Domain      string `gorm:"type:varchar(50)"`
 	InIndex     int    `gorm:"default:0"`
 	Strict      int    `gorm:"default:0"`
 	Regions     *int   `gorm:"type:integer"`
@@ -88,4 +89,3 @@ type TrackingResult struct {
 func (TrackingResult) TableName() string {
 	return "tracking_results"
 }
-

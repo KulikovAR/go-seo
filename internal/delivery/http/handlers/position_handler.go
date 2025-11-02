@@ -82,6 +82,8 @@ func (h *PositionHandler) TrackGooglePositions(c *gin.Context) {
 		req.Loc,
 		req.AI,
 		req.Raw,
+		req.LR,
+		req.Domain,
 	)
 
 	if err != nil {

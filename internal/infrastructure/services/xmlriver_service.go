@@ -247,7 +247,7 @@ func (s *XMLRiverService) isSiteMatch(resultURL, siteDomain string) bool {
 
 	return resultDomain == siteDomainExtracted
 }
-func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, subdomains bool, lr int) (int, string, string, error) {
+func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, subdomains bool, lr int, domain string) (int, string, string, error) {
 	req := SearchRequest{
 		Query:   query,
 		Page:    0,
@@ -257,6 +257,7 @@ func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, sour
 		Country: country,
 		Lang:    lang,
 		LR:      lr,
+		Domain:  domain,
 	}
 
 	return s.findSitePositionInternalWithSubdomains(req, siteDomain, source, maxPages, subdomains)
