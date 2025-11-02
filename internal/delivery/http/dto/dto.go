@@ -84,7 +84,7 @@ type TrackGooglePositionsRequest struct {
 	AI         int    `json:"ai"`         // Парсинг блока "Обзор от ИИ": 0 или 1
 	Raw        string `json:"raw"`        // Полный HTML код страницы: "page"
 	LR         int    `json:"lr"`         // ID языка для ограничения поиска
-	Domain     string `json:"domain"`     // ID домена Google для использования
+	Domain     int    `json:"domain"`     // ID домена Google для использования
 }
 
 type TrackYandexPositionsRequest struct {

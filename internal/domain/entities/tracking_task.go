@@ -67,7 +67,7 @@ type TrackingTask struct {
 	GroupBy    int    `json:"groupby"`
 	Within     int    `json:"within"`
 	LR         int    `json:"lr"`
-	Domain     string `json:"domain,omitempty"`
+	Domain     int    `json:"domain"`
 	InIndex    int    `json:"inindex"`
 	Strict     int    `json:"strict"`
 	Regions    *int   `json:"regions,omitempty"`

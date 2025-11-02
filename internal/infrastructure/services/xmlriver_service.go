@@ -29,7 +29,7 @@ type SearchRequest struct {
 	Ads     bool
 	Country string
 	Lang    string
-	Domain  string
+	Domain  int // ID домена Google
 	LR      int // ID региона Яндекса
 }
 
@@ -117,8 +117,8 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	if req.LR > 0 {
 		params.Set("lr", strconv.Itoa(req.LR))
 	}
-	if req.Domain != "" {
-		params.Set("domain", req.Domain)
+	if req.Domain > 0 {
+		params.Set("domain", strconv.Itoa(req.Domain))
 	}
 
 	var endpoint string
@@ -247,7 +247,7 @@ func (s *XMLRiverService) isSiteMatch(resultURL, siteDomain string) bool {
 
 	return resultDomain == siteDomainExtracted
 }
-func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, subdomains bool, lr int, domain string) (int, string, string, error) {
+func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, subdomains bool, lr int, domain int) (int, string, string, error) {
 	req := SearchRequest{
 		Query:   query,
 		Page:    0,

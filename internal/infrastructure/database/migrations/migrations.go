@@ -77,6 +77,39 @@ func CreateTables(db *gorm.DB) error {
 		}
 	}
 
+	// Проверяем и исправляем столбец domain в tracking_tasks
+	var hasDomainColumn bool
+	if err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 
+			FROM information_schema.columns 
+			WHERE table_name = 'tracking_tasks' 
+			AND column_name = 'domain'
+		)
+	`).Scan(&hasDomainColumn).Error; err != nil {
+		return err
+	}
+
+	if hasDomainColumn {
+		// Проверяем тип столбца
+		var columnType string
+		if err := db.Raw(`
+			SELECT data_type 
+			FROM information_schema.columns 
+			WHERE table_name = 'tracking_tasks' 
+			AND column_name = 'domain'
+		`).Scan(&columnType).Error; err != nil {
+			return err
+		}
+
+		// Если столбец имеет тип character varying (varchar), удаляем его
+		if columnType == "character varying" || columnType == "varchar" {
+			if err := db.Exec(`ALTER TABLE tracking_tasks DROP COLUMN IF EXISTS domain`).Error; err != nil {
+				return err
+			}
+		}
+	}
+
 	if err := db.AutoMigrate(
 		&models.Site{},
 		&models.Keyword{},
