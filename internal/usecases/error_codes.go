@@ -18,6 +18,12 @@ const (
 	ErrorPositionDeletion = "POSITION_DELETION_FAILED"
 	ErrorPositionFetch    = "POSITION_FETCH_FAILED"
 
+	ErrorGroupExists   = "GROUP_EXISTS"
+	ErrorGroupNotFound = "GROUP_NOT_FOUND"
+	ErrorGroupCreation = "GROUP_CREATION_FAILED"
+	ErrorGroupDeletion = "GROUP_DELETION_FAILED"
+	ErrorGroupFetch    = "GROUP_FETCH_FAILED"
+
 	ErrorValidation = "VALIDATION_ERROR"
 	ErrorInternal   = "INTERNAL_ERROR"
 )

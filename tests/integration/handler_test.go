@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"go-seo/internal/delivery/http/dto"
 	"go-seo/internal/delivery/http/handlers"
@@ -80,12 +81,13 @@ func TestKeywordHandler_CreateKeyword(t *testing.T) {
 	mockKeywordUseCase := new(MockKeywordUseCase)
 	handler := handlers.NewKeywordHandler(mockKeywordUseCase)
 
-	expectedKeyword := &entities.Keyword{ID: 1, Value: "купить чай", SiteID: 1}
-	mockKeywordUseCase.On("CreateKeyword", "купить чай", 1).Return(expectedKeyword, nil)
+	expectedKeyword := &entities.Keyword{ID: 1, Value: "купить чай", SiteID: 1, GroupID: 1}
+	mockKeywordUseCase.On("CreateKeyword", "купить чай", 1, 1).Return(expectedKeyword, nil)
 
 	reqBody := dto.CreateKeywordRequest{
-		Value:  "купить чай",
-		SiteID: 1,
+		Value:   "купить чай",
+		SiteID:  1,
+		GroupID: 1,
 	}
 	jsonBody, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest("POST", "/api/keywords", bytes.NewBuffer(jsonBody))
@@ -116,8 +118,8 @@ func TestKeywordHandler_GetKeywords(t *testing.T) {
 	handler := handlers.NewKeywordHandler(mockKeywordUseCase)
 
 	keywords := []*entities.Keyword{
-		{ID: 1, Value: "купить чай", SiteID: 1},
-		{ID: 2, Value: "купить кофе", SiteID: 1},
+		{ID: 1, Value: "купить чай", SiteID: 1, GroupID: 1},
+		{ID: 2, Value: "купить кофе", SiteID: 1, GroupID: 1},
 	}
 	mockKeywordUseCase.On("GetKeywordsBySite", 1).Return(keywords, nil)
 
@@ -188,12 +190,25 @@ func (m *MockSiteUseCase) GetSitesByIDs(ids []int) ([]*entities.Site, error) {
 	return args.Get(0).([]*entities.Site), args.Error(1)
 }
 
+func (m *MockSiteUseCase) GetKeywordsCount(siteID int) (int, error) {
+	args := m.Called(siteID)
+	return args.Get(0).(int), args.Error(1)
+}
+
+func (m *MockSiteUseCase) GetLastPositionUpdateDate(siteID int) (*time.Time, error) {
+	args := m.Called(siteID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*time.Time), args.Error(1)
+}
+
 type MockKeywordUseCase struct {
 	mock.Mock
 }
 
-func (m *MockKeywordUseCase) CreateKeyword(value string, siteID int) (*entities.Keyword, error) {
-	args := m.Called(value, siteID)
+func (m *MockKeywordUseCase) CreateKeyword(value string, siteID int, groupID int) (*entities.Keyword, error) {
+	args := m.Called(value, siteID, groupID)
 	return args.Get(0).(*entities.Keyword), args.Error(1)
 }
 

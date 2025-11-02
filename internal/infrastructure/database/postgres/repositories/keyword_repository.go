@@ -19,8 +19,9 @@ func NewKeywordRepository(db *gorm.DB) repositories.KeywordRepository {
 
 func (r *keywordRepository) Create(keyword *entities.Keyword) error {
 	model := &models.Keyword{
-		Value:  keyword.Value,
-		SiteID: keyword.SiteID,
+		Value:   keyword.Value,
+		SiteID:  keyword.SiteID,
+		GroupID: keyword.GroupID,
 	}
 
 	if err := r.db.Create(model).Error; err != nil {
@@ -97,9 +98,10 @@ func (r *keywordRepository) GetAll() ([]*entities.Keyword, error) {
 
 func (r *keywordRepository) Update(keyword *entities.Keyword) error {
 	model := &models.Keyword{
-		ID:     keyword.ID,
-		Value:  keyword.Value,
-		SiteID: keyword.SiteID,
+		ID:      keyword.ID,
+		Value:   keyword.Value,
+		SiteID:  keyword.SiteID,
+		GroupID: keyword.GroupID,
 	}
 
 	return r.db.Save(model).Error
@@ -119,8 +121,9 @@ func (r *keywordRepository) CountBySiteID(siteID int) (int, error) {
 
 func (r *keywordRepository) toDomain(model *models.Keyword) *entities.Keyword {
 	return &entities.Keyword{
-		ID:     model.ID,
-		Value:  model.Value,
-		SiteID: model.SiteID,
+		ID:      model.ID,
+		Value:   model.Value,
+		SiteID:  model.SiteID,
+		GroupID: model.GroupID,
 	}
 }

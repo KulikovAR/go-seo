@@ -8,6 +8,7 @@ import (
 type Container struct {
 	Site                  *SiteUseCase
 	Keyword               *KeywordUseCase
+	Group                 *GroupUseCase
 	PositionTracking      *PositionTrackingUseCase
 	AsyncPositionTracking *AsyncPositionTrackingUseCase
 	TrackingJob           *TrackingJobUseCase
@@ -17,6 +18,7 @@ func NewContainer(repos *repositories.Container, xmlRiver *services.XMLRiverServ
 	return &Container{
 		Site:                  NewSiteUseCase(repos.Site, repos.Position, repos.Keyword),
 		Keyword:               NewKeywordUseCase(repos.Keyword, repos.Position),
+		Group:                 NewGroupUseCase(repos.Group),
 		PositionTracking:      NewPositionTrackingUseCase(repos.Site, repos.Keyword, repos.Position, xmlRiver, xmlStock, wordstat),
 		AsyncPositionTracking: NewAsyncPositionTrackingUseCase(repos.Site, repos.Keyword, repos.Position, repos.TrackingJob, repos.TrackingTask, repos.TrackingResult, xmlRiver, xmlStock, wordstat, kafkaService, idGenerator, retryService, workerCount, batchSize),
 		TrackingJob:           NewTrackingJobUseCase(repos.TrackingJob),

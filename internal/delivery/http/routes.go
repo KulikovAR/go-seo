@@ -12,6 +12,7 @@ import (
 func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 	siteHandler := handlers.NewSiteHandler(useCases.Site)
 	keywordHandler := handlers.NewKeywordHandler(useCases.Keyword)
+	groupHandler := handlers.NewGroupHandler(useCases.Group)
 	positionHandler := handlers.NewPositionHandler(useCases.PositionTracking, useCases.AsyncPositionTracking)
 	trackingJobHandler := handlers.NewTrackingJobHandler(useCases.TrackingJob)
 
@@ -22,6 +23,14 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 			sites.POST("", siteHandler.CreateSite)
 			sites.GET("", siteHandler.GetSites)
 			sites.DELETE("/:id", siteHandler.DeleteSite)
+		}
+
+		groups := api.Group("/groups")
+		{
+			groups.POST("", groupHandler.CreateGroup)
+			groups.GET("", groupHandler.GetGroups)
+			groups.PUT("/:id", groupHandler.UpdateGroup)
+			groups.DELETE("/:id", groupHandler.DeleteGroup)
 		}
 
 		keywords := api.Group("/keywords")

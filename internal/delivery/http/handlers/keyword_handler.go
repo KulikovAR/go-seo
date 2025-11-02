@@ -41,7 +41,7 @@ func (h *KeywordHandler) CreateKeyword(c *gin.Context) {
 		return
 	}
 
-	keyword, err := h.keywordUseCase.CreateKeyword(req.Value, req.SiteID)
+	keyword, err := h.keywordUseCase.CreateKeyword(req.Value, req.SiteID, req.GroupID)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			code := usecases.GetDomainErrorCode(err)
@@ -69,9 +69,10 @@ func (h *KeywordHandler) CreateKeyword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, dto.KeywordResponse{
-		ID:     keyword.ID,
-		Value:  keyword.Value,
-		SiteID: keyword.SiteID,
+		ID:      keyword.ID,
+		Value:   keyword.Value,
+		SiteID:  keyword.SiteID,
+		GroupID: keyword.GroupID,
 	})
 }
 
@@ -176,9 +177,10 @@ func (h *KeywordHandler) GetKeywords(c *gin.Context) {
 	response := make([]dto.KeywordResponse, len(keywords))
 	for i, keyword := range keywords {
 		response[i] = dto.KeywordResponse{
-			ID:     keyword.ID,
-			Value:  keyword.Value,
-			SiteID: keyword.SiteID,
+			ID:      keyword.ID,
+			Value:   keyword.Value,
+			SiteID:  keyword.SiteID,
+			GroupID: keyword.GroupID,
 		}
 	}
 

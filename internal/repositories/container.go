@@ -10,6 +10,7 @@ import (
 type Container struct {
 	Keyword        repositories.KeywordRepository
 	Site           repositories.SiteRepository
+	Group          repositories.GroupRepository
 	Position       repositories.PositionRepository
 	TrackingJob    repositories.TrackingJobRepository
 	TrackingTask   repositories.TrackingTaskRepository
@@ -22,6 +23,7 @@ func NewContainer(db *gorm.DB) *Container {
 	return &Container{
 		Keyword:        postgresRepos.Keyword,
 		Site:           postgresRepos.Site,
+		Group:          postgresRepos.Group,
 		Position:       postgresRepos.Position,
 		TrackingJob:    postgresRepos.TrackingJob,
 		TrackingTask:   postgresRepos.TrackingTask,
