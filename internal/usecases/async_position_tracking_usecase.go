@@ -263,6 +263,7 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncYandexTracking(
 
 func (uc *AsyncPositionTrackingUseCase) StartAsyncWordstatTracking(
 	siteID int, xmlUserID, xmlAPIKey, xmlBaseURL string, regions *int,
+	defaultQuery, quotes, quotesExclamationMarks, exclamationMarks bool,
 ) (string, error) {
 	site, err := uc.siteRepo.GetByID(siteID)
 	if err != nil {
@@ -282,6 +283,30 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncWordstatTracking(
 		}
 	}
 
+	queryTypes := []string{}
+	if defaultQuery {
+		queryTypes = append(queryTypes, "default")
+	}
+	if quotes {
+		queryTypes = append(queryTypes, "quotes")
+	}
+	if quotesExclamationMarks {
+		queryTypes = append(queryTypes, "quotes_exclamation_marks")
+	}
+	if exclamationMarks {
+		queryTypes = append(queryTypes, "exclamation_marks")
+	}
+
+	if len(queryTypes) == 0 {
+		return "", &DomainError{
+			Code:    ErrorPositionCreation,
+			Message: "At least one query type must be enabled",
+			Err:     fmt.Errorf("no query types enabled"),
+		}
+	}
+
+	totalTasks := len(keywords) * len(queryTypes)
+
 	jobID := uc.idGenerator.GenerateJobID()
 	job := &entities.TrackingJob{
 		ID:             jobID,
@@ -290,7 +315,7 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncWordstatTracking(
 		Status:         entities.TaskStatusPending,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
-		TotalTasks:     len(keywords),
+		TotalTasks:     totalTasks,
 		CompletedTasks: 0,
 		FailedTasks:    0,
 	}
@@ -305,24 +330,27 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncWordstatTracking(
 
 	var tasks []*entities.TrackingTask
 	for _, keyword := range keywords {
-		taskID := uc.idGenerator.GenerateTaskID()
-		task := &entities.TrackingTask{
-			ID:         taskID,
-			JobID:      jobID,
-			KeywordID:  keyword.ID,
-			SiteID:     siteID,
-			Source:     entities.Wordstat,
-			Status:     entities.TaskStatusPending,
-			CreatedAt:  time.Now(),
-			UpdatedAt:  time.Now(),
-			RetryCount: 0,
-			MaxRetries: 5,
-			XMLUserID:  xmlUserID,
-			XMLAPIKey:  xmlAPIKey,
-			XMLBaseURL: xmlBaseURL,
-			Regions:    regions,
+		for _, queryType := range queryTypes {
+			taskID := uc.idGenerator.GenerateTaskID()
+			task := &entities.TrackingTask{
+				ID:                taskID,
+				JobID:             jobID,
+				KeywordID:         keyword.ID,
+				SiteID:            siteID,
+				Source:            entities.Wordstat,
+				Status:            entities.TaskStatusPending,
+				CreatedAt:         time.Now(),
+				UpdatedAt:         time.Now(),
+				RetryCount:        0,
+				MaxRetries:        5,
+				XMLUserID:         xmlUserID,
+				XMLAPIKey:         xmlAPIKey,
+				XMLBaseURL:        xmlBaseURL,
+				Regions:           regions,
+				WordstatQueryType: queryType,
+			}
+			tasks = append(tasks, task)
 		}
-		tasks = append(tasks, task)
 	}
 
 	for _, task := range tasks {
@@ -826,25 +854,32 @@ func (uc *AsyncPositionTrackingUseCase) executeWordstatTaskWithData(task *entiti
 		wordstatService = uc.wordstat
 	}
 
-	frequency, err := wordstatService.GetKeywordFrequency(keyword.Value, task.Regions)
+	queryType := task.WordstatQueryType
+	if queryType == "" {
+		queryType = "default"
+	}
+
+	modifiedQuery := uc.modifyWordstatQuery(keyword.Value, queryType)
+	frequency, err := wordstatService.GetKeywordFrequency(modifiedQuery, task.Regions)
 	if err != nil {
 		return err
 	}
 
 	positionEntity := &entities.Position{
-		KeywordID: keyword.ID,
-		SiteID:    keyword.SiteID,
-		Rank:      frequency,
-		URL:       "",
-		Title:     "",
-		Source:    entities.Wordstat,
-		Device:    "",
-		OS:        "",
-		Ads:       false,
-		Country:   "",
-		Lang:      "",
-		Pages:     0,
-		Date:      time.Now(),
+		KeywordID:         keyword.ID,
+		SiteID:            keyword.SiteID,
+		Rank:              frequency,
+		URL:               "",
+		Title:             "",
+		Source:            entities.Wordstat,
+		Device:            "",
+		OS:                "",
+		Ads:               false,
+		Country:           "",
+		Lang:              "",
+		Pages:             0,
+		Date:              time.Now(),
+		WordstatQueryType: queryType,
 	}
 
 	if err := uc.positionRepo.CreateOrUpdateToday(positionEntity); err != nil {
@@ -946,6 +981,31 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTask(task *entities.Trackin
 	return uc.resultRepo.Create(result)
 }
 
+func (uc *AsyncPositionTrackingUseCase) modifyWordstatQuery(query string, queryType string) string {
+	switch queryType {
+	case "default":
+		return query
+	case "quotes":
+		return fmt.Sprintf(`"%s"`, query)
+	case "quotes_exclamation_marks":
+		words := strings.Fields(query)
+		modifiedWords := make([]string, len(words))
+		for i, word := range words {
+			modifiedWords[i] = "!" + word
+		}
+		return fmt.Sprintf(`"%s"`, strings.Join(modifiedWords, " "))
+	case "exclamation_marks":
+		words := strings.Fields(query)
+		modifiedWords := make([]string, len(words))
+		for i, word := range words {
+			modifiedWords[i] = "!" + word
+		}
+		return fmt.Sprintf(`"[%s]"`, strings.Join(modifiedWords, " "))
+	default:
+		return query
+	}
+}
+
 func (uc *AsyncPositionTrackingUseCase) executeWordstatTask(task *entities.TrackingTask) error {
 	keyword, err := uc.keywordRepo.GetByID(task.KeywordID)
 	if err != nil {
@@ -963,25 +1023,32 @@ func (uc *AsyncPositionTrackingUseCase) executeWordstatTask(task *entities.Track
 		wordstatService = uc.wordstat
 	}
 
-	frequency, err := wordstatService.GetKeywordFrequency(keyword.Value, task.Regions)
+	queryType := task.WordstatQueryType
+	if queryType == "" {
+		queryType = "default"
+	}
+
+	modifiedQuery := uc.modifyWordstatQuery(keyword.Value, queryType)
+	frequency, err := wordstatService.GetKeywordFrequency(modifiedQuery, task.Regions)
 	if err != nil {
 		return err
 	}
 
 	positionEntity := &entities.Position{
-		KeywordID: keyword.ID,
-		SiteID:    keyword.SiteID,
-		Rank:      frequency,
-		URL:       "",
-		Title:     "",
-		Source:    entities.Wordstat,
-		Device:    "",
-		OS:        "",
-		Ads:       false,
-		Country:   "",
-		Lang:      "",
-		Pages:     0,
-		Date:      time.Now(),
+		KeywordID:         keyword.ID,
+		SiteID:            keyword.SiteID,
+		Rank:              frequency,
+		URL:               "",
+		Title:             "",
+		Source:            entities.Wordstat,
+		Device:            "",
+		OS:                "",
+		Ads:               false,
+		Country:           "",
+		Lang:              "",
+		Pages:             0,
+		Date:              time.Now(),
+		WordstatQueryType: queryType,
 	}
 
 	if err := uc.positionRepo.CreateOrUpdateToday(positionEntity); err != nil {

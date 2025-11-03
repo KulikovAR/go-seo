@@ -195,7 +195,7 @@ func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
 }
 
 // @Summary Track Wordstat positions
-// @Description Start async Wordstat position tracking for site keywords
+// @Description Start async Wordstat position tracking for site keywords with query type options
 // @Accept json
 // @Produce json
 // @Param request body dto.TrackWordstatPositionsRequest true "Wordstat tracking parameters"
@@ -226,12 +226,36 @@ func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 		req.Regions,
 	)
 
+	defaultQuery := true
+	if req.Default != nil {
+		defaultQuery = *req.Default
+	}
+
+	quotes := false
+	if req.Quotes != nil {
+		quotes = *req.Quotes
+	}
+
+	quotesExclamationMarks := false
+	if req.QuotesExclamationMarks != nil {
+		quotesExclamationMarks = *req.QuotesExclamationMarks
+	}
+
+	exclamationMarks := false
+	if req.ExclamationMarks != nil {
+		exclamationMarks = *req.ExclamationMarks
+	}
+
 	taskID, err := h.asyncPositionTrackingUseCase.StartAsyncWordstatTracking(
 		req.SiteID,
 		req.XMLUserID,
 		req.XMLAPIKey,
 		req.XMLBaseURL,
 		req.Regions,
+		defaultQuery,
+		quotes,
+		quotesExclamationMarks,
+		exclamationMarks,
 	)
 
 	if err != nil {
@@ -418,6 +442,7 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 // @Param rank_to query int false "Maximum rank filter"
 // @Param group_id query int false "Filter by keyword group ID"
 // @Param filter_group_id query int false "Filter by position filter_group_id"
+// @Param wordstat_query_type query string false "Filter Wordstat by query type (default, quotes, quotes_exclamation_marks, exclamation_marks)"
 // @Param page query int false "Page number (default 1)"
 // @Param per_page query int false "Items per page (default 50, max 100)"
 // @Success 200 {object} dto.CombinedPositionsResponse
@@ -534,7 +559,7 @@ func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
 	}
 
 	combinedPositions, total, err := h.positionTrackingUseCase.GetCombinedPositionsPaginated(
-		req.SiteID, req.Source, includeWordstat, wordstatSort, dateFrom, dateTo, dateSort, sortType, req.RankFrom, req.RankTo, req.GroupID, req.FilterGroupID, req.Page, req.PerPage)
+		req.SiteID, req.Source, includeWordstat, wordstatSort, dateFrom, dateTo, dateSort, sortType, req.RankFrom, req.RankTo, req.GroupID, req.FilterGroupID, req.WordstatQueryType, req.Page, req.PerPage)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{

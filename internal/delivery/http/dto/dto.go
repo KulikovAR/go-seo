@@ -118,11 +118,15 @@ type TrackYandexPositionsRequest struct {
 }
 
 type TrackWordstatPositionsRequest struct {
-	SiteID     int    `json:"site_id" binding:"required"`
-	XMLUserID  string `json:"xml_user_id"`
-	XMLAPIKey  string `json:"xml_api_key"`
-	XMLBaseURL string `json:"xml_base_url"`
-	Regions    *int   `json:"regions"` // ID региона Яндекса, nullable
+	SiteID                 int    `json:"site_id" binding:"required"`
+	XMLUserID              string `json:"xml_user_id"`
+	XMLAPIKey              string `json:"xml_api_key"`
+	XMLBaseURL             string `json:"xml_base_url"`
+	Regions                *int   `json:"regions"`
+	Default                *bool  `json:"default"`
+	Quotes                 *bool  `json:"quotes"`
+	QuotesExclamationMarks *bool  `json:"quotes_exclamation_marks"`
+	ExclamationMarks       *bool  `json:"exclamation_marks"`
 }
 
 type PositionResponse struct {
@@ -252,20 +256,21 @@ type Trends struct {
 }
 
 type CombinedPositionsRequest struct {
-	SiteID        int     `form:"site_id" binding:"required"`
-	Source        *string `form:"source" binding:"omitempty,oneof=google yandex"`
-	Wordstat      *bool   `form:"wordstat"`
-	WordstatSort  *string `form:"wordstat_sort" binding:"omitempty,oneof=asc desc"`
-	DateFrom      *string `form:"date_from"`
-	DateTo        *string `form:"date_to"`
-	DateSort      *string `form:"date_sort"`
-	SortType      *string `form:"sort_type" binding:"omitempty,oneof=asc desc"`
-	RankFrom      *int    `form:"rank_from" binding:"omitempty,min=0"`
-	RankTo        *int    `form:"rank_to" binding:"omitempty,min=0"`
-	Page          int     `form:"page" binding:"omitempty,min=1"`
-	PerPage       int     `form:"per_page" binding:"omitempty,min=1,max=100"`
-	GroupID       *int    `form:"group_id"`
-	FilterGroupID *int    `form:"filter_group_id"`
+	SiteID            int     `form:"site_id" binding:"required"`
+	Source            *string `form:"source" binding:"omitempty,oneof=google yandex"`
+	Wordstat          *bool   `form:"wordstat"`
+	WordstatSort      *string `form:"wordstat_sort" binding:"omitempty,oneof=asc desc"`
+	DateFrom          *string `form:"date_from"`
+	DateTo            *string `form:"date_to"`
+	DateSort          *string `form:"date_sort"`
+	SortType          *string `form:"sort_type" binding:"omitempty,oneof=asc desc"`
+	RankFrom          *int    `form:"rank_from" binding:"omitempty,min=0"`
+	RankTo            *int    `form:"rank_to" binding:"omitempty,min=0"`
+	Page              int     `form:"page" binding:"omitempty,min=1"`
+	PerPage           int     `form:"per_page" binding:"omitempty,min=1,max=100"`
+	GroupID           *int    `form:"group_id"`
+	FilterGroupID     *int    `form:"filter_group_id"`
+	WordstatQueryType *string `form:"wordstat_query_type" binding:"omitempty,oneof=default quotes quotes_exclamation_marks exclamation_marks"`
 }
 
 type CombinedPositionsResponse struct {

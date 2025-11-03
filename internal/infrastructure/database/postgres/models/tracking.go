@@ -23,43 +23,44 @@ func (TrackingJob) TableName() string {
 }
 
 type TrackingTask struct {
-	ID            string    `gorm:"primaryKey;type:varchar(50)"`
-	JobID         string    `gorm:"not null;type:varchar(50);index"`
-	KeywordID     int       `gorm:"not null;index"`
-	SiteID        int       `gorm:"not null;index"`
-	Source        string    `gorm:"not null;type:varchar(20)"`
-	Status        string    `gorm:"not null;type:varchar(20);index"`
-	CreatedAt     time.Time `gorm:"not null"`
-	UpdatedAt     time.Time `gorm:"not null"`
-	CompletedAt   *time.Time
-	RetryCount    int    `gorm:"not null;default:0"`
-	MaxRetries    int    `gorm:"not null;default:5"`
-	Error         string `gorm:"type:text"`
-	Device        string `gorm:"type:varchar(20)"`
-	OS            string `gorm:"type:varchar(20)"`
-	Ads           bool   `gorm:"default:false"`
-	Country       string `gorm:"type:varchar(10)"`
-	Lang          string `gorm:"type:varchar(10)"`
-	Pages         int    `gorm:"default:0"`
-	Subdomains    bool   `gorm:"default:false"`
-	XMLUserID     string `gorm:"type:varchar(100)"`
-	XMLAPIKey     string `gorm:"type:varchar(100)"`
-	XMLBaseURL    string `gorm:"type:varchar(200)"`
-	TBS           string `gorm:"type:varchar(50)"`
-	Filter        int    `gorm:"default:0"`
-	Highlights    int    `gorm:"default:0"`
-	NFPR          int    `gorm:"default:0"`
-	Loc           int    `gorm:"default:0"`
-	AI            int    `gorm:"default:0"`
-	Raw           string `gorm:"type:varchar(50)"`
-	GroupBy       int    `gorm:"default:0"`
-	Within        int    `gorm:"default:0"`
-	LR            int    `gorm:"default:0"`
-	Domain        int    `gorm:"default:0"`
-	InIndex       int    `gorm:"default:0"`
-	Strict        int    `gorm:"default:0"`
-	Regions       *int   `gorm:"type:integer"`
-	FilterGroupID *int   `gorm:"type:integer;index"`
+	ID                string    `gorm:"primaryKey;type:varchar(50)"`
+	JobID             string    `gorm:"not null;type:varchar(50);index"`
+	KeywordID         int       `gorm:"not null;index"`
+	SiteID            int       `gorm:"not null;index"`
+	Source            string    `gorm:"not null;type:varchar(20)"`
+	Status            string    `gorm:"not null;type:varchar(20);index"`
+	CreatedAt         time.Time `gorm:"not null"`
+	UpdatedAt         time.Time `gorm:"not null"`
+	CompletedAt       *time.Time
+	RetryCount        int    `gorm:"not null;default:0"`
+	MaxRetries        int    `gorm:"not null;default:5"`
+	Error             string `gorm:"type:text"`
+	Device            string `gorm:"type:varchar(20)"`
+	OS                string `gorm:"type:varchar(20)"`
+	Ads               bool   `gorm:"default:false"`
+	Country           string `gorm:"type:varchar(10)"`
+	Lang              string `gorm:"type:varchar(10)"`
+	Pages             int    `gorm:"default:0"`
+	Subdomains        bool   `gorm:"default:false"`
+	XMLUserID         string `gorm:"type:varchar(100)"`
+	XMLAPIKey         string `gorm:"type:varchar(100)"`
+	XMLBaseURL        string `gorm:"type:varchar(200)"`
+	TBS               string `gorm:"type:varchar(50)"`
+	Filter            int    `gorm:"default:0"`
+	Highlights        int    `gorm:"default:0"`
+	NFPR              int    `gorm:"default:0"`
+	Loc               int    `gorm:"default:0"`
+	AI                int    `gorm:"default:0"`
+	Raw               string `gorm:"type:varchar(50)"`
+	GroupBy           int    `gorm:"default:0"`
+	Within            int    `gorm:"default:0"`
+	LR                int    `gorm:"default:0"`
+	Domain            int    `gorm:"default:0"`
+	InIndex           int    `gorm:"default:0"`
+	Strict            int    `gorm:"default:0"`
+	Regions           *int   `gorm:"type:integer"`
+	FilterGroupID     *int   `gorm:"type:integer;index"`
+	WordstatQueryType string `gorm:"type:varchar(50)"`
 }
 
 func (TrackingTask) TableName() string {

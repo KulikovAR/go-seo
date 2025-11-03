@@ -25,7 +25,7 @@ type PositionRepository interface {
 	DeleteBySiteID(siteID int) error
 	DeleteByKeywordID(keywordID int) error
 
-	GetTodayByKeywordAndSiteAndSource(keywordID, siteID int, source string) (*entities.Position, error)
+	GetTodayByKeywordAndSiteAndSource(keywordID, siteID int, source string, wordstatQueryType string) (*entities.Position, error)
 	CreateOrUpdateToday(position *entities.Position) error
 
 	GetHistoryBySiteIDWithOnePerDay(siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error)
@@ -40,7 +40,7 @@ type PositionRepository interface {
 
 	GetPositionsHistoryPaginated(siteID int, keywordID *int, source *string, dateFrom, dateTo *time.Time, last bool, page, perPage int) ([]*entities.Position, int64, error)
 
-	GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, groupID *int, filterGroupID *int, page, perPage int) ([]*entities.CombinedPosition, int64, error)
+	GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, groupID *int, filterGroupID *int, wordstatQueryType *string, page, perPage int) ([]*entities.CombinedPosition, int64, error)
 
 	GetLastUpdateDateBySiteIDExcludingSource(siteID int, excludeSource string) (*time.Time, error)
 }
