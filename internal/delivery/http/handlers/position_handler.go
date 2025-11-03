@@ -532,7 +532,7 @@ func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
 	}
 
 	combinedPositions, total, err := h.positionTrackingUseCase.GetCombinedPositionsPaginated(
-		req.SiteID, req.Source, includeWordstat, wordstatSort, dateFrom, dateTo, dateSort, sortType, req.RankFrom, req.RankTo, req.FilterGroupID, req.Page, req.PerPage)
+		req.SiteID, req.Source, includeWordstat, wordstatSort, dateFrom, dateTo, dateSort, sortType, req.RankFrom, req.RankTo, req.GroupID, req.Page, req.PerPage)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
