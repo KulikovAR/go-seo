@@ -15,14 +15,14 @@ type SiteUseCaseInterface interface {
 }
 
 type KeywordUseCaseInterface interface {
-	CreateKeyword(value string, siteID int, groupID int) (*entities.Keyword, error)
+	CreateKeyword(value string, siteID int, groupID *int) (*entities.Keyword, error)
 	DeleteKeyword(id int) error
 	GetKeywordsBySite(siteID int) ([]*entities.Keyword, error)
 }
 
 type GroupUseCaseInterface interface {
-	CreateGroup(name string) (*entities.Group, error)
+	CreateGroup(name string, siteID int) (*entities.Group, error)
 	UpdateGroup(id int, name string) (*entities.Group, error)
 	DeleteGroup(id int) error
-	GetAllGroups() ([]*entities.Group, error)
+	GetGroupsBySite(siteID int) ([]*entities.Group, error)
 }

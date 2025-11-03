@@ -18,7 +18,7 @@ func NewKeywordUseCase(keywordRepo repositories.KeywordRepository, positionRepo 
 	}
 }
 
-func (uc *KeywordUseCase) CreateKeyword(value string, siteID int, groupID int) (*entities.Keyword, error) {
+func (uc *KeywordUseCase) CreateKeyword(value string, siteID int, groupID *int) (*entities.Keyword, error) {
 	existingKeyword, err := uc.keywordRepo.GetByValueAndSite(value, siteID)
 	if err == nil && existingKeyword != nil {
 		return nil, &DomainError{

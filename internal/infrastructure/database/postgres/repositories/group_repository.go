@@ -19,7 +19,8 @@ func NewGroupRepository(db *gorm.DB) repositories.GroupRepository {
 
 func (r *groupRepository) Create(group *entities.Group) error {
 	model := &models.Group{
-		Name: group.Name,
+		Name:   group.Name,
+		SiteID: group.SiteID,
 	}
 
 	if err := r.db.Create(model).Error; err != nil {
@@ -39,9 +40,9 @@ func (r *groupRepository) GetByID(id int) (*entities.Group, error) {
 	return r.toDomain(&model), nil
 }
 
-func (r *groupRepository) GetAll() ([]*entities.Group, error) {
+func (r *groupRepository) GetAllBySite(siteID int) ([]*entities.Group, error) {
 	var models []models.Group
-	if err := r.db.Order("created_at DESC").Find(&models).Error; err != nil {
+	if err := r.db.Where("site_id = ?", siteID).Order("created_at DESC").Find(&models).Error; err != nil {
 		return nil, err
 	}
 
@@ -55,8 +56,9 @@ func (r *groupRepository) GetAll() ([]*entities.Group, error) {
 
 func (r *groupRepository) Update(group *entities.Group) error {
 	model := &models.Group{
-		ID:   group.ID,
-		Name: group.Name,
+		ID:     group.ID,
+		Name:   group.Name,
+		SiteID: group.SiteID,
 	}
 
 	return r.db.Save(model).Error
@@ -68,7 +70,8 @@ func (r *groupRepository) Delete(id int) error {
 
 func (r *groupRepository) toDomain(model *models.Group) *entities.Group {
 	return &entities.Group{
-		ID:   model.ID,
-		Name: model.Name,
+		ID:     model.ID,
+		Name:   model.Name,
+		SiteID: model.SiteID,
 	}
 }

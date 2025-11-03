@@ -20,17 +20,6 @@ func NewGroupHandler(groupUseCase usecases.GroupUseCaseInterface) *GroupHandler 
 	}
 }
 
-// CreateGroup godoc
-// @Summary Create a new group
-// @Description Create a new group for organizing keywords
-// @Tags groups
-// @Accept json
-// @Produce json
-// @Param group body dto.CreateGroupRequest true "Group data"
-// @Success 201 {object} dto.GroupResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /api/groups [post]
 func (h *GroupHandler) CreateGroup(c *gin.Context) {
 	var req dto.CreateGroupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -41,7 +30,7 @@ func (h *GroupHandler) CreateGroup(c *gin.Context) {
 		return
 	}
 
-	group, err := h.groupUseCase.CreateGroup(req.Name)
+	group, err := h.groupUseCase.CreateGroup(req.Name, req.SiteID)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			code := usecases.GetDomainErrorCode(err)
@@ -69,8 +58,9 @@ func (h *GroupHandler) CreateGroup(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, dto.GroupResponse{
-		ID:   group.ID,
-		Name: group.Name,
+		ID:     group.ID,
+		Name:   group.Name,
+		SiteID: group.SiteID,
 	})
 }
 
@@ -135,8 +125,9 @@ func (h *GroupHandler) UpdateGroup(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, dto.GroupResponse{
-		ID:   group.ID,
-		Name: group.Name,
+		ID:     group.ID,
+		Name:   group.Name,
+		SiteID: group.SiteID,
 	})
 }
 
@@ -194,16 +185,26 @@ func (h *GroupHandler) DeleteGroup(c *gin.Context) {
 	})
 }
 
-// GetGroups godoc
-// @Summary Get all groups
-// @Description Get list of all groups
-// @Tags groups
-// @Produce json
-// @Success 200 {array} dto.GroupResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /api/groups [get]
 func (h *GroupHandler) GetGroups(c *gin.Context) {
-	groups, err := h.groupUseCase.GetAllGroups()
+	siteIDStr := c.Query("site_id")
+	if siteIDStr == "" {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "site_id is required",
+		})
+		return
+	}
+
+	siteID, err := strconv.Atoi(siteIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "Invalid site_id",
+		})
+		return
+	}
+
+	groups, err := h.groupUseCase.GetGroupsBySite(siteID)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
@@ -223,8 +224,9 @@ func (h *GroupHandler) GetGroups(c *gin.Context) {
 	response := make([]dto.GroupResponse, len(groups))
 	for i, group := range groups {
 		response[i] = dto.GroupResponse{
-			ID:   group.ID,
-			Name: group.Name,
+			ID:     group.ID,
+			Name:   group.Name,
+			SiteID: group.SiteID,
 		}
 	}
 

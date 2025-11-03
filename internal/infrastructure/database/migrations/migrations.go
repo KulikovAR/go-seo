@@ -23,60 +23,6 @@ func CreateTables(db *gorm.DB) error {
 		return err
 	}
 
-	var hasGroupIDColumn bool
-	if err := db.Raw(`
-		SELECT EXISTS (
-			SELECT 1 
-			FROM information_schema.columns 
-			WHERE table_name = 'keywords' 
-			AND column_name = 'group_id'
-		)
-	`).Scan(&hasGroupIDColumn).Error; err != nil {
-		return err
-	}
-
-	getOrCreateDefaultGroup := func() (int, error) {
-		var groupID int
-		if err := db.Raw(`SELECT id FROM groups WHERE name = 'Default' LIMIT 1`).Scan(&groupID).Error; err != nil || groupID == 0 {
-			if err := db.Exec(`INSERT INTO groups (name, created_at, updated_at) VALUES ('Default', NOW(), NOW())`).Error; err != nil {
-				return 0, err
-			}
-			if err := db.Raw(`SELECT id FROM groups WHERE name = 'Default' LIMIT 1`).Scan(&groupID).Error; err != nil {
-				return 0, err
-			}
-		}
-		return groupID, nil
-	}
-
-	if !hasGroupIDColumn {
-		if err := db.Exec(`ALTER TABLE keywords ADD COLUMN group_id INTEGER`).Error; err != nil {
-			return err
-		}
-
-		defaultGroupID, err := getOrCreateDefaultGroup()
-		if err != nil {
-			return err
-		}
-
-		if err := db.Exec(`UPDATE keywords SET group_id = ? WHERE group_id IS NULL`, defaultGroupID).Error; err != nil {
-			return err
-		}
-	} else {
-		var nullCount int64
-		if err := db.Raw(`SELECT COUNT(*) FROM keywords WHERE group_id IS NULL`).Scan(&nullCount).Error; err != nil {
-			return err
-		}
-		if nullCount > 0 {
-			defaultGroupID, err := getOrCreateDefaultGroup()
-			if err != nil {
-				return err
-			}
-			if err := db.Exec(`UPDATE keywords SET group_id = ? WHERE group_id IS NULL`, defaultGroupID).Error; err != nil {
-				return err
-			}
-		}
-	}
-
 	// Проверяем и исправляем столбец domain в tracking_tasks
 	var hasDomainColumn bool
 	if err := db.Raw(`
@@ -222,6 +168,34 @@ func CreateTables(db *gorm.DB) error {
 	if err := db.Exec(`
 		CREATE INDEX IF NOT EXISTS idx_positions_stats_main 
 		ON positions (site_id, source, date DESC, rank);
+	`).Error; err != nil {
+		return err
+	}
+
+	var hasSiteIDColumn bool
+	if err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 
+			FROM information_schema.columns 
+			WHERE table_name = 'groups' 
+			AND column_name = 'site_id'
+		)
+	`).Scan(&hasSiteIDColumn).Error; err != nil {
+		return err
+	}
+
+	if !hasSiteIDColumn {
+		if err := db.Exec(`ALTER TABLE groups ADD COLUMN site_id INTEGER NOT NULL DEFAULT 1`).Error; err != nil {
+			return err
+		}
+		if err := db.Exec(`ALTER TABLE groups ALTER COLUMN site_id DROP DEFAULT`).Error; err != nil {
+			return err
+		}
+	}
+
+	if err := db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_groups_site_id 
+		ON groups (site_id);
 	`).Error; err != nil {
 		return err
 	}

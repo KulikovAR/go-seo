@@ -1,6 +1,7 @@
 package entities
 
 type Group struct {
-	ID   int
-	Name string
+	ID     int
+	Name   string
+	SiteID int
 }

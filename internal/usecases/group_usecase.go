@@ -16,9 +16,10 @@ func NewGroupUseCase(groupRepo repositories.GroupRepository) *GroupUseCase {
 	}
 }
 
-func (uc *GroupUseCase) CreateGroup(name string) (*entities.Group, error) {
+func (uc *GroupUseCase) CreateGroup(name string, siteID int) (*entities.Group, error) {
 	group := &entities.Group{
-		Name: name,
+		Name:   name,
+		SiteID: siteID,
 	}
 
 	if err := uc.groupRepo.Create(group); err != nil {
@@ -91,8 +92,8 @@ func (uc *GroupUseCase) DeleteGroup(id int) error {
 	return nil
 }
 
-func (uc *GroupUseCase) GetAllGroups() ([]*entities.Group, error) {
-	groups, err := uc.groupRepo.GetAll()
+func (uc *GroupUseCase) GetGroupsBySite(siteID int) ([]*entities.Group, error) {
+	groups, err := uc.groupRepo.GetAllBySite(siteID)
 	if err != nil {
 		return nil, &DomainError{
 			Code:    ErrorGroupFetch,

@@ -20,18 +20,19 @@ type DeleteSiteResponse struct {
 type CreateKeywordRequest struct {
 	Value   string `json:"value" binding:"required"`
 	SiteID  int    `json:"site_id" binding:"required"`
-	GroupID int    `json:"group_id" binding:"required"`
+	GroupID *int   `json:"group_id"`
 }
 
 type KeywordResponse struct {
 	ID      int    `json:"id"`
 	Value   string `json:"value"`
 	SiteID  int    `json:"site_id"`
-	GroupID int    `json:"group_id"`
+	GroupID *int   `json:"group_id"`
 }
 
 type CreateGroupRequest struct {
-	Name string `json:"name" binding:"required"`
+	Name   string `json:"name" binding:"required"`
+	SiteID int    `json:"site_id" binding:"required"`
 }
 
 type UpdateGroupRequest struct {
@@ -39,8 +40,9 @@ type UpdateGroupRequest struct {
 }
 
 type GroupResponse struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID     int    `json:"id"`
+	Name   string `json:"name"`
+	SiteID int    `json:"site_id"`
 }
 
 type DeleteKeywordResponse struct {
