@@ -4,7 +4,6 @@ import (
 	"time"
 )
 
-// TrackingTaskStatus represents the status of a tracking task
 type TrackingTaskStatus string
 
 const (
@@ -15,7 +14,6 @@ const (
 	TaskStatusCancelled TrackingTaskStatus = "cancelled"
 )
 
-// TrackingJob represents a tracking job that contains multiple tasks
 type TrackingJob struct {
 	ID             string             `json:"id"`
 	SiteID         int                `json:"site_id"`
@@ -30,7 +28,6 @@ type TrackingJob struct {
 	Error          string             `json:"error,omitempty"`
 }
 
-// TrackingTask represents a single keyword tracking task
 type TrackingTask struct {
 	ID          string             `json:"id"`
 	JobID       string             `json:"job_id"`
@@ -73,7 +70,6 @@ type TrackingTask struct {
 	Regions    *int   `json:"regions,omitempty"`
 }
 
-// TrackingResult represents the result of a completed tracking task
 type TrackingResult struct {
 	TaskID    string    `json:"task_id"`
 	JobID     string    `json:"job_id"`

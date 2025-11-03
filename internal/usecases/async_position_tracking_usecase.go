@@ -375,7 +375,6 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 		return
 	}
 
-	// Динамическое определение размера батча
 	batchSize := uc.calculateOptimalBatchSize(len(tasks))
 	batches := uc.createBatches(tasks, batchSize)
 
@@ -422,20 +421,15 @@ func (uc *AsyncPositionTrackingUseCase) createBatches(tasks []*entities.Tracking
 	return batches
 }
 
-// calculateOptimalBatchSize вычисляет оптимальный размер батча на основе количества задач и доступных worker'ов
 func (uc *AsyncPositionTrackingUseCase) calculateOptimalBatchSize(totalTasks int) int {
 	workerCount := cap(uc.workerPool)
 
-	// Если задач меньше чем worker'ов, делаем батчи по 1 задаче
 	if totalTasks <= workerCount {
 		return 1
 	}
 
-	// Рассчитываем оптимальный размер батча
-	// Цель: использовать все worker'ы эффективно, но не создавать слишком много батчей
 	optimalBatchSize := totalTasks / workerCount
 
-	// Минимальный размер батча - 1, максимальный - из конфигурации
 	minBatchSize := 1
 	maxBatchSize := uc.batchSize
 
@@ -457,11 +451,9 @@ func (uc *AsyncPositionTrackingUseCase) processBatch(batchTasks []*entities.Trac
 		return
 	}
 
-	// Загружаем данные сайта и ключевых слов один раз для всего батча
 	siteID := batchTasks[0].SiteID
 	site, err := uc.siteRepo.GetByID(siteID)
 	if err != nil {
-		// Если не удалось загрузить сайт, помечаем все задачи как неудачные
 		for _, task := range batchTasks {
 			task.Status = entities.TaskStatusFailed
 			task.Error = fmt.Sprintf("Failed to load site: %v", err)
@@ -471,7 +463,6 @@ func (uc *AsyncPositionTrackingUseCase) processBatch(batchTasks []*entities.Trac
 		return
 	}
 
-	// Загружаем все ключевые слова для батча одним запросом
 	keywordIDs := make([]int, len(batchTasks))
 	for i, task := range batchTasks {
 		keywordIDs[i] = task.KeywordID
@@ -479,7 +470,6 @@ func (uc *AsyncPositionTrackingUseCase) processBatch(batchTasks []*entities.Trac
 
 	keywords, err := uc.keywordRepo.GetByIDs(keywordIDs)
 	if err != nil {
-		// Если не удалось загрузить ключевые слова, помечаем все задачи как неудачные
 		for _, task := range batchTasks {
 			task.Status = entities.TaskStatusFailed
 			task.Error = fmt.Sprintf("Failed to load keywords: %v", err)
@@ -489,13 +479,11 @@ func (uc *AsyncPositionTrackingUseCase) processBatch(batchTasks []*entities.Trac
 		return
 	}
 
-	// Создаем мапу для быстрого поиска ключевых слов
 	keywordMap := make(map[int]*entities.Keyword)
 	for _, keyword := range keywords {
 		keywordMap[keyword.ID] = keyword
 	}
 
-	// Обрабатываем каждую задачу в батче
 	for _, task := range batchTasks {
 		keyword, exists := keywordMap[task.KeywordID]
 		if !exists {
@@ -510,7 +498,6 @@ func (uc *AsyncPositionTrackingUseCase) processBatch(batchTasks []*entities.Trac
 	}
 }
 
-// processTaskWithData обрабатывает задачу с уже загруженными данными сайта и ключевого слова
 func (uc *AsyncPositionTrackingUseCase) processTaskWithData(task *entities.TrackingTask, site *entities.Site, keyword *entities.Keyword) {
 	task.Status = entities.TaskStatusRunning
 	uc.taskRepo.UpdateStatus(task.ID, entities.TaskStatusRunning)
@@ -585,7 +572,6 @@ func (uc *AsyncPositionTrackingUseCase) processTask(task *entities.TrackingTask)
 	uc.updateJobProgress(task.JobID, true)
 }
 
-// executeTaskWithData выполняет задачу с уже загруженными данными сайта и ключевого слова
 func (uc *AsyncPositionTrackingUseCase) executeTaskWithData(task *entities.TrackingTask, site *entities.Site, keyword *entities.Keyword) error {
 	switch task.Source {
 	case entities.GoogleSearch:
@@ -612,7 +598,6 @@ func (uc *AsyncPositionTrackingUseCase) executeTask(task *entities.TrackingTask)
 	}
 }
 
-// executeGoogleTaskWithData выполняет Google задачу с уже загруженными данными
 func (uc *AsyncPositionTrackingUseCase) executeGoogleTaskWithData(task *entities.TrackingTask, site *entities.Site, keyword *entities.Keyword) error {
 
 	var xmlRiverService *services.XMLRiverService
@@ -685,7 +670,6 @@ func (uc *AsyncPositionTrackingUseCase) getSoftIDByBaseURL(baseURL string) strin
 	if strings.Contains(baseURLLower, "xmlstock") {
 		return uc.xmlStockSoftID
 	}
-	// По умолчанию используем XMLRiver soft_id
 	return uc.xmlRiverSoftID
 }
 
@@ -762,7 +746,6 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTask(task *entities.Trackin
 	return uc.resultRepo.Create(result)
 }
 
-// executeYandexTaskWithData выполняет Yandex задачу с уже загруженными данными
 func (uc *AsyncPositionTrackingUseCase) executeYandexTaskWithData(task *entities.TrackingTask, site *entities.Site, keyword *entities.Keyword) error {
 	var xmlRiverService *services.XMLRiverService
 	if task.XMLUserID != "" && task.XMLAPIKey != "" && task.XMLBaseURL != "" {
@@ -826,7 +809,6 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTaskWithData(task *entities
 	return uc.resultRepo.Create(result)
 }
 
-// executeWordstatTaskWithData выполняет Wordstat задачу с уже загруженными данными
 func (uc *AsyncPositionTrackingUseCase) executeWordstatTaskWithData(task *entities.TrackingTask, site *entities.Site, keyword *entities.Keyword) error {
 	var wordstatService *services.WordstatService
 	if task.XMLUserID != "" && task.XMLAPIKey != "" && task.XMLBaseURL != "" {

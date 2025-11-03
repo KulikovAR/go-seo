@@ -22,7 +22,6 @@ func NewSiteHandler(siteUseCase usecases.SiteUseCaseInterface) *SiteHandler {
 	}
 }
 
-// parseIDsFromQuery парсит массив ID из query параметра "ids"
 func parseIDsFromQuery(c *gin.Context) ([]int, error) {
 	idsStr := c.Query("ids")
 	if idsStr == "" {
@@ -99,8 +98,8 @@ func (h *SiteHandler) CreateSite(c *gin.Context) {
 	c.JSON(http.StatusCreated, dto.SiteResponse{
 		ID:                 site.ID,
 		Domain:             site.Domain,
-		KeywordsCount:      0, // Новый сайт не имеет ключевых слов
-		LastPositionUpdate: nil, // Новый сайт не имеет позиций
+		KeywordsCount:      0,
+		LastPositionUpdate: nil,
 	})
 }
 
@@ -167,7 +166,6 @@ func (h *SiteHandler) DeleteSite(c *gin.Context) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /api/sites [get]
 func (h *SiteHandler) GetSites(c *gin.Context) {
-	// Парсим параметр ids из query
 	ids, err := parseIDsFromQuery(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
@@ -179,10 +177,8 @@ func (h *SiteHandler) GetSites(c *gin.Context) {
 
 	var sites []*entities.Site
 	if ids != nil {
-		// Если ids указаны, получаем только нужные сайты
 		sites, err = h.siteUseCase.GetSitesByIDs(ids)
 	} else {
-		// Если ids не указаны, получаем все сайты
 		sites, err = h.siteUseCase.GetAllSites()
 	}
 
@@ -204,17 +200,13 @@ func (h *SiteHandler) GetSites(c *gin.Context) {
 
 	response := make([]dto.SiteResponse, len(sites))
 	for i, site := range sites {
-		// Получаем количество ключевых слов для сайта
 		keywordsCount, err := h.siteUseCase.GetKeywordsCount(site.ID)
 		if err != nil {
-			// Если не удалось получить количество ключевых слов, используем 0
 			keywordsCount = 0
 		}
 
-		// Получаем дату последней позиции (исключая wordstat)
 		lastPositionUpdate, err := h.siteUseCase.GetLastPositionUpdateDate(site.ID)
 		if err != nil {
-			// Если не удалось получить дату, используем nil
 			lastPositionUpdate = nil
 		}
 

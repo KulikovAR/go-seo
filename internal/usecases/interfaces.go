@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-// Интерфейсы для тестирования
 type SiteUseCaseInterface interface {
 	CreateSite(domain string) (*entities.Site, error)
 	DeleteSite(id int) error

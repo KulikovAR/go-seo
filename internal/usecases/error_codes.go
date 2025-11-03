@@ -1,6 +1,5 @@
 package usecases
 
-// Error codes for domain errors
 const (
 	ErrorSiteExists   = "SITE_EXISTS"
 	ErrorSiteNotFound = "SITE_NOT_FOUND"

@@ -211,7 +211,6 @@ func (h *PositionHandler) TrackWordstatPositions(c *gin.Context) {
 		return
 	}
 
-	// Логируем параметры запроса
 	logger.LogTrackSiteParamsWithRegions(
 		req.SiteID,
 		"wordstat",
@@ -489,7 +488,6 @@ func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
 		}
 		dateSort = &parsed
 
-		// Проверяем, что date_sort входит в интервал date_from - date_to (если оба переданы)
 		if dateFrom != nil && dateTo != nil {
 			if dateSort.Before(*dateFrom) {
 				c.JSON(http.StatusBadRequest, dto.ErrorResponse{

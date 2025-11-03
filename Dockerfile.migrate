@@ -1,23 +1,15 @@
-# Dockerfile для выполнения миграций
 FROM golang:1.24.3-alpine
 
-# Установка необходимых пакетов
 RUN apk add --no-cache git ca-certificates tzdata
 
-# Создание рабочей директории
 WORKDIR /app
 
-# Копирование go.mod и go.sum для кэширования зависимостей
 COPY go.mod go.sum ./
 
-# Загрузка зависимостей
 RUN go mod download
 
-# Копирование исходного кода
 COPY . .
 
-# Обновление зависимостей и создание go.sum
 RUN go mod tidy
 
-# Команда по умолчанию (будет переопределена в docker-compose.yml)
 CMD ["go", "run", "cmd/migrate/main.go"]
