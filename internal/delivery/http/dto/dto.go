@@ -65,48 +65,50 @@ type TrackSitePositionsRequest struct {
 }
 
 type TrackGooglePositionsRequest struct {
-	SiteID     int    `json:"site_id" binding:"required"`
-	Pages      int    `json:"pages" binding:"omitempty,min=1,max=10"`
-	Device     string `json:"device" binding:"omitempty,oneof=desktop tablet mobile"`
-	OS         string `json:"os" binding:"omitempty,oneof=ios android"`
-	Ads        bool   `json:"ads"`
-	Country    string `json:"country"`
-	Lang       string `json:"lang"`
-	Subdomains bool   `json:"subdomains"`
-	XMLUserID  string `json:"xml_user_id"`
-	XMLAPIKey  string `json:"xml_api_key"`
-	XMLBaseURL string `json:"xml_base_url"`
-	TBS        string `json:"tbs"`        // Период поиска: qdr:h, qdr:d, qdr:w, qdr:m, qdr:y
-	Filter     int    `json:"filter"`     // Скрывать похожие результаты: 0 или 1
-	Highlights int    `json:"highlights"` // Подсветка ключевых слов: 0 или 1
-	NFPR       int    `json:"nfpr"`       // Отменить исправление запроса: 0 или 1
-	Loc        int    `json:"loc"`        // ID местоположения
-	AI         int    `json:"ai"`         // Парсинг блока "Обзор от ИИ": 0 или 1
-	Raw        string `json:"raw"`        // Полный HTML код страницы: "page"
-	LR         int    `json:"lr"`         // ID языка для ограничения поиска
-	Domain     int    `json:"domain"`     // ID домена Google для использования
+	SiteID        int    `json:"site_id" binding:"required"`
+	Pages         int    `json:"pages" binding:"omitempty,min=1,max=10"`
+	Device        string `json:"device" binding:"omitempty,oneof=desktop tablet mobile"`
+	OS            string `json:"os" binding:"omitempty,oneof=ios android"`
+	Ads           bool   `json:"ads"`
+	Country       string `json:"country"`
+	Lang          string `json:"lang"`
+	Subdomains    bool   `json:"subdomains"`
+	XMLUserID     string `json:"xml_user_id"`
+	XMLAPIKey     string `json:"xml_api_key"`
+	XMLBaseURL    string `json:"xml_base_url"`
+	TBS           string `json:"tbs"`
+	Filter        int    `json:"filter"`
+	Highlights    int    `json:"highlights"`
+	NFPR          int    `json:"nfpr"`
+	Loc           int    `json:"loc"`
+	AI            int    `json:"ai"`
+	Raw           string `json:"raw"`
+	LR            int    `json:"lr"`
+	Domain        int    `json:"domain"`
+	FilterGroupID *int   `json:"filter_group_id"`
 }
 
 type TrackYandexPositionsRequest struct {
-	SiteID     int    `json:"site_id" binding:"required"`
-	Pages      int    `json:"pages" binding:"omitempty,min=1,max=10"`
-	Device     string `json:"device" binding:"omitempty,oneof=desktop tablet mobile"`
-	OS         string `json:"os" binding:"omitempty,oneof=ios android"`
-	Ads        bool   `json:"ads"`
-	Country    string `json:"country"`
-	Lang       string `json:"lang"`
-	Subdomains bool   `json:"subdomains"`
-	XMLUserID  string `json:"xml_user_id"`
-	XMLAPIKey  string `json:"xml_api_key"`
-	XMLBaseURL string `json:"xml_base_url"`
-	GroupBy    int    `json:"groupby"`    // ТОП позиций для сбора (всегда 10)
-	Filter     int    `json:"filter"`     // Скрывать похожие результаты: 0 или 1
-	Highlights int    `json:"highlights"` // Подсветка ключевых слов: 0 или 1
-	Within     int    `json:"within"`     // Фильтр по периоду: 77, 1, 2, 0
-	LR         int    `json:"lr"`         // ID региона Яндекса
-	Raw        string `json:"raw"`        // Полный HTML код страницы: "page"
-	InIndex    int    `json:"inindex"`    // Проверка индексации: 0 или 1
-	Strict     int    `json:"strict"`     // Режим строгого соответствия: 0 или 1
+	SiteID        int    `json:"site_id" binding:"required"`
+	Pages         int    `json:"pages" binding:"omitempty,min=1,max=10"`
+	Device        string `json:"device" binding:"omitempty,oneof=desktop tablet mobile"`
+	OS            string `json:"os" binding:"omitempty,oneof=ios android"`
+	Ads           bool   `json:"ads"`
+	Country       string `json:"country"`
+	Lang          string `json:"lang"`
+	Subdomains    bool   `json:"subdomains"`
+	XMLUserID     string `json:"xml_user_id"`
+	XMLAPIKey     string `json:"xml_api_key"`
+	XMLBaseURL    string `json:"xml_base_url"`
+	GroupBy       int    `json:"groupby"`
+	Filter        int    `json:"filter"`
+	Highlights    int    `json:"highlights"`
+	Within        int    `json:"within"`
+	LR            int    `json:"lr"`
+	Raw           string `json:"raw"`
+	InIndex       int    `json:"inindex"`
+	Strict        int    `json:"strict"`
+	FilterGroupID *int   `json:"filter_group_id"`
 }
 
 type TrackWordstatPositionsRequest struct {
@@ -244,18 +246,19 @@ type Trends struct {
 }
 
 type CombinedPositionsRequest struct {
-	SiteID       int     `form:"site_id" binding:"required"`
-	Source       *string `form:"source" binding:"omitempty,oneof=google yandex"`
-	Wordstat     *bool   `form:"wordstat"`
-	WordstatSort *string `form:"wordstat_sort" binding:"omitempty,oneof=asc desc"`
-	DateFrom     *string `form:"date_from"`
-	DateTo       *string `form:"date_to"`
-	DateSort     *string `form:"date_sort"`
-	SortType     *string `form:"sort_type" binding:"omitempty,oneof=asc desc"`
-	RankFrom     *int    `form:"rank_from" binding:"omitempty,min=0"`
-	RankTo       *int    `form:"rank_to" binding:"omitempty,min=0"`
-	Page         int     `form:"page" binding:"omitempty,min=1"`
-	PerPage      int     `form:"per_page" binding:"omitempty,min=1,max=100"`
+	SiteID        int     `form:"site_id" binding:"required"`
+	Source        *string `form:"source" binding:"omitempty,oneof=google yandex"`
+	Wordstat      *bool   `form:"wordstat"`
+	WordstatSort  *string `form:"wordstat_sort" binding:"omitempty,oneof=asc desc"`
+	DateFrom      *string `form:"date_from"`
+	DateTo        *string `form:"date_to"`
+	DateSort      *string `form:"date_sort"`
+	SortType      *string `form:"sort_type" binding:"omitempty,oneof=asc desc"`
+	RankFrom      *int    `form:"rank_from" binding:"omitempty,min=0"`
+	RankTo        *int    `form:"rank_to" binding:"omitempty,min=0"`
+	Page          int     `form:"page" binding:"omitempty,min=1"`
+	PerPage       int     `form:"per_page" binding:"omitempty,min=1,max=100"`
+	FilterGroupID *int    `form:"filter_group_id"`
 }
 
 type CombinedPositionsResponse struct {

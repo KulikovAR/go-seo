@@ -20,22 +20,23 @@ func NewPositionRepository(db *gorm.DB) repositories.PositionRepository {
 
 func (r *positionRepository) Create(position *entities.Position) error {
 	model := &positionModels.Position{
-		KeywordID: position.KeywordID,
-		SiteID:    position.SiteID,
-		Rank:      position.Rank,
-		URL:       position.URL,
-		Title:     position.Title,
-		Source:    position.Source,
-		Device:    position.Device,
-		OS:        position.OS,
-		Ads:       position.Ads,
-		Country:   position.Country,
-		Lang:      position.Lang,
-		Pages:     position.Pages,
-		Date:      position.Date,
+		KeywordID:     position.KeywordID,
+		SiteID:        position.SiteID,
+		Rank:          position.Rank,
+		URL:           position.URL,
+		Title:         position.Title,
+		Source:        position.Source,
+		Device:        position.Device,
+		OS:            position.OS,
+		Ads:           position.Ads,
+		Country:       position.Country,
+		Lang:          position.Lang,
+		Pages:         position.Pages,
+		Date:          position.Date,
+		FilterGroupID: position.FilterGroupID,
 	}
 
-	if err := r.db.Select("keyword_id", "site_id", "rank", "url", "title", "source", "device", "os", "ads", "country", "lang", "pages", "date").Create(model).Error; err != nil {
+	if err := r.db.Select("keyword_id", "site_id", "rank", "url", "title", "source", "device", "os", "ads", "country", "lang", "pages", "date", "filter_group_id").Create(model).Error; err != nil {
 		return err
 	}
 
@@ -51,19 +52,20 @@ func (r *positionRepository) CreateBatch(positions []*entities.Position) error {
 	models := make([]*positionModels.Position, len(positions))
 	for i, position := range positions {
 		models[i] = &positionModels.Position{
-			KeywordID: position.KeywordID,
-			SiteID:    position.SiteID,
-			Rank:      position.Rank,
-			URL:       position.URL,
-			Title:     position.Title,
-			Source:    position.Source,
-			Device:    position.Device,
-			OS:        position.OS,
-			Ads:       position.Ads,
-			Country:   position.Country,
-			Lang:      position.Lang,
-			Pages:     position.Pages,
-			Date:      position.Date,
+			KeywordID:     position.KeywordID,
+			SiteID:        position.SiteID,
+			Rank:          position.Rank,
+			URL:           position.URL,
+			Title:         position.Title,
+			Source:        position.Source,
+			Device:        position.Device,
+			OS:            position.OS,
+			Ads:           position.Ads,
+			Country:       position.Country,
+			Lang:          position.Lang,
+			Pages:         position.Pages,
+			Date:          position.Date,
+			FilterGroupID: position.FilterGroupID,
 		}
 	}
 
@@ -272,19 +274,20 @@ func (r *positionRepository) Update(position *entities.Position) error {
 	return r.db.Model(&positionModels.Position{}).
 		Where("id = ?", position.ID).
 		Updates(positionModels.Position{
-			KeywordID: position.KeywordID,
-			SiteID:    position.SiteID,
-			Rank:      position.Rank,
-			URL:       position.URL,
-			Title:     position.Title,
-			Source:    position.Source,
-			Device:    position.Device,
-			OS:        position.OS,
-			Ads:       position.Ads,
-			Country:   position.Country,
-			Lang:      position.Lang,
-			Pages:     position.Pages,
-			Date:      position.Date,
+			KeywordID:     position.KeywordID,
+			SiteID:        position.SiteID,
+			Rank:          position.Rank,
+			URL:           position.URL,
+			Title:         position.Title,
+			Source:        position.Source,
+			Device:        position.Device,
+			OS:            position.OS,
+			Ads:           position.Ads,
+			Country:       position.Country,
+			Lang:          position.Lang,
+			Pages:         position.Pages,
+			Date:          position.Date,
+			FilterGroupID: position.FilterGroupID,
 		}).Error
 }
 
@@ -479,20 +482,21 @@ func (r *positionRepository) GetLatestBySiteIDAndSource(siteID int, source strin
 
 func (r *positionRepository) toDomain(model *positionModels.Position) *entities.Position {
 	position := &entities.Position{
-		ID:        model.ID,
-		KeywordID: model.KeywordID,
-		SiteID:    model.SiteID,
-		Rank:      model.Rank,
-		URL:       model.URL,
-		Title:     model.Title,
-		Source:    model.Source,
-		Device:    model.Device,
-		OS:        model.OS,
-		Ads:       model.Ads,
-		Country:   model.Country,
-		Lang:      model.Lang,
-		Pages:     model.Pages,
-		Date:      model.Date,
+		ID:            model.ID,
+		KeywordID:     model.KeywordID,
+		SiteID:        model.SiteID,
+		Rank:          model.Rank,
+		URL:           model.URL,
+		Title:         model.Title,
+		Source:        model.Source,
+		Device:        model.Device,
+		OS:            model.OS,
+		Ads:           model.Ads,
+		Country:       model.Country,
+		Lang:          model.Lang,
+		Pages:         model.Pages,
+		Date:          model.Date,
+		FilterGroupID: model.FilterGroupID,
 	}
 
 	if model.Keyword.ID != 0 {
@@ -795,11 +799,15 @@ func (r *positionRepository) GetPositionsHistoryPaginated(siteID int, keywordID 
 	return positions, total, nil
 }
 
-func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
+func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, filterGroupID *int, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
 	offset := (page - 1) * perPage
 
 	var allKeywords []positionModels.Keyword
 	query := r.db.Where("site_id = ?", siteID)
+
+	if filterGroupID != nil {
+		query = query.Where("group_id = ?", *filterGroupID)
+	}
 
 	var totalKeywords int64
 	if err := query.Model(&positionModels.Keyword{}).Count(&totalKeywords).Error; err != nil {
@@ -910,6 +918,10 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 
 			positionQuery := r.db.Where("site_id = ? AND keyword_id = ? AND source != ? AND DATE(date) = ?",
 				siteID, keywordID, "wordstat", dateSort.Format("2006-01-02"))
+
+			if filterGroupID != nil {
+				positionQuery = positionQuery.Where("filter_group_id = ?", *filterGroupID)
+			}
 
 			if source != nil {
 				if *source == "google" {
@@ -1025,6 +1037,10 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 		}
 		if rankTo != nil {
 			query = query.Where("rank <= ?", *rankTo)
+		}
+
+		if filterGroupID != nil {
+			query = query.Where("filter_group_id = ?", *filterGroupID)
 		}
 
 		if err := query.Order("date DESC").Find(&positions).Error; err != nil {

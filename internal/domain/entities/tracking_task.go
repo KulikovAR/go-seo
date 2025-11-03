@@ -54,20 +54,21 @@ type TrackingTask struct {
 	XMLAPIKey  string `json:"xml_api_key,omitempty"`
 	XMLBaseURL string `json:"xml_base_url,omitempty"`
 	// Source-specific parameters
-	TBS        string `json:"tbs,omitempty"`
-	Filter     int    `json:"filter"`
-	Highlights int    `json:"highlights"`
-	NFPR       int    `json:"nfpr"`
-	Loc        int    `json:"loc"`
-	AI         int    `json:"ai"`
-	Raw        string `json:"raw,omitempty"`
-	GroupBy    int    `json:"groupby"`
-	Within     int    `json:"within"`
-	LR         int    `json:"lr"`
-	Domain     int    `json:"domain"`
-	InIndex    int    `json:"inindex"`
-	Strict     int    `json:"strict"`
-	Regions    *int   `json:"regions,omitempty"`
+	TBS           string `json:"tbs,omitempty"`
+	Filter        int    `json:"filter"`
+	Highlights    int    `json:"highlights"`
+	NFPR          int    `json:"nfpr"`
+	Loc           int    `json:"loc"`
+	AI            int    `json:"ai"`
+	Raw           string `json:"raw,omitempty"`
+	GroupBy       int    `json:"groupby"`
+	Within        int    `json:"within"`
+	LR            int    `json:"lr"`
+	Domain        int    `json:"domain"`
+	InIndex       int    `json:"inindex"`
+	Strict        int    `json:"strict"`
+	Regions       *int   `json:"regions,omitempty"`
+	FilterGroupID *int   `json:"filter_group_id,omitempty"`
 }
 
 type TrackingResult struct {
