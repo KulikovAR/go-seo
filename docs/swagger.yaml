@@ -38,13 +38,6 @@ definitions:
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
     type: object
-  dto.CreateGroupRequest:
-    properties:
-      name:
-        type: string
-    required:
-    - name
-    type: object
   dto.CreateKeywordRequest:
     properties:
       group_id:
@@ -54,7 +47,6 @@ definitions:
       value:
         type: string
     required:
-    - group_id
     - site_id
     - value
     type: object
@@ -88,6 +80,8 @@ definitions:
         type: integer
       name:
         type: string
+      site_id:
+        type: integer
     type: object
   dto.KeywordResponse:
     properties:
@@ -295,7 +289,6 @@ definitions:
       ads:
         type: boolean
       ai:
-        description: 'Парсинг блока "Обзор от ИИ": 0 или 1'
         type: integer
       country:
         type: string
@@ -306,24 +299,20 @@ definitions:
         - mobile
         type: string
       domain:
-        description: ID домена Google для использования
         type: integer
       filter:
-        description: 'Скрывать похожие результаты: 0 или 1'
+        type: integer
+      filter_group_id:
         type: integer
       highlights:
-        description: 'Подсветка ключевых слов: 0 или 1'
         type: integer
       lang:
         type: string
       loc:
-        description: ID местоположения
         type: integer
       lr:
-        description: ID языка для ограничения поиска
         type: integer
       nfpr:
-        description: 'Отменить исправление запроса: 0 или 1'
         type: integer
       os:
         enum:
@@ -335,14 +324,12 @@ definitions:
         minimum: 1
         type: integer
       raw:
-        description: 'Полный HTML код страницы: "page"'
         type: string
       site_id:
         type: integer
       subdomains:
         type: boolean
       tbs:
-        description: 'Период поиска: qdr:h, qdr:d, qdr:w, qdr:m, qdr:y'
         type: string
       xml_api_key:
         type: string
@@ -382,21 +369,18 @@ definitions:
         - mobile
         type: string
       filter:
-        description: 'Скрывать похожие результаты: 0 или 1'
+        type: integer
+      filter_group_id:
         type: integer
       groupby:
-        description: ТОП позиций для сбора (всегда 10)
         type: integer
       highlights:
-        description: 'Подсветка ключевых слов: 0 или 1'
         type: integer
       inindex:
-        description: 'Проверка индексации: 0 или 1'
         type: integer
       lang:
         type: string
       lr:
-        description: ID региона Яндекса
         type: integer
       os:
         enum:
@@ -408,17 +392,14 @@ definitions:
         minimum: 1
         type: integer
       raw:
-        description: 'Полный HTML код страницы: "page"'
         type: string
       site_id:
         type: integer
       strict:
-        description: 'Режим строгого соответствия: 0 или 1'
         type: integer
       subdomains:
         type: boolean
       within:
-        description: 'Фильтр по периоду: 77, 1, 2, 0'
         type: integer
       xml_api_key:
         type: string
@@ -484,6 +465,11 @@ definitions:
     required:
     - name
     type: object
+  dto.UpdateKeywordRequest:
+    properties:
+      group_id:
+        type: integer
+    type: object
   dto.VisibilityStats:
     properties:
       avg_position:
@@ -498,54 +484,6 @@ definitions:
 info:
   contact: {}
 paths:
-  /api/groups:
-    get:
-      description: Get list of all groups
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/dto.GroupResponse'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Get all groups
-      tags:
-      - groups
-    post:
-      consumes:
-      - application/json
-      description: Create a new group for organizing keywords
-      parameters:
-      - description: Group data
-        in: body
-        name: group
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CreateGroupRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.GroupResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Create a new group
-      tags:
-      - groups
   /api/groups/{id}:
     delete:
       description: Delete a group
@@ -694,6 +632,44 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Delete a keyword
+      tags:
+      - keywords
+    put:
+      consumes:
+      - application/json
+      description: Update keyword group_id
+      parameters:
+      - description: Keyword ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Keyword update data
+        in: body
+        name: keyword
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateKeywordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.KeywordResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Update keyword group
       tags:
       - keywords
   /api/positions/combined:

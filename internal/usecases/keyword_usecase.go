@@ -67,6 +67,28 @@ func (uc *KeywordUseCase) CreateKeyword(value string, siteID int, groupID *int) 
 	return keyword, nil
 }
 
+func (uc *KeywordUseCase) UpdateKeyword(id int, groupID *int) (*entities.Keyword, error) {
+	keyword, err := uc.keywordRepo.GetByID(id)
+	if err != nil {
+		return nil, &DomainError{
+			Code:    ErrorKeywordNotFound,
+			Message: "Keyword not found",
+			Err:     err,
+		}
+	}
+
+	keyword.GroupID = groupID
+	if err := uc.keywordRepo.Update(keyword); err != nil {
+		return nil, &DomainError{
+			Code:    ErrorKeywordUpdate,
+			Message: "Failed to update keyword",
+			Err:     err,
+		}
+	}
+
+	return keyword, nil
+}
+
 func (uc *KeywordUseCase) DeleteKeyword(id int) error {
 	_, err := uc.keywordRepo.GetByID(id)
 	if err != nil {

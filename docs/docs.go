@@ -15,79 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/groups": {
-            "get": {
-                "description": "Get list of all groups",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "groups"
-                ],
-                "summary": "Get all groups",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dto.GroupResponse"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create a new group for organizing keywords",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "groups"
-                ],
-                "summary": "Create a new group",
-                "parameters": [
-                    {
-                        "description": "Group data",
-                        "name": "group",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateGroupRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/dto.GroupResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/groups/{id}": {
             "put": {
                 "description": "Update group name",
@@ -278,6 +205,63 @@ const docTemplate = `{
             }
         },
         "/api/keywords/{id}": {
+            "put": {
+                "description": "Update keyword group_id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keywords"
+                ],
+                "summary": "Update keyword group",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Keyword ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Keyword update data",
+                        "name": "keyword",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateKeywordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.KeywordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "description": "Delete a keyword and all its tracking data",
                 "tags": [
@@ -960,21 +944,9 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.CreateGroupRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.CreateKeywordRequest": {
             "type": "object",
             "required": [
-                "group_id",
                 "site_id",
                 "value"
             ],
@@ -1036,6 +1008,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "site_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -1354,7 +1329,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "ai": {
-                    "description": "Парсинг блока \"Обзор от ИИ\": 0 или 1",
                     "type": "integer"
                 },
                 "country": {
@@ -1369,30 +1343,27 @@ const docTemplate = `{
                     ]
                 },
                 "domain": {
-                    "description": "ID домена Google для использования",
                     "type": "integer"
                 },
                 "filter": {
-                    "description": "Скрывать похожие результаты: 0 или 1",
+                    "type": "integer"
+                },
+                "filter_group_id": {
                     "type": "integer"
                 },
                 "highlights": {
-                    "description": "Подсветка ключевых слов: 0 или 1",
                     "type": "integer"
                 },
                 "lang": {
                     "type": "string"
                 },
                 "loc": {
-                    "description": "ID местоположения",
                     "type": "integer"
                 },
                 "lr": {
-                    "description": "ID языка для ограничения поиска",
                     "type": "integer"
                 },
                 "nfpr": {
-                    "description": "Отменить исправление запроса: 0 или 1",
                     "type": "integer"
                 },
                 "os": {
@@ -1408,7 +1379,6 @@ const docTemplate = `{
                     "minimum": 1
                 },
                 "raw": {
-                    "description": "Полный HTML код страницы: \"page\"",
                     "type": "string"
                 },
                 "site_id": {
@@ -1418,7 +1388,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "tbs": {
-                    "description": "Период поиска: qdr:h, qdr:d, qdr:w, qdr:m, qdr:y",
                     "type": "string"
                 },
                 "xml_api_key": {
@@ -1477,26 +1446,24 @@ const docTemplate = `{
                     ]
                 },
                 "filter": {
-                    "description": "Скрывать похожие результаты: 0 или 1",
+                    "type": "integer"
+                },
+                "filter_group_id": {
                     "type": "integer"
                 },
                 "groupby": {
-                    "description": "ТОП позиций для сбора (всегда 10)",
                     "type": "integer"
                 },
                 "highlights": {
-                    "description": "Подсветка ключевых слов: 0 или 1",
                     "type": "integer"
                 },
                 "inindex": {
-                    "description": "Проверка индексации: 0 или 1",
                     "type": "integer"
                 },
                 "lang": {
                     "type": "string"
                 },
                 "lr": {
-                    "description": "ID региона Яндекса",
                     "type": "integer"
                 },
                 "os": {
@@ -1512,21 +1479,18 @@ const docTemplate = `{
                     "minimum": 1
                 },
                 "raw": {
-                    "description": "Полный HTML код страницы: \"page\"",
                     "type": "string"
                 },
                 "site_id": {
                     "type": "integer"
                 },
                 "strict": {
-                    "description": "Режим строгого соответствия: 0 или 1",
                     "type": "integer"
                 },
                 "subdomains": {
                     "type": "boolean"
                 },
                 "within": {
-                    "description": "Фильтр по периоду: 77, 1, 2, 0",
                     "type": "integer"
                 },
                 "xml_api_key": {
@@ -1621,6 +1585,14 @@ const docTemplate = `{
             "properties": {
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.UpdateKeywordRequest": {
+            "type": "object",
+            "properties": {
+                "group_id": {
+                    "type": "integer"
                 }
             }
         },

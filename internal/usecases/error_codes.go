@@ -10,6 +10,7 @@ const (
 	ErrorKeywordExists   = "KEYWORD_EXISTS"
 	ErrorKeywordNotFound = "KEYWORD_NOT_FOUND"
 	ErrorKeywordCreation = "KEYWORD_CREATION_FAILED"
+	ErrorKeywordUpdate   = "KEYWORD_UPDATE_FAILED"
 	ErrorKeywordDeletion = "KEYWORD_DELETION_FAILED"
 	ErrorKeywordFetch    = "KEYWORD_FETCH_FAILED"
 

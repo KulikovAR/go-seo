@@ -23,6 +23,10 @@ type CreateKeywordRequest struct {
 	GroupID *int   `json:"group_id"`
 }
 
+type UpdateKeywordRequest struct {
+	GroupID *int `json:"group_id"`
+}
+
 type KeywordResponse struct {
 	ID      int    `json:"id"`
 	Value   string `json:"value"`

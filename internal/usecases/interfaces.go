@@ -16,6 +16,7 @@ type SiteUseCaseInterface interface {
 
 type KeywordUseCaseInterface interface {
 	CreateKeyword(value string, siteID int, groupID *int) (*entities.Keyword, error)
+	UpdateKeyword(id int, groupID *int) (*entities.Keyword, error)
 	DeleteKeyword(id int) error
 	GetKeywordsBySite(siteID int) ([]*entities.Keyword, error)
 }

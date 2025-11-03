@@ -37,6 +37,7 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 		{
 			keywords.POST("", keywordHandler.CreateKeyword)
 			keywords.GET("", keywordHandler.GetKeywords)
+			keywords.PUT("/:id", keywordHandler.UpdateKeyword)
 			keywords.DELETE("/:id", keywordHandler.DeleteKeyword)
 		}
 
