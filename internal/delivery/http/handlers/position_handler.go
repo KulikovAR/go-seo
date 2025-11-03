@@ -417,6 +417,7 @@ func (h *PositionHandler) GetPositionsHistory(c *gin.Context) {
 // @Param rank_from query int false "Minimum rank filter"
 // @Param rank_to query int false "Maximum rank filter"
 // @Param group_id query int false "Filter by keyword group ID"
+// @Param filter_group_id query int false "Filter by position filter_group_id"
 // @Param page query int false "Page number (default 1)"
 // @Param per_page query int false "Items per page (default 50, max 100)"
 // @Success 200 {object} dto.CombinedPositionsResponse
@@ -533,7 +534,7 @@ func (h *PositionHandler) GetCombinedPositions(c *gin.Context) {
 	}
 
 	combinedPositions, total, err := h.positionTrackingUseCase.GetCombinedPositionsPaginated(
-		req.SiteID, req.Source, includeWordstat, wordstatSort, dateFrom, dateTo, dateSort, sortType, req.RankFrom, req.RankTo, req.GroupID, req.Page, req.PerPage)
+		req.SiteID, req.Source, includeWordstat, wordstatSort, dateFrom, dateTo, dateSort, sortType, req.RankFrom, req.RankTo, req.GroupID, req.FilterGroupID, req.Page, req.PerPage)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{

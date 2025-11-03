@@ -38,6 +38,16 @@ definitions:
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
     type: object
+  dto.CreateGroupRequest:
+    properties:
+      name:
+        type: string
+      site_id:
+        type: integer
+    required:
+    - name
+    - site_id
+    type: object
   dto.CreateKeywordRequest:
     properties:
       group_id:
@@ -484,6 +494,64 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/groups:
+    get:
+      description: Get list of all groups for a specific site
+      parameters:
+      - description: Site ID
+        in: query
+        name: site_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.GroupResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get all groups
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: Create a new group for organizing keywords
+      parameters:
+      - description: Group data
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.GroupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Create a new group
+      tags:
+      - groups
   /api/groups/{id}:
     delete:
       description: Delete a group
@@ -719,6 +787,10 @@ paths:
       - description: Maximum rank filter
         in: query
         name: rank_to
+        type: integer
+      - description: Filter by keyword group ID
+        in: query
+        name: group_id
         type: integer
       - description: Page number (default 1)
         in: query

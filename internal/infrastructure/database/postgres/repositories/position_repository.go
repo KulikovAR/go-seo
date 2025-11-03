@@ -799,14 +799,14 @@ func (r *positionRepository) GetPositionsHistoryPaginated(siteID int, keywordID 
 	return positions, total, nil
 }
 
-func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, filterGroupID *int, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
+func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, groupID *int, filterGroupID *int, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
 	offset := (page - 1) * perPage
 
 	var allKeywords []positionModels.Keyword
 	query := r.db.Where("site_id = ?", siteID)
 
-	if filterGroupID != nil {
-		query = query.Where("group_id = ?", *filterGroupID)
+	if groupID != nil {
+		query = query.Where("group_id = ?", *groupID)
 	}
 
 	var totalKeywords int64

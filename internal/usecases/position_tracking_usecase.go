@@ -424,7 +424,7 @@ func (uc *PositionTrackingUseCase) GetLatestPositions() ([]*entities.Position, e
 	return latestPositions, nil
 }
 
-func (uc *PositionTrackingUseCase) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, filterGroupID *int, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
+func (uc *PositionTrackingUseCase) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, groupID *int, filterGroupID *int, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
 	if page <= 0 {
 		page = 1
 	}
@@ -453,7 +453,7 @@ func (uc *PositionTrackingUseCase) GetCombinedPositionsPaginated(siteID int, sou
 		}
 	}
 
-	combinedPositions, total, err := uc.positionRepo.GetCombinedPositionsPaginated(siteID, source, includeWordstat, wordstatSort, dateFrom, dateTo, dateSort, sortType, rankFrom, rankTo, filterGroupID, page, perPage)
+	combinedPositions, total, err := uc.positionRepo.GetCombinedPositionsPaginated(siteID, source, includeWordstat, wordstatSort, dateFrom, dateTo, dateSort, sortType, rankFrom, rankTo, groupID, filterGroupID, page, perPage)
 	if err != nil {
 		return nil, 0, &DomainError{
 			Code:    ErrorPositionFetch,
