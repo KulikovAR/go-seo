@@ -20,6 +20,17 @@ func NewGroupHandler(groupUseCase usecases.GroupUseCaseInterface) *GroupHandler 
 	}
 }
 
+// CreateGroup godoc
+// @Summary Create a new group
+// @Description Create a new group for organizing keywords
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param group body dto.CreateGroupRequest true "Group data"
+// @Success 201 {object} dto.GroupResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/groups [post]
 func (h *GroupHandler) CreateGroup(c *gin.Context) {
 	var req dto.CreateGroupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -185,6 +196,16 @@ func (h *GroupHandler) DeleteGroup(c *gin.Context) {
 	})
 }
 
+// GetGroups godoc
+// @Summary Get all groups
+// @Description Get list of all groups for a specific site
+// @Tags groups
+// @Produce json
+// @Param site_id query int true "Site ID"
+// @Success 200 {array} dto.GroupResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/groups [get]
 func (h *GroupHandler) GetGroups(c *gin.Context) {
 	siteIDStr := c.Query("site_id")
 	if siteIDStr == "" {
