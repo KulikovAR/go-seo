@@ -182,6 +182,10 @@ func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchReque
 
 		resp, err := s.Search(req, source)
 		if err != nil {
+			errStr := err.Error()
+			if source == entities.YandexSearch && strings.Contains(errStr, "error 18") {
+				return 0, "", "", nil
+			}
 			return 0, "", "", fmt.Errorf("failed to search page %d: %w", page, err)
 		}
 
@@ -208,6 +212,10 @@ func (s *XMLRiverService) findSitePositionInternal(req SearchRequest, siteDomain
 
 		resp, err := s.Search(req, source)
 		if err != nil {
+			errStr := err.Error()
+			if source == entities.YandexSearch && strings.Contains(errStr, "error 18") {
+				return 0, "", "", nil
+			}
 			return 0, "", "", fmt.Errorf("failed to search page %d: %w", page, err)
 		}
 

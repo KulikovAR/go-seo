@@ -395,7 +395,13 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 			select {
 			case <-ticker.C:
 				j, err := uc.jobRepo.GetByID(jobID)
-				if err == nil && j.TotalTasks > 0 {
+				if err != nil {
+					continue
+				}
+				if j.Status == entities.TaskStatusCompleted || j.Status == entities.TaskStatusFailed {
+					return
+				}
+				if j.TotalTasks > 0 {
 					p := (j.CompletedTasks + j.FailedTasks) * 100 / j.TotalTasks
 					uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", p)
 				}
