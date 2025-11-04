@@ -375,6 +375,14 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 		return
 	}
 
+	if job.Status == entities.TaskStatusCompleted || job.Status == entities.TaskStatusFailed {
+		return
+	}
+
+	if job.Status == entities.TaskStatusRunning {
+		return
+	}
+
 	job.Status = entities.TaskStatusRunning
 	uc.jobRepo.UpdateStatus(jobID, entities.TaskStatusRunning)
 	uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", 0)
@@ -533,6 +541,10 @@ func (uc *AsyncPositionTrackingUseCase) processBatch(batchTasks []*entities.Trac
 }
 
 func (uc *AsyncPositionTrackingUseCase) processTaskWithData(task *entities.TrackingTask, site *entities.Site, keyword *entities.Keyword) {
+	if task.Status == entities.TaskStatusCompleted || task.Status == entities.TaskStatusFailed {
+		return
+	}
+
 	task.Status = entities.TaskStatusRunning
 	uc.taskRepo.UpdateStatus(task.ID, entities.TaskStatusRunning)
 
