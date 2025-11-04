@@ -85,14 +85,14 @@ func (s *WordstatService) GetWordstatData(query string, regions *int) (*Wordstat
 	return &wordstatResp, nil
 }
 
-func (s *WordstatService) GetKeywordFrequency(query string, regions *int) (int, error) {
-	resp, err := s.GetWordstatData(query, regions)
+func (s *WordstatService) GetKeywordFrequency(queryForAPI string, originalQuery string, regions *int) (int, error) {
+	resp, err := s.GetWordstatData(queryForAPI, regions)
 	if err != nil {
 		return 0, err
 	}
 
 	for _, item := range resp.Popular {
-		if item.Text == query {
+		if item.Text == originalQuery {
 			frequency, err := strconv.Atoi(item.Value)
 			if err != nil {
 				return 0, fmt.Errorf("failed to parse frequency value: %w", err)

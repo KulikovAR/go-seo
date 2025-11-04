@@ -860,7 +860,7 @@ func (uc *AsyncPositionTrackingUseCase) executeWordstatTaskWithData(task *entiti
 	}
 
 	modifiedQuery := uc.modifyWordstatQuery(keyword.Value, queryType)
-	frequency, err := wordstatService.GetKeywordFrequency(modifiedQuery, task.Regions)
+	frequency, err := wordstatService.GetKeywordFrequency(modifiedQuery, keyword.Value, task.Regions)
 	if err != nil {
 		return err
 	}
@@ -1029,7 +1029,7 @@ func (uc *AsyncPositionTrackingUseCase) executeWordstatTask(task *entities.Track
 	}
 
 	modifiedQuery := uc.modifyWordstatQuery(keyword.Value, queryType)
-	frequency, err := wordstatService.GetKeywordFrequency(modifiedQuery, task.Regions)
+	frequency, err := wordstatService.GetKeywordFrequency(modifiedQuery, keyword.Value, task.Regions)
 	if err != nil {
 		return err
 	}

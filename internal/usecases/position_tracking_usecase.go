@@ -466,7 +466,7 @@ func (uc *PositionTrackingUseCase) GetCombinedPositionsPaginated(siteID int, sou
 }
 
 func (uc *PositionTrackingUseCase) trackWordstatPosition(keyword *entities.Keyword) error {
-	frequency, err := uc.wordstat.GetKeywordFrequency(keyword.Value, nil)
+	frequency, err := uc.wordstat.GetKeywordFrequency(keyword.Value, keyword.Value, nil)
 	if err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,
@@ -669,7 +669,7 @@ func (uc *PositionTrackingUseCase) trackWordstatKeywordPosition(
 		wordstatService = uc.wordstat
 	}
 
-	frequency, err := wordstatService.GetKeywordFrequency(keyword.Value, regions)
+	frequency, err := wordstatService.GetKeywordFrequency(keyword.Value, keyword.Value, regions)
 	if err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,
