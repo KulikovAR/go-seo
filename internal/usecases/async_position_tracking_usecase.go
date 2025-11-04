@@ -433,6 +433,9 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 	close(progressDone)
 	if job.Status == entities.TaskStatusCompleted {
 		uc.kafkaService.SendJobStatus(jobID, string(job.Status), job.Error, 100)
+		if job.Source == entities.GoogleSearch || job.Source == entities.YandexSearch {
+			uc.calculateAndUpdateDynamic(job.SiteID, job.Source)
+		}
 	} else {
 		uc.kafkaService.SendJobStatus(jobID, string(job.Status), job.Error)
 	}
@@ -1095,4 +1098,92 @@ func (uc *AsyncPositionTrackingUseCase) updateJobProgress(jobID string, success 
 		progress := (job.CompletedTasks + job.FailedTasks) * 100 / job.TotalTasks
 		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", progress)
 	}
+}
+
+func (uc *AsyncPositionTrackingUseCase) calculateAndUpdateDynamic(siteID int, source string) {
+	currentPositions, err := uc.positionRepo.GetLatestBySiteIDAndSource(siteID, source)
+	if err != nil {
+		return
+	}
+
+	type currentPositionData struct {
+		rank int
+		date time.Time
+	}
+
+	currentMap := make(map[int]currentPositionData)
+	for _, pos := range currentPositions {
+		if pos.Rank > 0 {
+			currentMap[pos.KeywordID] = currentPositionData{
+				rank: pos.Rank,
+				date: pos.Date,
+			}
+		}
+	}
+
+	if len(currentMap) == 0 {
+		site, err := uc.siteRepo.GetByID(siteID)
+		if err != nil {
+			return
+		}
+		if source == entities.GoogleSearch {
+			site.GoogleDynamic = nil
+		} else if source == entities.YandexSearch {
+			site.YandexDynamic = nil
+		}
+		uc.siteRepo.Update(site)
+		return
+	}
+
+	var totalDiff int
+	hasComparisons := false
+	for kwID, currentData := range currentMap {
+		dateBefore := currentData.date.Add(-time.Nanosecond)
+		positions, err := uc.positionRepo.GetByKeywordAndSiteAndSourceWithDateRange(kwID, siteID, source, nil, &dateBefore)
+		if err != nil {
+			continue
+		}
+
+		if len(positions) == 0 {
+			continue
+		}
+
+		var previousRank int
+		for _, pos := range positions {
+			if pos.Rank > 0 {
+				previousRank = pos.Rank
+				break
+			}
+		}
+
+		if previousRank > 0 {
+			diff := previousRank - currentData.rank
+			totalDiff += diff
+			hasComparisons = true
+		}
+	}
+
+	site, err := uc.siteRepo.GetByID(siteID)
+	if err != nil {
+		return
+	}
+
+	var dynamic *int
+	if hasComparisons {
+		if totalDiff > 0 {
+			val := 1
+			dynamic = &val
+		} else if totalDiff < 0 {
+			val := 0
+			dynamic = &val
+		}
+	}
+
+	if source == entities.GoogleSearch {
+		site.GoogleDynamic = dynamic
+	} else if source == entities.YandexSearch {
+		site.YandexDynamic = dynamic
+	}
+
+	uc.siteRepo.Update(site)
 }

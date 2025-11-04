@@ -11,6 +11,8 @@ type SiteResponse struct {
 	Domain             string     `json:"domain"`
 	KeywordsCount      int        `json:"keywords_count"`
 	LastPositionUpdate *time.Time `json:"last_position_update,omitempty"`
+	YandexDynamic      *int       `json:"yandex_dynamic"`
+	GoogleDynamic      *int       `json:"google_dynamic"`
 }
 
 type DeleteSiteResponse struct {

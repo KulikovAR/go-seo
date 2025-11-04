@@ -82,8 +82,10 @@ func (r *siteRepository) GetByIDs(ids []int) ([]*entities.Site, error) {
 
 func (r *siteRepository) Update(site *entities.Site) error {
 	model := &models.Site{
-		ID:     site.ID,
-		Domain: site.Domain,
+		ID:            site.ID,
+		Domain:        site.Domain,
+		YandexDynamic: site.YandexDynamic,
+		GoogleDynamic: site.GoogleDynamic,
 	}
 
 	return r.db.Save(model).Error
@@ -95,7 +97,9 @@ func (r *siteRepository) Delete(id int) error {
 
 func (r *siteRepository) toDomain(model *models.Site) *entities.Site {
 	return &entities.Site{
-		ID:     model.ID,
-		Domain: model.Domain,
+		ID:            model.ID,
+		Domain:        model.Domain,
+		YandexDynamic: model.YandexDynamic,
+		GoogleDynamic: model.GoogleDynamic,
 	}
 }

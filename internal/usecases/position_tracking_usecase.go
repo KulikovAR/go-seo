@@ -704,3 +704,68 @@ func (uc *PositionTrackingUseCase) trackWordstatKeywordPosition(
 
 	return nil
 }
+
+func (uc *PositionTrackingUseCase) CalculatePositionDynamic(siteID int, source string) (*int, error) {
+	currentPositions, err := uc.positionRepo.GetLatestBySiteIDAndSource(siteID, source)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(currentPositions) == 0 {
+		return nil, nil
+	}
+
+	currentMap := make(map[int]int)
+	for _, pos := range currentPositions {
+		if pos.Rank > 0 {
+			currentMap[pos.KeywordID] = pos.Rank
+		}
+	}
+
+	if len(currentMap) == 0 {
+		return nil, nil
+	}
+
+	keywordIDs := make([]int, 0, len(currentMap))
+	for kwID := range currentMap {
+		keywordIDs = append(keywordIDs, kwID)
+	}
+
+	var totalDiff int
+	for _, kwID := range keywordIDs {
+		currentRank := currentMap[kwID]
+
+		positions, err := uc.positionRepo.GetByKeywordAndSiteAndSource(kwID, siteID, source)
+		if err != nil {
+			continue
+		}
+
+		if len(positions) < 2 {
+			continue
+		}
+
+		var previousRank int
+		for i := 1; i < len(positions); i++ {
+			if positions[i].Rank > 0 {
+				previousRank = positions[i].Rank
+				break
+			}
+		}
+
+		if previousRank > 0 {
+			diff := previousRank - currentRank
+			totalDiff += diff
+		}
+	}
+
+	var result *int
+	if totalDiff > 0 {
+		val := 1
+		result = &val
+	} else if totalDiff < 0 {
+		val := 0
+		result = &val
+	}
+
+	return result, nil
+}

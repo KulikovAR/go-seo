@@ -215,6 +215,8 @@ func (h *SiteHandler) GetSites(c *gin.Context) {
 			Domain:             site.Domain,
 			KeywordsCount:      keywordsCount,
 			LastPositionUpdate: lastPositionUpdate,
+			YandexDynamic:      site.YandexDynamic,
+			GoogleDynamic:      site.GoogleDynamic,
 		}
 	}
 
