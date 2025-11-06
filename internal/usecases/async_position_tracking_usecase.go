@@ -168,7 +168,7 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncGoogleTracking(
 func (uc *AsyncPositionTrackingUseCase) StartAsyncYandexTracking(
 	siteID int, device, os string, ads bool, country, lang string, pages int, subdomains bool,
 	xmlUserID, xmlAPIKey, xmlBaseURL string, groupBy, filter, highlights, within, lr int, raw string, inIndex, strict int,
-	filterGroupID *int,
+	organic bool, filterGroupID *int,
 ) (string, error) {
 	site, err := uc.siteRepo.GetByID(siteID)
 	if err != nil {
@@ -241,6 +241,7 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncYandexTracking(
 			Raw:           raw,
 			InIndex:       inIndex,
 			Strict:        strict,
+			Organic:       organic,
 			FilterGroupID: filterGroupID,
 		}
 		tasks = append(tasks, task)
@@ -664,9 +665,11 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTaskWithData(task *entities
 		xmlRiverService = uc.xmlStock
 	}
 
+	// Для Google используем organic=false и groupBy=0
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
 		keyword.Value, site.Domain, entities.GoogleSearch, task.Pages,
 		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, task.LR, task.Domain,
+		false, 0,
 	)
 	if err != nil {
 		return err
@@ -749,9 +752,11 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTask(task *entities.Trackin
 		xmlRiverService = uc.xmlStock
 	}
 
+	// Для Google используем organic=false и groupBy=0
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
 		keyword.Value, site.Domain, entities.GoogleSearch, task.Pages,
 		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, task.LR, task.Domain,
+		false, 0,
 	)
 	if err != nil {
 		return err
@@ -812,9 +817,18 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTaskWithData(task *entities
 		xmlRiverService = uc.xmlStock
 	}
 
+	// Если organic=false, используем groupby=pages*10 для получения всех результатов сразу
+	var groupBy int
+	if !task.Organic && task.Pages > 0 {
+		groupBy = task.Pages * 10
+	} else {
+		groupBy = task.GroupBy
+	}
+
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
 		keyword.Value, site.Domain, entities.YandexSearch, task.Pages,
 		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, task.LR, 0,
+		task.Organic, groupBy,
 	)
 	if err != nil {
 		return err
@@ -952,9 +966,18 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTask(task *entities.Trackin
 		xmlRiverService = uc.xmlStock
 	}
 
+	// Если organic=false, используем groupby=pages*10 для получения всех результатов сразу
+	var groupBy int
+	if !task.Organic && task.Pages > 0 {
+		groupBy = task.Pages * 10
+	} else {
+		groupBy = task.GroupBy
+	}
+
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
 		keyword.Value, site.Domain, entities.YandexSearch, task.Pages,
 		task.Device, task.OS, task.Ads, task.Country, task.Lang, task.Subdomains, task.LR, 0,
+		task.Organic, groupBy,
 	)
 	if err != nil {
 		return err

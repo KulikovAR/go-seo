@@ -30,8 +30,10 @@ type SearchRequest struct {
 	Ads     bool
 	Country string
 	Lang    string
-	Domain  int // ID домена Google
-	LR      int // ID региона Яндекса
+	Domain  int  // ID домена Google
+	LR      int  // ID региона Яндекса
+	GroupBy int  // GroupBy для Yandex (page*10 для получения всех результатов сразу)
+	Organic bool // Если true, используем yandexlive endpoint
 }
 
 type SearchResponse struct {
@@ -125,11 +127,18 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	if req.Domain > 0 {
 		params.Set("domain", strconv.Itoa(req.Domain))
 	}
+	if req.GroupBy > 0 {
+		params.Set("groupby", strconv.Itoa(req.GroupBy))
+	}
 
 	var endpoint string
 
 	if source == entities.YandexSearch {
-		endpoint = "/yandex/xml"
+		if req.Organic {
+			endpoint = "/yandexlive/xml"
+		} else {
+			endpoint = "/yandex/xml"
+		}
 	} else {
 		endpoint = "/google/xml"
 	}
@@ -177,6 +186,31 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 }
 
 func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchRequest, siteDomain string, source string, maxPages int, subdomains bool) (int, string, string, error) {
+	// Если organic=false для Yandex, используем groupby для получения всех результатов сразу
+	if source == entities.YandexSearch && !req.Organic && req.GroupBy > 0 {
+		req.Page = 0
+		resp, err := s.Search(req, source)
+		if err != nil {
+			errStr := err.Error()
+			if strings.Contains(errStr, "error 18") {
+				return 0, "", "", nil
+			}
+			return 0, "", "", fmt.Errorf("failed to search: %w", err)
+		}
+
+		position := 1
+		for _, group := range resp.Response.Results.Grouping.Groups {
+			for _, doc := range group.Docs {
+				if s.isSiteMatchWithSubdomains(doc.URL, siteDomain, subdomains) {
+					return position, doc.URL, doc.Title, nil
+				}
+				position++
+			}
+		}
+		return 0, "", "", nil
+	}
+
+	// Для organic=true или других случаев парсим постранично
 	for page := 0; page <= maxPages-1; page++ {
 		req.Page = page
 
@@ -260,7 +294,7 @@ func (s *XMLRiverService) isSiteMatch(resultURL, siteDomain string) bool {
 
 	return resultDomain == siteDomainExtracted
 }
-func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, subdomains bool, lr int, domain int) (int, string, string, error) {
+func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, source string, maxPages int, device, os string, ads bool, country, lang string, subdomains bool, lr int, domain int, organic bool, groupBy int) (int, string, string, error) {
 	req := SearchRequest{
 		Query:   query,
 		Page:    0,
@@ -271,6 +305,8 @@ func (s *XMLRiverService) FindSitePositionWithSubdomains(query, siteDomain, sour
 		Lang:    lang,
 		LR:      lr,
 		Domain:  domain,
+		Organic: organic,
+		GroupBy: groupBy,
 	}
 
 	return s.findSitePositionInternalWithSubdomains(req, siteDomain, source, maxPages, subdomains)

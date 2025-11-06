@@ -102,6 +102,7 @@ func (uc *PositionTrackingUseCase) TrackGooglePositions(
 func (uc *PositionTrackingUseCase) TrackYandexPositions(
 	siteID int, device, os string, ads bool, country, lang string, pages int, subdomains bool,
 	xmlUserID, xmlAPIKey, xmlBaseURL string, groupBy, filter, highlights, within, lr int, raw string, inIndex, strict int,
+	organic bool,
 ) (int, error) {
 	site, err := uc.siteRepo.GetByID(siteID)
 	if err != nil {
@@ -132,7 +133,7 @@ func (uc *PositionTrackingUseCase) TrackYandexPositions(
 			defer wg.Done()
 
 			err := uc.trackYandexKeywordPosition(site, kw, device, os, ads, country, lang, pages, subdomains,
-				xmlUserID, xmlAPIKey, xmlBaseURL, groupBy, filter, highlights, within, lr, raw, inIndex, strict)
+				xmlUserID, xmlAPIKey, xmlBaseURL, groupBy, filter, highlights, within, lr, raw, inIndex, strict, organic)
 
 			mu.Lock()
 			if err != nil && firstError == nil {
@@ -233,7 +234,8 @@ func (uc *PositionTrackingUseCase) trackKeywordPosition(
 		return uc.trackWordstatPosition(keyword)
 	}
 
-	position, url, title, err := uc.xmlRiver.FindSitePositionWithSubdomains(keyword.Value, site.Domain, source, pages, device, os, ads, country, lang, subdomains, 0, 0)
+	// Для общего случая используем organic=false и groupBy=0
+	position, url, title, err := uc.xmlRiver.FindSitePositionWithSubdomains(keyword.Value, site.Domain, source, pages, device, os, ads, country, lang, subdomains, 0, 0, false, 0)
 	if err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,
@@ -544,7 +546,8 @@ func (uc *PositionTrackingUseCase) trackGoogleKeywordPosition(
 		xmlRiverService = uc.xmlStock
 	}
 
-	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(keyword.Value, site.Domain, entities.GoogleSearch, pages, device, os, ads, country, lang, subdomains, 0, 0)
+	// Для Google используем organic=false и groupBy=0
+	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(keyword.Value, site.Domain, entities.GoogleSearch, pages, device, os, ads, country, lang, subdomains, 0, 0, false, 0)
 	if err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,
@@ -592,6 +595,7 @@ func (uc *PositionTrackingUseCase) trackYandexKeywordPosition(
 	groupBy, filter, highlights, within, lr int,
 	raw string,
 	inIndex, strict int,
+	organic bool,
 ) error {
 	// Создаем временный XMLRiver сервис с кастомными настройками
 	var xmlRiverService *services.XMLRiverService
@@ -611,7 +615,15 @@ func (uc *PositionTrackingUseCase) trackYandexKeywordPosition(
 		xmlRiverService = uc.xmlStock
 	}
 
-	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(keyword.Value, site.Domain, entities.YandexSearch, pages, device, os, ads, country, lang, subdomains, lr, 0)
+	// Если organic=false, используем groupby=pages*10 для получения всех результатов сразу
+	var calculatedGroupBy int
+	if !organic && pages > 0 {
+		calculatedGroupBy = pages * 10
+	} else {
+		calculatedGroupBy = groupBy
+	}
+
+	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(keyword.Value, site.Domain, entities.YandexSearch, pages, device, os, ads, country, lang, subdomains, lr, 0, organic, calculatedGroupBy)
 	if err != nil {
 		return &DomainError{
 			Code:    ErrorPositionCreation,

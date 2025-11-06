@@ -116,6 +116,7 @@ type TrackYandexPositionsRequest struct {
 	Raw           string `json:"raw"`
 	InIndex       int    `json:"inindex"`
 	Strict        int    `json:"strict"`
+	Organic       bool   `json:"organic"`
 	FilterGroupID *int   `json:"filter_group_id"`
 }
 

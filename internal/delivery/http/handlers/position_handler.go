@@ -169,6 +169,7 @@ func (h *PositionHandler) TrackYandexPositions(c *gin.Context) {
 		req.Raw,
 		req.InIndex,
 		req.Strict,
+		req.Organic,
 		req.FilterGroupID,
 	)
 

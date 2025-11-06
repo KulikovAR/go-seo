@@ -58,6 +58,7 @@ type TrackingTask struct {
 	Domain            int    `gorm:"default:0"`
 	InIndex           int    `gorm:"default:0"`
 	Strict            int    `gorm:"default:0"`
+	Organic           bool   `gorm:"default:false"`
 	Regions           *int   `gorm:"type:integer"`
 	FilterGroupID     *int   `gorm:"type:integer;index"`
 	WordstatQueryType string `gorm:"type:varchar(50)"`

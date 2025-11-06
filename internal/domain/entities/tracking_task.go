@@ -67,6 +67,7 @@ type TrackingTask struct {
 	Domain            int    `json:"domain"`
 	InIndex           int    `json:"inindex"`
 	Strict            int    `json:"strict"`
+	Organic           bool   `json:"organic"`
 	Regions           *int   `json:"regions,omitempty"`
 	FilterGroupID     *int   `json:"filter_group_id,omitempty"`
 	WordstatQueryType string `json:"wordstat_query_type,omitempty"`
