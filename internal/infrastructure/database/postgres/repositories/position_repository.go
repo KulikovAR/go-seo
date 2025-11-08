@@ -306,7 +306,7 @@ func (r *positionRepository) DeleteByKeywordID(keywordID int) error {
 	return r.db.Where("keyword_id = ?", keywordID).Delete(&positionModels.Position{}).Error
 }
 
-func (r *positionRepository) GetTodayByKeywordAndSiteAndSource(keywordID, siteID int, source string, wordstatQueryType string) (*entities.Position, error) {
+func (r *positionRepository) GetTodayByKeywordAndSiteAndSource(keywordID, siteID int, source string, wordstatQueryType string, filterGroupID *int) (*entities.Position, error) {
 	var model positionModels.Position
 
 	now := time.Now()
@@ -318,6 +318,12 @@ func (r *positionRepository) GetTodayByKeywordAndSiteAndSource(keywordID, siteID
 
 	if source == "wordstat" && wordstatQueryType != "" {
 		query = query.Where("wordstat_query_type = ?", wordstatQueryType)
+	}
+
+	if (source == "google" || source == "yandex") && filterGroupID != nil {
+		query = query.Where("filter_group_id = ?", *filterGroupID)
+	} else if (source == "google" || source == "yandex") && filterGroupID == nil {
+		query = query.Where("filter_group_id IS NULL")
 	}
 
 	if err := query.First(&model).Error; err != nil {
@@ -335,17 +341,28 @@ func (r *positionRepository) CreateOrUpdateToday(position *entities.Position) er
 	if position.Source == "wordstat" {
 		wordstatQueryType = position.WordstatQueryType
 	}
-	existingPosition, err := r.GetTodayByKeywordAndSiteAndSource(position.KeywordID, position.SiteID, position.Source, wordstatQueryType)
+	existingPosition, err := r.GetTodayByKeywordAndSiteAndSource(position.KeywordID, position.SiteID, position.Source, wordstatQueryType, position.FilterGroupID)
 	if err != nil {
 		return err
 	}
 
 	if existingPosition != nil {
-		position.ID = existingPosition.ID
-		return r.Update(position)
-	} else {
-		return r.Create(position)
+		if position.Source == "google" || position.Source == "yandex" {
+			existingFilterGroupID := existingPosition.FilterGroupID
+			newFilterGroupID := position.FilterGroupID
+
+			if (existingFilterGroupID == nil && newFilterGroupID == nil) ||
+				(existingFilterGroupID != nil && newFilterGroupID != nil && *existingFilterGroupID == *newFilterGroupID) {
+				position.ID = existingPosition.ID
+				return r.Update(position)
+			}
+		} else {
+			position.ID = existingPosition.ID
+			return r.Update(position)
+		}
 	}
+
+	return r.Create(position)
 }
 
 func (r *positionRepository) GetHistoryBySiteIDWithOnePerDay(siteID int, dateFrom, dateTo *time.Time) ([]*entities.Position, error) {

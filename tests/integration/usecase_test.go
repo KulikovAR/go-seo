@@ -209,8 +209,8 @@ func (m *MockPositionRepository) GetLastUpdateDateBySiteIDExcludingSource(siteID
 	return args.Get(0).(*time.Time), args.Error(1)
 }
 
-func (m *MockPositionRepository) GetTodayByKeywordAndSiteAndSource(keywordID, siteID int, source string) (*entities.Position, error) {
-	args := m.Called(keywordID, siteID, source)
+func (m *MockPositionRepository) GetTodayByKeywordAndSiteAndSource(keywordID, siteID int, source string, wordstatQueryType string, filterGroupID *int) (*entities.Position, error) {
+	args := m.Called(keywordID, siteID, source, wordstatQueryType, filterGroupID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
