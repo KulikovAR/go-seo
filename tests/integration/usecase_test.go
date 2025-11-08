@@ -252,8 +252,8 @@ func (m *MockPositionRepository) GetLatestBySiteIDAndSource(siteID int, source s
 	return args.Get(0).([]*entities.Position), args.Error(1)
 }
 
-func (m *MockPositionRepository) GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time) (*entities.PositionStatistics, error) {
-	args := m.Called(siteID, source, dateFrom, dateTo)
+func (m *MockPositionRepository) GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time, filterGroupID *int) (*entities.PositionStatistics, error) {
+	args := m.Called(siteID, source, dateFrom, dateTo, filterGroupID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

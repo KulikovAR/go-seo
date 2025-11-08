@@ -36,7 +36,7 @@ type PositionRepository interface {
 	GetLatestBySiteID(siteID int) ([]*entities.Position, error)
 	GetLatestBySiteIDAndSource(siteID int, source string) ([]*entities.Position, error)
 
-	GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time) (*entities.PositionStatistics, error)
+	GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time, filterGroupID *int) (*entities.PositionStatistics, error)
 
 	GetPositionsHistoryPaginated(siteID int, keywordID *int, source *string, dateFrom, dateTo *time.Time, last bool, page, perPage int) ([]*entities.Position, int64, error)
 

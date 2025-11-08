@@ -681,7 +681,7 @@ func (h *PositionHandler) GetPositionStatistics(c *gin.Context) {
 		return
 	}
 
-	stats, err := h.positionTrackingUseCase.GetPositionStatistics(req.SiteID, req.Source, dateFrom, dateTo)
+	stats, err := h.positionTrackingUseCase.GetPositionStatistics(req.SiteID, req.Source, dateFrom, dateTo, req.FilterGroupID)
 	if err != nil {
 		if usecases.IsDomainError(err) {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{

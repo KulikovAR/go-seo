@@ -211,10 +211,11 @@ type AsyncTrackPositionsResponse struct {
 }
 
 type PositionStatisticsRequest struct {
-	SiteID   int    `json:"site_id" binding:"required"`
-	DateFrom string `json:"date_from" binding:"required"`
-	DateTo   string `json:"date_to" binding:"required"`
-	Source   string `json:"source" binding:"required,oneof=google yandex wordstat"`
+	SiteID        int    `json:"site_id" binding:"required"`
+	DateFrom      string `json:"date_from" binding:"required"`
+	DateTo        string `json:"date_to" binding:"required"`
+	Source        string `json:"source" binding:"required,oneof=google yandex wordstat"`
+	FilterGroupID *int   `json:"filter_group_id"`
 }
 
 type PositionStatisticsResponse struct {

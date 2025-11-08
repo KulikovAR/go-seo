@@ -529,32 +529,22 @@ func (r *positionRepository) toDomain(model *positionModels.Position) *entities.
 	return position
 }
 
-func (r *positionRepository) GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time) (*entities.PositionStatistics, error) {
+func (r *positionRepository) GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time, filterGroupID *int) (*entities.PositionStatistics, error) {
 	var stats entities.PositionStatistics
 
-	// Упрощенный SQL запрос без CTE
 	query := `
 		SELECT 
-			-- Общие статистики
 			COUNT(*) as total_positions,
 			COUNT(DISTINCT keyword_id) as keywords_count,
-			
-			-- Видимость
 			COUNT(CASE WHEN rank > 0 THEN 1 END) as visible,
 			COUNT(CASE WHEN rank = 0 THEN 1 END) as not_visible,
-			
-			-- Статистики позиций (только для видимых)
 			ROUND(AVG(CASE WHEN rank > 0 THEN rank END), 2) as avg_position,
 			MIN(CASE WHEN rank > 0 THEN rank END) as best_position,
 			MAX(CASE WHEN rank > 0 THEN rank END) as worst_position,
-			
-			-- Распределение позиций (PositionDistribution)
 			COUNT(CASE WHEN rank BETWEEN 1 AND 3 THEN 1 END) as top_3,
 			COUNT(CASE WHEN rank BETWEEN 1 AND 10 THEN 1 END) as top_10,
 			COUNT(CASE WHEN rank BETWEEN 1 AND 20 THEN 1 END) as top_20,
 			COUNT(CASE WHEN rank = 0 THEN 1 END) as not_found,
-			
-			-- Диапазоны позиций (PositionRanges)
 			COUNT(CASE WHEN rank BETWEEN 1 AND 3 THEN 1 END) as range_1_3_count,
 			COUNT(CASE WHEN rank BETWEEN 4 AND 10 THEN 1 END) as range_4_10_count,
 			COUNT(CASE WHEN rank BETWEEN 11 AND 30 THEN 1 END) as range_11_30_count,
@@ -567,6 +557,12 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 		  AND date >= $3::date 
 		  AND date <= $4::date
 	`
+
+	queryParams := []interface{}{siteID, source, dateFrom, dateTo}
+	if filterGroupID != nil {
+		query += ` AND filter_group_id = $5`
+		queryParams = append(queryParams, *filterGroupID)
+	}
 
 	var result struct {
 		TotalPositions int     `json:"total_positions"`
@@ -588,8 +584,7 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 		Range100Plus   int     `json:"range_100_plus_count"`
 	}
 
-	// Выполняем запрос с использованием Rows для детального контроля
-	rows, err := r.db.Raw(query, siteID, source, dateFrom, dateTo).Rows()
+	rows, err := r.db.Raw(query, queryParams...).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -621,18 +616,21 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 		}
 	}
 
-	// Получаем медианную позицию отдельным запросом
 	var medianPosition float64
 	medianQuery := `
 		SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY rank) as median_position
 		FROM positions 
 		WHERE site_id = $1 AND source = $2 AND date >= $3::date AND date <= $4::date AND rank > 0
 	`
-	if err := r.db.Raw(medianQuery, siteID, source, dateFrom, dateTo).Scan(&medianPosition).Error; err != nil {
+	medianParams := []interface{}{siteID, source, dateFrom, dateTo}
+	if filterGroupID != nil {
+		medianQuery += ` AND filter_group_id = $5`
+		medianParams = append(medianParams, *filterGroupID)
+	}
+	if err := r.db.Raw(medianQuery, medianParams...).Scan(&medianPosition).Error; err != nil {
 		medianPosition = 0
 	}
 
-	// Получаем тренды
 	var trends struct {
 		Improved int `json:"improved"`
 		Declined int `json:"declined"`
@@ -646,6 +644,13 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 			WHERE site_id = $1 AND source = $2 
 			  AND date >= $3::date AND date <= $4::date
 			  AND date >= CURRENT_DATE - INTERVAL '30 days'
+	`
+	trendsParams := []interface{}{siteID, source, dateFrom, dateTo}
+	if filterGroupID != nil {
+		trendsQuery += ` AND filter_group_id = $5`
+		trendsParams = append(trendsParams, *filterGroupID)
+	}
+	trendsQuery += `
 		),
 		keyword_changes AS (
 			SELECT 
@@ -667,7 +672,7 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 		WHERE first_rank IS NOT NULL AND last_rank IS NOT NULL
 	`
 
-	if err := r.db.Raw(trendsQuery, siteID, source, dateFrom, dateTo).Scan(&trends).Error; err != nil {
+	if err := r.db.Raw(trendsQuery, trendsParams...).Scan(&trends).Error; err != nil {
 		trends.Improved = 0
 		trends.Declined = 0
 		trends.Stable = 0

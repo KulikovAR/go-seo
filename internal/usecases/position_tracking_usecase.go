@@ -360,7 +360,7 @@ func (uc *PositionTrackingUseCase) GetPositionsHistoryPaginated(siteID int, keyw
 	return positions, total, nil
 }
 
-func (uc *PositionTrackingUseCase) GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time) (*entities.PositionStatistics, error) {
+func (uc *PositionTrackingUseCase) GetPositionStatistics(siteID int, source string, dateFrom, dateTo time.Time, filterGroupID *int) (*entities.PositionStatistics, error) {
 	site, err := uc.siteRepo.GetByID(siteID)
 	if err != nil {
 		return nil, &DomainError{
@@ -385,7 +385,7 @@ func (uc *PositionTrackingUseCase) GetPositionStatistics(siteID int, source stri
 		}
 	}
 
-	stats, err := uc.positionRepo.GetPositionStatistics(siteID, source, dateFrom, dateTo)
+	stats, err := uc.positionRepo.GetPositionStatistics(siteID, source, dateFrom, dateTo, filterGroupID)
 	if err != nil {
 		return nil, &DomainError{
 			Code:    ErrorPositionFetch,
