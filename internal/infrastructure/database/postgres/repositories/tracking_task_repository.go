@@ -179,6 +179,10 @@ func (r *TrackingTaskRepository) DeleteByJobID(jobID string) error {
 	return r.db.Delete(&models.TrackingTask{}, "job_id = ?", jobID).Error
 }
 
+func (r *TrackingTaskRepository) DeleteBySiteID(siteID int) error {
+	return r.db.Where("site_id = ?", siteID).Delete(&models.TrackingTask{}).Error
+}
+
 func (r *TrackingTaskRepository) modelToEntity(model *models.TrackingTask) *entities.TrackingTask {
 	return &entities.TrackingTask{
 		ID:                model.ID,

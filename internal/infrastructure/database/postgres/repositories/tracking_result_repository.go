@@ -85,6 +85,10 @@ func (r *TrackingResultRepository) DeleteByJobID(jobID string) error {
 	return r.db.Delete(&models.TrackingResult{}, "job_id = ?", jobID).Error
 }
 
+func (r *TrackingResultRepository) DeleteBySiteID(siteID int) error {
+	return r.db.Where("site_id = ?", siteID).Delete(&models.TrackingResult{}).Error
+}
+
 func (r *TrackingResultRepository) modelToEntity(model *models.TrackingResult) *entities.TrackingResult {
 	return &entities.TrackingResult{
 		TaskID:    model.TaskID,

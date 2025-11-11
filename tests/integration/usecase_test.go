@@ -107,6 +107,11 @@ func (m *MockKeywordRepository) CountBySiteID(siteID int) (int, error) {
 	return args.Get(0).(int), args.Error(1)
 }
 
+func (m *MockKeywordRepository) DeleteBySiteID(siteID int) error {
+	args := m.Called(siteID)
+	return args.Error(0)
+}
+
 type MockPositionRepository struct {
 	mock.Mock
 }
@@ -270,12 +275,203 @@ func (m *MockPositionRepository) GetCombinedPositionsPaginated(siteID int, sourc
 	return args.Get(0).([]*entities.CombinedPosition), args.Get(1).(int64), args.Error(2)
 }
 
+type MockGroupRepository struct {
+	mock.Mock
+}
+
+func (m *MockGroupRepository) Create(group *entities.Group) error {
+	args := m.Called(group)
+	group.ID = 1
+	return args.Error(0)
+}
+
+func (m *MockGroupRepository) GetByID(id int) (*entities.Group, error) {
+	args := m.Called(id)
+	return args.Get(0).(*entities.Group), args.Error(1)
+}
+
+func (m *MockGroupRepository) GetAllBySite(siteID int) ([]*entities.Group, error) {
+	args := m.Called(siteID)
+	return args.Get(0).([]*entities.Group), args.Error(1)
+}
+
+func (m *MockGroupRepository) Update(group *entities.Group) error {
+	args := m.Called(group)
+	return args.Error(0)
+}
+
+func (m *MockGroupRepository) Delete(id int) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+func (m *MockGroupRepository) DeleteBySiteID(siteID int) error {
+	args := m.Called(siteID)
+	return args.Error(0)
+}
+
+type MockTrackingJobRepository struct {
+	mock.Mock
+}
+
+func (m *MockTrackingJobRepository) Create(job *entities.TrackingJob) error {
+	args := m.Called(job)
+	return args.Error(0)
+}
+
+func (m *MockTrackingJobRepository) GetByID(id string) (*entities.TrackingJob, error) {
+	args := m.Called(id)
+	return args.Get(0).(*entities.TrackingJob), args.Error(1)
+}
+
+func (m *MockTrackingJobRepository) Update(job *entities.TrackingJob) error {
+	args := m.Called(job)
+	return args.Error(0)
+}
+
+func (m *MockTrackingJobRepository) UpdateStatus(id string, status entities.TrackingTaskStatus) error {
+	args := m.Called(id, status)
+	return args.Error(0)
+}
+
+func (m *MockTrackingJobRepository) UpdateProgress(id string, completed, failed int) error {
+	args := m.Called(id, completed, failed)
+	return args.Error(0)
+}
+
+func (m *MockTrackingJobRepository) GetBySiteID(siteID int) ([]*entities.TrackingJob, error) {
+	args := m.Called(siteID)
+	return args.Get(0).([]*entities.TrackingJob), args.Error(1)
+}
+
+func (m *MockTrackingJobRepository) GetByStatus(status entities.TrackingTaskStatus) ([]*entities.TrackingJob, error) {
+	args := m.Called(status)
+	return args.Get(0).([]*entities.TrackingJob), args.Error(1)
+}
+
+func (m *MockTrackingJobRepository) GetJobsWithPagination(page, perPage int, siteID *int, status *entities.TrackingTaskStatus) ([]*entities.TrackingJob, int64, error) {
+	args := m.Called(page, perPage, siteID, status)
+	return args.Get(0).([]*entities.TrackingJob), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockTrackingJobRepository) Delete(id string) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+func (m *MockTrackingJobRepository) DeleteBySiteID(siteID int) error {
+	args := m.Called(siteID)
+	return args.Error(0)
+}
+
+type MockTrackingTaskRepository struct {
+	mock.Mock
+}
+
+func (m *MockTrackingTaskRepository) Create(task *entities.TrackingTask) error {
+	args := m.Called(task)
+	return args.Error(0)
+}
+
+func (m *MockTrackingTaskRepository) GetByID(id string) (*entities.TrackingTask, error) {
+	args := m.Called(id)
+	return args.Get(0).(*entities.TrackingTask), args.Error(1)
+}
+
+func (m *MockTrackingTaskRepository) GetByJobID(jobID string) ([]*entities.TrackingTask, error) {
+	args := m.Called(jobID)
+	return args.Get(0).([]*entities.TrackingTask), args.Error(1)
+}
+
+func (m *MockTrackingTaskRepository) Update(task *entities.TrackingTask) error {
+	args := m.Called(task)
+	return args.Error(0)
+}
+
+func (m *MockTrackingTaskRepository) UpdateStatus(id string, status entities.TrackingTaskStatus) error {
+	args := m.Called(id, status)
+	return args.Error(0)
+}
+
+func (m *MockTrackingTaskRepository) UpdateRetryCount(id string, retryCount int) error {
+	args := m.Called(id, retryCount)
+	return args.Error(0)
+}
+
+func (m *MockTrackingTaskRepository) GetPendingTasks(limit int) ([]*entities.TrackingTask, error) {
+	args := m.Called(limit)
+	return args.Get(0).([]*entities.TrackingTask), args.Error(1)
+}
+
+func (m *MockTrackingTaskRepository) GetFailedTasks(limit int) ([]*entities.TrackingTask, error) {
+	args := m.Called(limit)
+	return args.Get(0).([]*entities.TrackingTask), args.Error(1)
+}
+
+func (m *MockTrackingTaskRepository) Delete(id string) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+func (m *MockTrackingTaskRepository) DeleteByJobID(jobID string) error {
+	args := m.Called(jobID)
+	return args.Error(0)
+}
+
+func (m *MockTrackingTaskRepository) DeleteBySiteID(siteID int) error {
+	args := m.Called(siteID)
+	return args.Error(0)
+}
+
+type MockTrackingResultRepository struct {
+	mock.Mock
+}
+
+func (m *MockTrackingResultRepository) Create(result *entities.TrackingResult) error {
+	args := m.Called(result)
+	return args.Error(0)
+}
+
+func (m *MockTrackingResultRepository) GetByTaskID(taskID string) (*entities.TrackingResult, error) {
+	args := m.Called(taskID)
+	return args.Get(0).(*entities.TrackingResult), args.Error(1)
+}
+
+func (m *MockTrackingResultRepository) GetByJobID(jobID string) ([]*entities.TrackingResult, error) {
+	args := m.Called(jobID)
+	return args.Get(0).([]*entities.TrackingResult), args.Error(1)
+}
+
+func (m *MockTrackingResultRepository) GetBySiteID(siteID int) ([]*entities.TrackingResult, error) {
+	args := m.Called(siteID)
+	return args.Get(0).([]*entities.TrackingResult), args.Error(1)
+}
+
+func (m *MockTrackingResultRepository) Delete(id string) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+func (m *MockTrackingResultRepository) DeleteByJobID(jobID string) error {
+	args := m.Called(jobID)
+	return args.Error(0)
+}
+
+func (m *MockTrackingResultRepository) DeleteBySiteID(siteID int) error {
+	args := m.Called(siteID)
+	return args.Error(0)
+}
+
 func TestSiteUseCase_CreateSite(t *testing.T) {
 	mockSiteRepo := new(MockSiteRepository)
 	mockPositionRepo := new(MockPositionRepository)
 	mockKeywordRepo := new(MockKeywordRepository)
+	mockGroupRepo := new(MockGroupRepository)
+	mockJobRepo := new(MockTrackingJobRepository)
+	mockTaskRepo := new(MockTrackingTaskRepository)
+	mockResultRepo := new(MockTrackingResultRepository)
 
-	useCase := usecases.NewSiteUseCase(mockSiteRepo, mockPositionRepo, mockKeywordRepo)
+	useCase := usecases.NewSiteUseCase(mockSiteRepo, mockPositionRepo, mockKeywordRepo, mockGroupRepo, mockJobRepo, mockTaskRepo, mockResultRepo)
 
 	mockSiteRepo.On("Create", mock.AnythingOfType("*entities.Site")).Return(nil)
 

@@ -15,6 +15,7 @@ type TrackingJobRepository interface {
 	GetByStatus(status entities.TrackingTaskStatus) ([]*entities.TrackingJob, error)
 	GetJobsWithPagination(page, perPage int, siteID *int, status *entities.TrackingTaskStatus) ([]*entities.TrackingJob, int64, error)
 	Delete(id string) error
+	DeleteBySiteID(siteID int) error
 }
 
 // TrackingTaskRepository defines the interface for tracking task operations
@@ -29,6 +30,7 @@ type TrackingTaskRepository interface {
 	GetFailedTasks(limit int) ([]*entities.TrackingTask, error)
 	Delete(id string) error
 	DeleteByJobID(jobID string) error
+	DeleteBySiteID(siteID int) error
 }
 
 // TrackingResultRepository defines the interface for tracking result operations
@@ -39,4 +41,5 @@ type TrackingResultRepository interface {
 	GetBySiteID(siteID int) ([]*entities.TrackingResult, error)
 	Delete(id string) error
 	DeleteByJobID(jobID string) error
+	DeleteBySiteID(siteID int) error
 }

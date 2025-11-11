@@ -12,13 +12,29 @@ type SiteUseCase struct {
 	siteRepo     repositories.SiteRepository
 	positionRepo repositories.PositionRepository
 	keywordRepo  repositories.KeywordRepository
+	groupRepo    repositories.GroupRepository
+	jobRepo      repositories.TrackingJobRepository
+	taskRepo     repositories.TrackingTaskRepository
+	resultRepo   repositories.TrackingResultRepository
 }
 
-func NewSiteUseCase(siteRepo repositories.SiteRepository, positionRepo repositories.PositionRepository, keywordRepo repositories.KeywordRepository) *SiteUseCase {
+func NewSiteUseCase(
+	siteRepo repositories.SiteRepository,
+	positionRepo repositories.PositionRepository,
+	keywordRepo repositories.KeywordRepository,
+	groupRepo repositories.GroupRepository,
+	jobRepo repositories.TrackingJobRepository,
+	taskRepo repositories.TrackingTaskRepository,
+	resultRepo repositories.TrackingResultRepository,
+) *SiteUseCase {
 	return &SiteUseCase{
 		siteRepo:     siteRepo,
 		positionRepo: positionRepo,
 		keywordRepo:  keywordRepo,
+		groupRepo:    groupRepo,
+		jobRepo:      jobRepo,
+		taskRepo:     taskRepo,
+		resultRepo:   resultRepo,
 	}
 }
 
@@ -64,10 +80,50 @@ func (uc *SiteUseCase) DeleteSite(id int) error {
 		}
 	}
 
+	if err := uc.resultRepo.DeleteBySiteID(id); err != nil {
+		return &DomainError{
+			Code:    ErrorPositionDeletion,
+			Message: "Failed to delete site tracking results",
+			Err:     err,
+		}
+	}
+
+	if err := uc.taskRepo.DeleteBySiteID(id); err != nil {
+		return &DomainError{
+			Code:    ErrorPositionDeletion,
+			Message: "Failed to delete site tracking tasks",
+			Err:     err,
+		}
+	}
+
+	if err := uc.jobRepo.DeleteBySiteID(id); err != nil {
+		return &DomainError{
+			Code:    ErrorPositionDeletion,
+			Message: "Failed to delete site tracking jobs",
+			Err:     err,
+		}
+	}
+
 	if err := uc.positionRepo.DeleteBySiteID(id); err != nil {
 		return &DomainError{
 			Code:    ErrorPositionDeletion,
 			Message: "Failed to delete site positions",
+			Err:     err,
+		}
+	}
+
+	if err := uc.keywordRepo.DeleteBySiteID(id); err != nil {
+		return &DomainError{
+			Code:    ErrorPositionDeletion,
+			Message: "Failed to delete site keywords",
+			Err:     err,
+		}
+	}
+
+	if err := uc.groupRepo.DeleteBySiteID(id); err != nil {
+		return &DomainError{
+			Code:    ErrorPositionDeletion,
+			Message: "Failed to delete site groups",
 			Err:     err,
 		}
 	}

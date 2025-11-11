@@ -136,6 +136,10 @@ func (r *keywordRepository) Delete(id int) error {
 	return r.db.Delete(&models.Keyword{}, id).Error
 }
 
+func (r *keywordRepository) DeleteBySiteID(siteID int) error {
+	return r.db.Where("site_id = ?", siteID).Delete(&models.Keyword{}).Error
+}
+
 func (r *keywordRepository) CountBySiteID(siteID int) (int, error) {
 	var count int64
 	if err := r.db.Model(&models.Keyword{}).Where("site_id = ?", siteID).Count(&count).Error; err != nil {

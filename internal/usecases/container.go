@@ -16,7 +16,7 @@ type Container struct {
 
 func NewContainer(repos *repositories.Container, xmlRiver *services.XMLRiverService, xmlStock *services.XMLRiverService, wordstat *services.WordstatService, kafkaService *services.KafkaService, idGenerator *services.IDGeneratorService, retryService *services.RetryService, workerCount int, batchSize int, xmlRiverSoftID string, xmlStockSoftID string) *Container {
 	return &Container{
-		Site:                  NewSiteUseCase(repos.Site, repos.Position, repos.Keyword),
+		Site:                  NewSiteUseCase(repos.Site, repos.Position, repos.Keyword, repos.Group, repos.TrackingJob, repos.TrackingTask, repos.TrackingResult),
 		Keyword:               NewKeywordUseCase(repos.Keyword, repos.Position),
 		Group:                 NewGroupUseCase(repos.Group),
 		PositionTracking:      NewPositionTrackingUseCase(repos.Site, repos.Keyword, repos.Position, xmlRiver, xmlStock, wordstat, xmlRiverSoftID, xmlStockSoftID),

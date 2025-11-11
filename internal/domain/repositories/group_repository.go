@@ -8,4 +8,5 @@ type GroupRepository interface {
 	GetAllBySite(siteID int) ([]*entities.Group, error)
 	Update(group *entities.Group) error
 	Delete(id int) error
+	DeleteBySiteID(siteID int) error
 }

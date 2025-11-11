@@ -194,3 +194,7 @@ func (r *TrackingJobRepository) GetJobsWithPagination(page, perPage int, siteID 
 func (r *TrackingJobRepository) Delete(id string) error {
 	return r.db.Delete(&models.TrackingJob{}, "id = ?", id).Error
 }
+
+func (r *TrackingJobRepository) DeleteBySiteID(siteID int) error {
+	return r.db.Where("site_id = ?", siteID).Delete(&models.TrackingJob{}).Error
+}

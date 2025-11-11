@@ -68,6 +68,10 @@ func (r *groupRepository) Delete(id int) error {
 	return r.db.Delete(&models.Group{}, id).Error
 }
 
+func (r *groupRepository) DeleteBySiteID(siteID int) error {
+	return r.db.Where("site_id = ?", siteID).Delete(&models.Group{}).Error
+}
+
 func (r *groupRepository) toDomain(model *models.Group) *entities.Group {
 	return &entities.Group{
 		ID:     model.ID,
