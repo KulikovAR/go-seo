@@ -36,6 +36,7 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 		keywords := api.Group("/keywords")
 		{
 			keywords.POST("", keywordHandler.CreateKeyword)
+			keywords.POST("/batch", keywordHandler.CreateKeywordsBatch)
 			keywords.GET("", keywordHandler.GetKeywords)
 			keywords.PUT("/:id", keywordHandler.UpdateKeyword)
 			keywords.DELETE("/:id", keywordHandler.DeleteKeyword)

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"go-seo/internal/delivery/http/dto"
+	"go-seo/internal/domain/entities"
 	"go-seo/internal/usecases"
 
 	"github.com/gin-gonic/gin"
@@ -253,4 +254,62 @@ func (h *KeywordHandler) GetKeywords(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func (h *KeywordHandler) CreateKeywordsBatch(c *gin.Context) {
+	var req []dto.CreateKeywordItem
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	if len(req) == 0 {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "Keywords array cannot be empty",
+		})
+		return
+	}
+
+	keywords := make([]*entities.Keyword, len(req))
+	for i, item := range req {
+		keywords[i] = &entities.Keyword{
+			Value:   item.Value,
+			SiteID:  item.SiteID,
+			GroupID: item.GroupID,
+		}
+	}
+
+	created, errors := h.keywordUseCase.CreateKeywordsBatch(keywords)
+
+	response := make([]dto.KeywordResponse, len(created))
+	for i, keyword := range created {
+		response[i] = dto.KeywordResponse{
+			ID:      keyword.ID,
+			Value:   keyword.Value,
+			SiteID:  keyword.SiteID,
+			GroupID: keyword.GroupID,
+		}
+	}
+
+	errorMessages := make([]string, len(errors))
+	for i, err := range errors {
+		errorMessages[i] = err.Error()
+	}
+
+	if len(errors) > 0 && len(created) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"created": response,
+			"errors":  errorMessages,
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"created": response,
+		"errors":  errorMessages,
+	})
 }

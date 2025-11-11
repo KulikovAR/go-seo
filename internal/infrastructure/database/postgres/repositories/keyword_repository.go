@@ -32,6 +32,31 @@ func (r *keywordRepository) Create(keyword *entities.Keyword) error {
 	return nil
 }
 
+func (r *keywordRepository) CreateBatch(keywords []*entities.Keyword) error {
+	if len(keywords) == 0 {
+		return nil
+	}
+
+	keywordModels := make([]*models.Keyword, len(keywords))
+	for i, keyword := range keywords {
+		keywordModels[i] = &models.Keyword{
+			Value:   keyword.Value,
+			SiteID:  keyword.SiteID,
+			GroupID: keyword.GroupID,
+		}
+	}
+
+	if err := r.db.CreateInBatches(keywordModels, 100).Error; err != nil {
+		return database.WrapDatabaseError(err)
+	}
+
+	for i, model := range keywordModels {
+		keywords[i].ID = model.ID
+	}
+
+	return nil
+}
+
 func (r *keywordRepository) GetByID(id int) (*entities.Keyword, error) {
 	var model models.Keyword
 	if err := r.db.First(&model, id).Error; err != nil {

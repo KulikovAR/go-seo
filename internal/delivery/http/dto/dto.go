@@ -25,6 +25,12 @@ type CreateKeywordRequest struct {
 	GroupID *int   `json:"group_id"`
 }
 
+type CreateKeywordItem struct {
+	Value   string `json:"value" binding:"required"`
+	SiteID  int    `json:"site_id" binding:"required"`
+	GroupID *int   `json:"group_id"`
+}
+
 type UpdateKeywordRequest struct {
 	GroupID *int `json:"group_id"`
 }
