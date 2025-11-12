@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"go-seo/internal/domain/entities"
 	"go-seo/internal/domain/repositories"
 	positionModels "go-seo/internal/infrastructure/database/postgres/models"
@@ -663,23 +664,31 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 			  AND date >= CURRENT_DATE - INTERVAL '30 days'
 	`
 	trendsParams := []interface{}{siteID, source, dateFrom, dateTo}
+	paramIndex := 5
 	if filterGroupID != nil {
-		trendsQuery += ` AND filter_group_id = $5`
+		trendsQuery += ` AND filter_group_id = $` + fmt.Sprintf("%d", paramIndex)
 		trendsParams = append(trendsParams, *filterGroupID)
+		paramIndex++
 	}
 	trendsQuery += `
 		),
+		first_ranks AS (
+			SELECT DISTINCT ON (keyword_id) keyword_id, rank as first_rank
+			FROM recent_data
+			ORDER BY keyword_id, date ASC
+		),
+		last_ranks AS (
+			SELECT DISTINCT ON (keyword_id) keyword_id, rank as last_rank
+			FROM recent_data
+			ORDER BY keyword_id, date DESC
+		),
 		keyword_changes AS (
 			SELECT 
-				keyword_id,
-				(SELECT rank FROM recent_data rd2 
-				 WHERE rd2.keyword_id = rd1.keyword_id 
-				 ORDER BY rd2.date ASC LIMIT 1) as first_rank,
-				(SELECT rank FROM recent_data rd3 
-				 WHERE rd3.keyword_id = rd1.keyword_id 
-				 ORDER BY rd3.date DESC LIMIT 1) as last_rank
-			FROM recent_data rd1
-			GROUP BY keyword_id
+				f.keyword_id,
+				f.first_rank,
+				l.last_rank
+			FROM first_ranks f
+			INNER JOIN last_ranks l ON f.keyword_id = l.keyword_id
 		)
 		SELECT 
 			COUNT(CASE WHEN last_rank < first_rank THEN 1 END) as improved,
@@ -704,13 +713,6 @@ func (r *positionRepository) GetPositionStatistics(siteID int, source string, da
 	stats.VisibilityStats.BestPosition = result.BestPosition
 	stats.VisibilityStats.WorstPosition = result.WorstPosition
 	stats.VisibilityStats.MedianPosition = int(medianPosition)
-
-	stats.PositionDistribution = entities.PositionDistribution{
-		Top3:     result.Top3,
-		Top10:    result.Top10,
-		Top20:    result.Top20,
-		NotFound: result.NotFound,
-	}
 
 	stats.PositionRanges = entities.PositionRanges{
 		Range1_3:     result.Range1_3,

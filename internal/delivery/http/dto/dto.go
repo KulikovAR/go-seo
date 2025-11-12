@@ -225,21 +225,13 @@ type PositionStatisticsRequest struct {
 }
 
 type PositionStatisticsResponse struct {
-	TotalPositions       int                  `json:"total_positions"`
-	KeywordsCount        int                  `json:"keywords_count"`
-	Visible              int                  `json:"visible"`
-	NotVisible           int                  `json:"not_visible"`
-	PositionDistribution PositionDistribution `json:"position_distribution"`
-	PositionRanges       PositionRanges       `json:"position_ranges"`
-	VisibilityStats      VisibilityStats      `json:"visibility_stats"`
-	Trends               Trends               `json:"trends"`
-}
-
-type PositionDistribution struct {
-	Top3     int `json:"top_3"`
-	Top10    int `json:"top_10"`
-	Top20    int `json:"top_20"`
-	NotFound int `json:"not_found"`
+	TotalPositions  int             `json:"total_positions"`
+	KeywordsCount   int             `json:"keywords_count"`
+	Visible         int             `json:"visible"`
+	NotVisible      int             `json:"not_visible"`
+	PositionRanges  PositionRanges  `json:"position_ranges"`
+	VisibilityStats VisibilityStats `json:"visibility_stats"`
+	Trends          Trends          `json:"trends"`
 }
 
 type PositionRanges struct {

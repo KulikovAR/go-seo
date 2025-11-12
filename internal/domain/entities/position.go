@@ -25,21 +25,13 @@ type Position struct {
 }
 
 type PositionStatistics struct {
-	TotalPositions       int
-	KeywordsCount        int
-	Visible              int
-	NotVisible           int
-	PositionDistribution PositionDistribution
-	PositionRanges       PositionRanges
-	VisibilityStats      VisibilityStats
-	Trends               Trends
-}
-
-type PositionDistribution struct {
-	Top3     int
-	Top10    int
-	Top20    int
-	NotFound int
+	TotalPositions  int
+	KeywordsCount   int
+	Visible         int
+	NotVisible      int
+	PositionRanges  PositionRanges
+	VisibilityStats VisibilityStats
+	Trends          Trends
 }
 
 type PositionRanges struct {

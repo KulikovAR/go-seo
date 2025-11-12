@@ -435,7 +435,7 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 
 	var wg sync.WaitGroup
 	batchChan := make(chan []*entities.TrackingTask, len(batches))
-	
+
 	// Заполняем канал батчами
 	for _, batch := range batches {
 		batchChan <- batch

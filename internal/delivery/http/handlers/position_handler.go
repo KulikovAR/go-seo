@@ -702,12 +702,6 @@ func (h *PositionHandler) GetPositionStatistics(c *gin.Context) {
 		KeywordsCount:  stats.KeywordsCount,
 		Visible:        stats.Visible,
 		NotVisible:     stats.NotVisible,
-		PositionDistribution: dto.PositionDistribution{
-			Top3:     stats.PositionDistribution.Top3,
-			Top10:    stats.PositionDistribution.Top10,
-			Top20:    stats.PositionDistribution.Top20,
-			NotFound: stats.PositionDistribution.NotFound,
-		},
 		PositionRanges: dto.PositionRanges{
 			Range1_3:     stats.PositionRanges.Range1_3,
 			Range4_10:    stats.PositionRanges.Range4_10,

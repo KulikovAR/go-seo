@@ -141,17 +141,6 @@ definitions:
       url:
         type: string
     type: object
-  dto.PositionDistribution:
-    properties:
-      not_found:
-        type: integer
-      top_3:
-        type: integer
-      top_10:
-        type: integer
-      top_20:
-        type: integer
-    type: object
   dto.PositionHistoryItem:
     properties:
       country:
@@ -270,8 +259,6 @@ definitions:
         type: integer
       not_visible:
         type: integer
-      position_distribution:
-        $ref: '#/definitions/dto.PositionDistribution'
       position_ranges:
         $ref: '#/definitions/dto.PositionRanges'
       total_positions:
