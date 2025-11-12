@@ -39,12 +39,20 @@ type WordstatPosition struct {
 }
 
 func NewWordstatService(baseURL, userID, apiKey string) (*WordstatService, error) {
+	transport := &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 50,
+		IdleConnTimeout:     90 * time.Second,
+		DisableKeepAlives:   false,
+	}
+
 	return &WordstatService{
 		baseURL: baseURL,
 		userID:  userID,
 		apiKey:  apiKey,
 		client: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout:   30 * time.Second,
+			Transport: transport,
 		},
 	}, nil
 }

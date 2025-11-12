@@ -533,18 +533,25 @@ func (uc *AsyncPositionTrackingUseCase) processBatch(batchTasks []*entities.Trac
 		keywordMap[keyword.ID] = keyword
 	}
 
+	// Параллельная обработка задач внутри батча
+	var taskWg sync.WaitGroup
 	for _, task := range batchTasks {
-		keyword, exists := keywordMap[task.KeywordID]
-		if !exists {
-			task.Status = entities.TaskStatusFailed
-			task.Error = "Keyword not found"
-			uc.taskRepo.Update(task)
-			uc.updateJobProgress(task.JobID, false)
-			continue
-		}
+		taskWg.Add(1)
+		go func(t *entities.TrackingTask) {
+			defer taskWg.Done()
+			keyword, exists := keywordMap[t.KeywordID]
+			if !exists {
+				t.Status = entities.TaskStatusFailed
+				t.Error = "Keyword not found"
+				uc.taskRepo.Update(t)
+				uc.updateJobProgress(t.JobID, false)
+				return
+			}
 
-		uc.processTaskWithData(task, site, keyword)
+			uc.processTaskWithData(t, site, keyword)
+		}(task)
 	}
+	taskWg.Wait()
 }
 
 func (uc *AsyncPositionTrackingUseCase) processTaskWithData(task *entities.TrackingTask, site *entities.Site, keyword *entities.Keyword) {

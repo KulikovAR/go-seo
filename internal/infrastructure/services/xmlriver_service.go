@@ -82,13 +82,21 @@ type Result struct {
 }
 
 func NewXMLRiverService(baseURL, userID, apiKey, softID string) (*XMLRiverService, error) {
+	transport := &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 50,
+		IdleConnTimeout:     90 * time.Second,
+		DisableKeepAlives:   false,
+	}
+
 	return &XMLRiverService{
 		baseURL: baseURL,
 		userID:  userID,
 		apiKey:  apiKey,
 		softID:  softID,
 		client: &http.Client{
-			Timeout: 120 * time.Second,
+			Timeout:   120 * time.Second,
+			Transport: transport,
 		},
 	}, nil
 }
