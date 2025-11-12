@@ -424,13 +424,34 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 	batchSize := uc.calculateOptimalBatchSize(len(tasks))
 	batches := uc.createBatches(tasks, batchSize)
 
+	// Ограничиваем количество одновременно запущенных горутин для обработки батчей,
+	// чтобы несколько job'ов могли работать параллельно.
+	// Используем workerCount для ограничения, чтобы не создавать слишком много горутин
+	workerCount := cap(uc.workerPool)
+	maxWorkers := workerCount
+	if len(batches) < maxWorkers {
+		maxWorkers = len(batches)
+	}
+
 	var wg sync.WaitGroup
+	batchChan := make(chan []*entities.TrackingTask, len(batches))
+	
+	// Заполняем канал батчами
 	for _, batch := range batches {
+		batchChan <- batch
+	}
+	close(batchChan)
+
+	// Запускаем ограниченное количество горутин для обработки батчей
+	// Каждый батч получит слот из workerPool в processBatch перед обработкой
+	for i := 0; i < maxWorkers; i++ {
 		wg.Add(1)
-		go func(batchTasks []*entities.TrackingTask) {
+		go func() {
 			defer wg.Done()
-			uc.processBatch(batchTasks)
-		}(batch)
+			for batch := range batchChan {
+				uc.processBatch(batch)
+			}
+		}()
 	}
 
 	wg.Wait()
