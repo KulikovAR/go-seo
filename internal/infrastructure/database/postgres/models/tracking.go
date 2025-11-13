@@ -15,6 +15,7 @@ type TrackingJob struct {
 	TotalTasks     int    `gorm:"not null;default:0"`
 	CompletedTasks int    `gorm:"not null;default:0"`
 	FailedTasks    int    `gorm:"not null;default:0"`
+	FailedRequests int    `gorm:"not null;default:0"`
 	Error          string `gorm:"type:text"`
 }
 

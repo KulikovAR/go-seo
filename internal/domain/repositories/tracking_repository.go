@@ -11,6 +11,7 @@ type TrackingJobRepository interface {
 	Update(job *entities.TrackingJob) error
 	UpdateStatus(id string, status entities.TrackingTaskStatus) error
 	UpdateProgress(id string, completed, failed int) error
+	UpdateFailedRequests(id string, failedRequests int) error
 	GetBySiteID(siteID int) ([]*entities.TrackingJob, error)
 	GetByStatus(status entities.TrackingTaskStatus) ([]*entities.TrackingJob, error)
 	GetJobsWithPagination(page, perPage int, siteID *int, status *entities.TrackingTaskStatus) ([]*entities.TrackingJob, int64, error)

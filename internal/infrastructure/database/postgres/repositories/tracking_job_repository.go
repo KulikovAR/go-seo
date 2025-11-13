@@ -30,6 +30,7 @@ func (r *TrackingJobRepository) Create(job *entities.TrackingJob) error {
 		TotalTasks:     job.TotalTasks,
 		CompletedTasks: job.CompletedTasks,
 		FailedTasks:    job.FailedTasks,
+		FailedRequests: job.FailedRequests,
 		Error:          job.Error,
 	}
 
@@ -53,6 +54,7 @@ func (r *TrackingJobRepository) GetByID(id string) (*entities.TrackingJob, error
 		TotalTasks:     model.TotalTasks,
 		CompletedTasks: model.CompletedTasks,
 		FailedTasks:    model.FailedTasks,
+		FailedRequests: model.FailedRequests,
 		Error:          model.Error,
 	}, nil
 }
@@ -69,6 +71,7 @@ func (r *TrackingJobRepository) Update(job *entities.TrackingJob) error {
 		TotalTasks:     job.TotalTasks,
 		CompletedTasks: job.CompletedTasks,
 		FailedTasks:    job.FailedTasks,
+		FailedRequests: job.FailedRequests,
 		Error:          job.Error,
 	}
 
@@ -94,6 +97,15 @@ func (r *TrackingJobRepository) UpdateProgress(id string, completed, failed int)
 		}).Error
 }
 
+func (r *TrackingJobRepository) UpdateFailedRequests(id string, failedRequests int) error {
+	return r.db.Model(&models.TrackingJob{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"failed_requests": failedRequests,
+			"updated_at":      time.Now(),
+		}).Error
+}
+
 func (r *TrackingJobRepository) GetBySiteID(siteID int) ([]*entities.TrackingJob, error) {
 	var models []models.TrackingJob
 	if err := r.db.Where("site_id = ?", siteID).Order("created_at DESC").Find(&models).Error; err != nil {
@@ -113,6 +125,7 @@ func (r *TrackingJobRepository) GetBySiteID(siteID int) ([]*entities.TrackingJob
 			TotalTasks:     model.TotalTasks,
 			CompletedTasks: model.CompletedTasks,
 			FailedTasks:    model.FailedTasks,
+			FailedRequests: model.FailedRequests,
 			Error:          model.Error,
 		})
 	}
@@ -139,6 +152,7 @@ func (r *TrackingJobRepository) GetByStatus(status entities.TrackingTaskStatus) 
 			TotalTasks:     model.TotalTasks,
 			CompletedTasks: model.CompletedTasks,
 			FailedTasks:    model.FailedTasks,
+			FailedRequests: model.FailedRequests,
 			Error:          model.Error,
 		})
 	}
@@ -184,6 +198,7 @@ func (r *TrackingJobRepository) GetJobsWithPagination(page, perPage int, siteID 
 			TotalTasks:     model.TotalTasks,
 			CompletedTasks: model.CompletedTasks,
 			FailedTasks:    model.FailedTasks,
+			FailedRequests: model.FailedRequests,
 			Error:          model.Error,
 		})
 	}

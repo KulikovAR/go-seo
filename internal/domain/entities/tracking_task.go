@@ -25,6 +25,7 @@ type TrackingJob struct {
 	TotalTasks     int                `json:"total_tasks"`
 	CompletedTasks int                `json:"completed_tasks"`
 	FailedTasks    int                `json:"failed_tasks"`
+	FailedRequests int                `json:"failed_requests"`
 	Error          string             `json:"error,omitempty"`
 }
 

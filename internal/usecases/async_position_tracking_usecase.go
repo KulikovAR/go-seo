@@ -11,6 +11,36 @@ import (
 	"go-seo/internal/infrastructure/services"
 )
 
+type taskParams struct {
+	Device            string
+	OS                string
+	Ads               bool
+	Country           string
+	Lang              string
+	Pages             int
+	Subdomains        bool
+	XMLUserID         string
+	XMLAPIKey         string
+	XMLBaseURL        string
+	TBS               string
+	Filter            int
+	Highlights        int
+	NFPR              int
+	Loc               int
+	AI                int
+	Raw               string
+	GroupBy           int
+	Within            int
+	LR                int
+	Domain            int
+	InIndex           int
+	Strict            int
+	Organic           bool
+	Regions           *int
+	FilterGroupID     *int
+	WordstatQueryType string
+}
+
 type AsyncPositionTrackingUseCase struct {
 	siteRepo       repositories.SiteRepository
 	keywordRepo    repositories.KeywordRepository
@@ -102,6 +132,7 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncGoogleTracking(
 		TotalTasks:     len(keywords),
 		CompletedTasks: 0,
 		FailedTasks:    0,
+		FailedRequests: 0,
 	}
 
 	if err := uc.jobRepo.Create(job); err != nil {
@@ -112,55 +143,30 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncGoogleTracking(
 		}
 	}
 
-	var tasks []*entities.TrackingTask
-	for _, keyword := range keywords {
-		taskID := uc.idGenerator.GenerateTaskID()
-		task := &entities.TrackingTask{
-			ID:            taskID,
-			JobID:         jobID,
-			KeywordID:     keyword.ID,
-			SiteID:        siteID,
-			Source:        entities.GoogleSearch,
-			Status:        entities.TaskStatusPending,
-			CreatedAt:     time.Now(),
-			UpdatedAt:     time.Now(),
-			RetryCount:    0,
-			MaxRetries:    5,
-			Device:        device,
-			OS:            os,
-			Ads:           ads,
-			Country:       country,
-			Lang:          lang,
-			Pages:         pages,
-			Subdomains:    subdomains,
-			XMLUserID:     xmlUserID,
-			XMLAPIKey:     xmlAPIKey,
-			XMLBaseURL:    xmlBaseURL,
-			TBS:           tbs,
-			Filter:        filter,
-			Highlights:    highlights,
-			NFPR:          nfpr,
-			Loc:           loc,
-			AI:            ai,
-			Raw:           raw,
-			LR:            lr,
-			Domain:        domain,
-			FilterGroupID: filterGroupID,
-		}
-		tasks = append(tasks, task)
+	params := &taskParams{
+		Device:        device,
+		OS:            os,
+		Ads:           ads,
+		Country:       country,
+		Lang:          lang,
+		Pages:         pages,
+		Subdomains:    subdomains,
+		XMLUserID:     xmlUserID,
+		XMLAPIKey:     xmlAPIKey,
+		XMLBaseURL:    xmlBaseURL,
+		TBS:           tbs,
+		Filter:        filter,
+		Highlights:    highlights,
+		NFPR:          nfpr,
+		Loc:           loc,
+		AI:            ai,
+		Raw:           raw,
+		LR:            lr,
+		Domain:        domain,
+		FilterGroupID: filterGroupID,
 	}
 
-	for _, task := range tasks {
-		if err := uc.taskRepo.Create(task); err != nil {
-			return "", &DomainError{
-				Code:    ErrorPositionCreation,
-				Message: "Failed to create tracking task",
-				Err:     err,
-			}
-		}
-	}
-
-	go uc.processJob(jobID)
+	go uc.processJob(jobID, params)
 
 	return jobID, nil
 }
@@ -199,6 +205,7 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncYandexTracking(
 		TotalTasks:     len(keywords),
 		CompletedTasks: 0,
 		FailedTasks:    0,
+		FailedRequests: 0,
 	}
 
 	if err := uc.jobRepo.Create(job); err != nil {
@@ -209,55 +216,30 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncYandexTracking(
 		}
 	}
 
-	var tasks []*entities.TrackingTask
-	for _, keyword := range keywords {
-		taskID := uc.idGenerator.GenerateTaskID()
-		task := &entities.TrackingTask{
-			ID:            taskID,
-			JobID:         jobID,
-			KeywordID:     keyword.ID,
-			SiteID:        siteID,
-			Source:        entities.YandexSearch,
-			Status:        entities.TaskStatusPending,
-			CreatedAt:     time.Now(),
-			UpdatedAt:     time.Now(),
-			RetryCount:    0,
-			MaxRetries:    5,
-			Device:        device,
-			OS:            os,
-			Ads:           ads,
-			Country:       country,
-			Lang:          lang,
-			Pages:         pages,
-			Subdomains:    subdomains,
-			XMLUserID:     xmlUserID,
-			XMLAPIKey:     xmlAPIKey,
-			XMLBaseURL:    xmlBaseURL,
-			GroupBy:       groupBy,
-			Filter:        filter,
-			Highlights:    highlights,
-			Within:        within,
-			LR:            lr,
-			Raw:           raw,
-			InIndex:       inIndex,
-			Strict:        strict,
-			Organic:       organic,
-			FilterGroupID: filterGroupID,
-		}
-		tasks = append(tasks, task)
+	params := &taskParams{
+		Device:        device,
+		OS:            os,
+		Ads:           ads,
+		Country:       country,
+		Lang:          lang,
+		Pages:         pages,
+		Subdomains:    subdomains,
+		XMLUserID:     xmlUserID,
+		XMLAPIKey:     xmlAPIKey,
+		XMLBaseURL:    xmlBaseURL,
+		GroupBy:       groupBy,
+		Filter:        filter,
+		Highlights:    highlights,
+		Within:        within,
+		LR:            lr,
+		Raw:           raw,
+		InIndex:       inIndex,
+		Strict:        strict,
+		Organic:       organic,
+		FilterGroupID: filterGroupID,
 	}
 
-	for _, task := range tasks {
-		if err := uc.taskRepo.Create(task); err != nil {
-			return "", &DomainError{
-				Code:    ErrorPositionCreation,
-				Message: "Failed to create tracking task",
-				Err:     err,
-			}
-		}
-	}
-
-	go uc.processJob(jobID)
+	go uc.processJob(jobID, params)
 
 	return jobID, nil
 }
@@ -319,6 +301,7 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncWordstatTracking(
 		TotalTasks:     totalTasks,
 		CompletedTasks: 0,
 		FailedTasks:    0,
+		FailedRequests: 0,
 	}
 
 	if err := uc.jobRepo.Create(job); err != nil {
@@ -329,47 +312,20 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncWordstatTracking(
 		}
 	}
 
-	var tasks []*entities.TrackingTask
-	for _, keyword := range keywords {
-		for _, queryType := range queryTypes {
-			taskID := uc.idGenerator.GenerateTaskID()
-			task := &entities.TrackingTask{
-				ID:                taskID,
-				JobID:             jobID,
-				KeywordID:         keyword.ID,
-				SiteID:            siteID,
-				Source:            entities.Wordstat,
-				Status:            entities.TaskStatusPending,
-				CreatedAt:         time.Now(),
-				UpdatedAt:         time.Now(),
-				RetryCount:        0,
-				MaxRetries:        5,
-				XMLUserID:         xmlUserID,
-				XMLAPIKey:         xmlAPIKey,
-				XMLBaseURL:        xmlBaseURL,
-				Regions:           regions,
-				WordstatQueryType: queryType,
-			}
-			tasks = append(tasks, task)
-		}
+	params := &taskParams{
+		XMLUserID:         xmlUserID,
+		XMLAPIKey:         xmlAPIKey,
+		XMLBaseURL:        xmlBaseURL,
+		Regions:           regions,
+		WordstatQueryType: strings.Join(queryTypes, ","), // Сохраняем все queryTypes через запятую
 	}
 
-	for _, task := range tasks {
-		if err := uc.taskRepo.Create(task); err != nil {
-			return "", &DomainError{
-				Code:    ErrorPositionCreation,
-				Message: "Failed to create tracking task",
-				Err:     err,
-			}
-		}
-	}
-
-	go uc.processJob(jobID)
+	go uc.processJob(jobID, params)
 
 	return jobID, nil
 }
 
-func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
+func (uc *AsyncPositionTrackingUseCase) processJob(jobID string, params *taskParams) {
 	job, err := uc.jobRepo.GetByID(jobID)
 	if err != nil {
 		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), err.Error())
@@ -388,31 +344,8 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 	uc.jobRepo.UpdateStatus(jobID, entities.TaskStatusRunning)
 	uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", 0)
 
-	progressDone := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(2 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				j, err := uc.jobRepo.GetByID(jobID)
-				if err != nil {
-					continue
-				}
-				if j.Status == entities.TaskStatusCompleted || j.Status == entities.TaskStatusFailed {
-					return
-				}
-				if j.TotalTasks > 0 {
-					p := (j.CompletedTasks + j.FailedTasks) * 100 / j.TotalTasks
-					uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", p)
-				}
-			case <-progressDone:
-				return
-			}
-		}
-	}()
-
-	tasks, err := uc.taskRepo.GetByJobID(jobID)
+	// Получаем keywords напрямую
+	keywords, err := uc.keywordRepo.GetBySiteID(job.SiteID)
 	if err != nil {
 		job.Status = entities.TaskStatusFailed
 		job.Error = err.Error()
@@ -421,12 +354,64 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 		return
 	}
 
-	batchSize := uc.calculateOptimalBatchSize(len(tasks))
-	batches := uc.createBatches(tasks, batchSize)
+	site, err := uc.siteRepo.GetByID(job.SiteID)
+	if err != nil {
+		job.Status = entities.TaskStatusFailed
+		job.Error = err.Error()
+		uc.jobRepo.Update(job)
+		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), err.Error())
+		return
+	}
 
-	// Ограничиваем количество одновременно запущенных горутин для обработки батчей,
-	// чтобы несколько job'ов могли работать параллельно.
-	// Используем workerCount для ограничения, чтобы не создавать слишком много горутин
+	// Для Wordstat нужно обработать каждый keyword с каждым queryType
+	var workItems []workItem
+	if job.Source == entities.Wordstat {
+		queryTypes := strings.Split(params.WordstatQueryType, ",")
+		for _, keyword := range keywords {
+			for _, queryType := range queryTypes {
+				workItems = append(workItems, workItem{
+					Keyword:   keyword,
+					QueryType: strings.TrimSpace(queryType),
+				})
+			}
+		}
+	} else {
+		for _, keyword := range keywords {
+			workItems = append(workItems, workItem{
+				Keyword: keyword,
+			})
+		}
+	}
+
+	// Отслеживание прогресса с отправкой каждые 5%
+	var progressMu sync.Mutex
+	var completedCount, failedCount, failedRequestsCount int
+	lastSentPercent := -1
+	updateProgress := func(completed, failed, failedRequests int) {
+		progressMu.Lock()
+		defer progressMu.Unlock()
+
+		completedCount += completed
+		failedCount += failed
+		failedRequestsCount += failedRequests
+
+		uc.jobRepo.UpdateProgress(jobID, completedCount, failedCount)
+		uc.jobRepo.UpdateFailedRequests(jobID, failedRequestsCount)
+
+		if job.TotalTasks > 0 {
+			currentPercent := (completedCount + failedCount) * 100 / job.TotalTasks
+			// Отправляем каждые 5%
+			if currentPercent-lastSentPercent >= 5 || currentPercent == 100 {
+				uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", currentPercent)
+				lastSentPercent = currentPercent
+			}
+		}
+	}
+
+	// Обработка workItems
+	batchSize := uc.calculateOptimalBatchSize(len(workItems))
+	batches := uc.createWorkItemBatches(workItems, batchSize)
+
 	workerCount := cap(uc.workerPool)
 	maxWorkers := workerCount
 	if len(batches) < maxWorkers {
@@ -434,22 +419,19 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 	}
 
 	var wg sync.WaitGroup
-	batchChan := make(chan []*entities.TrackingTask, len(batches))
+	batchChan := make(chan []workItem, len(batches))
 
-	// Заполняем канал батчами
 	for _, batch := range batches {
 		batchChan <- batch
 	}
 	close(batchChan)
 
-	// Запускаем ограниченное количество горутин для обработки батчей
-	// Каждый батч получит слот из workerPool в processBatch перед обработкой
 	for i := 0; i < maxWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for batch := range batchChan {
-				uc.processBatch(batch)
+				uc.processWorkItemBatch(batch, job, site, params, updateProgress)
 			}
 		}()
 	}
@@ -466,7 +448,6 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 	}
 	uc.jobRepo.Update(job)
 
-	close(progressDone)
 	if job.Status == entities.TaskStatusCompleted {
 		uc.kafkaService.SendJobStatus(jobID, string(job.Status), job.Error, 100)
 		if job.Source == entities.GoogleSearch || job.Source == entities.YandexSearch {
@@ -475,6 +456,25 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string) {
 	} else {
 		uc.kafkaService.SendJobStatus(jobID, string(job.Status), job.Error)
 	}
+}
+
+type workItem struct {
+	Keyword   *entities.Keyword
+	QueryType string
+}
+
+func (uc *AsyncPositionTrackingUseCase) createWorkItemBatches(items []workItem, batchSize int) [][]workItem {
+	var batches [][]workItem
+
+	for i := 0; i < len(items); i += batchSize {
+		end := i + batchSize
+		if end > len(items) {
+			end = len(items)
+		}
+		batches = append(batches, items[i:end])
+	}
+
+	return batches
 }
 
 func (uc *AsyncPositionTrackingUseCase) createBatches(tasks []*entities.TrackingTask, batchSize int) [][]*entities.TrackingTask {
@@ -511,6 +511,51 @@ func (uc *AsyncPositionTrackingUseCase) calculateOptimalBatchSize(totalTasks int
 	}
 
 	return optimalBatchSize
+}
+
+func (uc *AsyncPositionTrackingUseCase) processWorkItemBatch(
+	batch []workItem,
+	job *entities.TrackingJob,
+	site *entities.Site,
+	params *taskParams,
+	updateProgress func(completed, failed, failedRequests int),
+) {
+	uc.workerPool <- struct{}{}
+	defer func() { <-uc.workerPool }()
+
+	if len(batch) == 0 {
+		return
+	}
+
+	var completed, failed, failedRequests int
+	var mu sync.Mutex
+
+	var wg sync.WaitGroup
+	for _, item := range batch {
+		wg.Add(1)
+		go func(workItem workItem) {
+			defer wg.Done()
+
+			err := uc.retryService.ExecuteWithRetry(func() error {
+				return uc.executeWorkItem(workItem, job, site, params)
+			})
+
+			mu.Lock()
+			if err != nil {
+				failed++
+				failedRequests++
+			} else {
+				completed++
+			}
+			mu.Unlock()
+		}(item)
+	}
+	wg.Wait()
+
+	// Обновляем прогресс
+	if completed > 0 || failed > 0 || failedRequests > 0 {
+		updateProgress(completed, failed, failedRequests)
+	}
 }
 
 func (uc *AsyncPositionTrackingUseCase) processBatch(batchTasks []*entities.TrackingTask) {
@@ -653,6 +698,19 @@ func (uc *AsyncPositionTrackingUseCase) processTask(task *entities.TrackingTask)
 	uc.updateJobProgress(task.JobID, true)
 }
 
+func (uc *AsyncPositionTrackingUseCase) executeWorkItem(item workItem, job *entities.TrackingJob, site *entities.Site, params *taskParams) error {
+	switch job.Source {
+	case entities.GoogleSearch:
+		return uc.executeGoogleWorkItem(item, job, site, params)
+	case entities.YandexSearch:
+		return uc.executeYandexWorkItem(item, job, site, params)
+	case entities.Wordstat:
+		return uc.executeWordstatWorkItem(item, job, site, params)
+	default:
+		return fmt.Errorf("unknown source: %s", job.Source)
+	}
+}
+
 func (uc *AsyncPositionTrackingUseCase) executeTaskWithData(task *entities.TrackingTask, site *entities.Site, keyword *entities.Keyword) error {
 	switch task.Source {
 	case entities.GoogleSearch:
@@ -739,6 +797,211 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTaskWithData(task *entities
 		Country:   task.Country,
 		Lang:      task.Lang,
 		Pages:     task.Pages,
+		Date:      time.Now(),
+		Success:   true,
+	}
+
+	return uc.resultRepo.Create(result)
+}
+
+func (uc *AsyncPositionTrackingUseCase) executeGoogleWorkItem(item workItem, job *entities.TrackingJob, site *entities.Site, params *taskParams) error {
+	var xmlRiverService *services.XMLRiverService
+	if params.XMLUserID != "" && params.XMLAPIKey != "" && params.XMLBaseURL != "" {
+		var err error
+		softID := uc.getSoftIDByBaseURL(params.XMLBaseURL)
+		xmlRiverService, err = services.NewXMLRiverService(params.XMLBaseURL, params.XMLUserID, params.XMLAPIKey, softID)
+		if err != nil {
+			return err
+		}
+	} else {
+		xmlRiverService = uc.xmlStock
+	}
+
+	// Для Google используем organic=false и groupBy=0
+	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
+		item.Keyword.Value, site.Domain, entities.GoogleSearch, params.Pages,
+		params.Device, params.OS, params.Ads, params.Country, params.Lang, params.Subdomains, params.LR, params.Domain,
+		false, 0,
+	)
+	if err != nil {
+		return err
+	}
+
+	positionEntity := &entities.Position{
+		KeywordID:     item.Keyword.ID,
+		SiteID:        site.ID,
+		Rank:          position,
+		URL:           url,
+		Title:         title,
+		Source:        entities.GoogleSearch,
+		Device:        params.Device,
+		OS:            params.OS,
+		Ads:           params.Ads,
+		Country:       params.Country,
+		Lang:          params.Lang,
+		Pages:         params.Pages,
+		Date:          time.Now(),
+		FilterGroupID: params.FilterGroupID,
+	}
+
+	if err := uc.positionRepo.CreateOrUpdateToday(positionEntity); err != nil {
+		return err
+	}
+
+	result := &entities.TrackingResult{
+		TaskID:    "", // Больше не используем taskID
+		JobID:     job.ID,
+		KeywordID: item.Keyword.ID,
+		SiteID:    site.ID,
+		Source:    entities.GoogleSearch,
+		Rank:      position,
+		URL:       url,
+		Title:     title,
+		Device:    params.Device,
+		OS:        params.OS,
+		Ads:       params.Ads,
+		Country:   params.Country,
+		Lang:      params.Lang,
+		Pages:     params.Pages,
+		Date:      time.Now(),
+		Success:   true,
+	}
+
+	return uc.resultRepo.Create(result)
+}
+
+func (uc *AsyncPositionTrackingUseCase) executeYandexWorkItem(item workItem, job *entities.TrackingJob, site *entities.Site, params *taskParams) error {
+	var xmlRiverService *services.XMLRiverService
+	if params.XMLUserID != "" && params.XMLAPIKey != "" && params.XMLBaseURL != "" {
+		var err error
+		softID := uc.getSoftIDByBaseURL(params.XMLBaseURL)
+		xmlRiverService, err = services.NewXMLRiverService(params.XMLBaseURL, params.XMLUserID, params.XMLAPIKey, softID)
+		if err != nil {
+			return err
+		}
+	} else {
+		xmlRiverService = uc.xmlStock
+	}
+
+	// Если organic=false, используем groupby=pages*10 для получения всех результатов сразу
+	var groupBy int
+	if !params.Organic && params.Pages > 0 {
+		groupBy = params.Pages * 10
+	} else {
+		groupBy = params.GroupBy
+	}
+
+	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
+		item.Keyword.Value, site.Domain, entities.YandexSearch, params.Pages,
+		params.Device, params.OS, params.Ads, params.Country, params.Lang, params.Subdomains, params.LR, 0,
+		params.Organic, groupBy,
+	)
+	if err != nil {
+		return err
+	}
+
+	positionEntity := &entities.Position{
+		KeywordID:     item.Keyword.ID,
+		SiteID:        site.ID,
+		Rank:          position,
+		URL:           url,
+		Title:         title,
+		Source:        entities.YandexSearch,
+		Device:        params.Device,
+		OS:            params.OS,
+		Ads:           params.Ads,
+		Country:       params.Country,
+		Lang:          params.Lang,
+		Pages:         params.Pages,
+		Date:          time.Now(),
+		FilterGroupID: params.FilterGroupID,
+	}
+
+	if err := uc.positionRepo.CreateOrUpdateToday(positionEntity); err != nil {
+		return err
+	}
+
+	result := &entities.TrackingResult{
+		TaskID:    "", // Больше не используем taskID
+		JobID:     job.ID,
+		KeywordID: item.Keyword.ID,
+		SiteID:    site.ID,
+		Source:    entities.YandexSearch,
+		Rank:      position,
+		URL:       url,
+		Title:     title,
+		Device:    params.Device,
+		OS:        params.OS,
+		Ads:       params.Ads,
+		Country:   params.Country,
+		Lang:      params.Lang,
+		Pages:     params.Pages,
+		Date:      time.Now(),
+		Success:   true,
+	}
+
+	return uc.resultRepo.Create(result)
+}
+
+func (uc *AsyncPositionTrackingUseCase) executeWordstatWorkItem(item workItem, job *entities.TrackingJob, site *entities.Site, params *taskParams) error {
+	var wordstatService *services.WordstatService
+	if params.XMLUserID != "" && params.XMLAPIKey != "" && params.XMLBaseURL != "" {
+		var err error
+		wordstatService, err = services.NewWordstatService(params.XMLBaseURL, params.XMLUserID, params.XMLAPIKey)
+		if err != nil {
+			return err
+		}
+	} else {
+		wordstatService = uc.wordstat
+	}
+
+	queryType := item.QueryType
+	if queryType == "" {
+		queryType = "default"
+	}
+
+	modifiedQuery := uc.modifyWordstatQuery(item.Keyword.Value, queryType)
+	frequency, err := wordstatService.GetKeywordFrequency(modifiedQuery, item.Keyword.Value, params.Regions)
+	if err != nil {
+		return err
+	}
+
+	positionEntity := &entities.Position{
+		KeywordID:         item.Keyword.ID,
+		SiteID:            item.Keyword.SiteID,
+		Rank:              frequency,
+		URL:               "",
+		Title:             "",
+		Source:            entities.Wordstat,
+		Device:            "",
+		OS:                "",
+		Ads:               false,
+		Country:           "",
+		Lang:              "",
+		Pages:             0,
+		Date:              time.Now(),
+		WordstatQueryType: queryType,
+	}
+
+	if err := uc.positionRepo.CreateOrUpdateToday(positionEntity); err != nil {
+		return err
+	}
+
+	result := &entities.TrackingResult{
+		TaskID:    "", // Больше не используем taskID
+		JobID:     job.ID,
+		KeywordID: item.Keyword.ID,
+		SiteID:    item.Keyword.SiteID,
+		Source:    entities.Wordstat,
+		Rank:      frequency,
+		URL:       "",
+		Title:     "",
+		Device:    "",
+		OS:        "",
+		Ads:       false,
+		Country:   "",
+		Lang:      "",
+		Pages:     0,
 		Date:      time.Now(),
 		Success:   true,
 	}
