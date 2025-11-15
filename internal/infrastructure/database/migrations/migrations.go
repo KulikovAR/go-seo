@@ -23,6 +23,25 @@ func CreateTables(db *gorm.DB) error {
 		return err
 	}
 
+	// Удаляем колонку name из таблицы sites, если она существует
+	var hasNameColumn bool
+	if err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 
+			FROM information_schema.columns 
+			WHERE table_name = 'sites' 
+			AND column_name = 'name'
+		)
+	`).Scan(&hasNameColumn).Error; err != nil {
+		return err
+	}
+
+	if hasNameColumn {
+		if err := db.Exec(`ALTER TABLE sites DROP COLUMN IF EXISTS name`).Error; err != nil {
+			return err
+		}
+	}
+
 	// Проверяем и исправляем столбец domain в tracking_tasks
 	var hasDomainColumn bool
 	if err := db.Raw(`
