@@ -400,8 +400,8 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string, params *taskPar
 
 		if job.TotalTasks > 0 {
 			currentPercent := (completedCount + failedCount) * 100 / job.TotalTasks
-			// Отправляем каждые 5%
-			if currentPercent-lastSentPercent >= 5 || currentPercent == 100 {
+			// Отправляем каждые 5% или при достижении 100%
+			if currentPercent-lastSentPercent >= 5 || (currentPercent == 100 && lastSentPercent < 100) {
 				uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", currentPercent)
 				lastSentPercent = currentPercent
 			}
@@ -445,16 +445,18 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string, params *taskPar
 	} else {
 		job.Status = entities.TaskStatusCompleted
 		job.CompletedAt = &[]time.Time{time.Now()}[0]
+		job.Error = "" // Очищаем ошибку при успешном завершении
 	}
 	uc.jobRepo.Update(job)
 
+	// Всегда отправляем финальный статус в Kafka
 	if job.Status == entities.TaskStatusCompleted {
-		uc.kafkaService.SendJobStatus(jobID, string(job.Status), job.Error, 100)
+		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusCompleted), "", 100)
 		if job.Source == entities.GoogleSearch || job.Source == entities.YandexSearch {
 			uc.calculateAndUpdateDynamic(job.SiteID, job.Source)
 		}
 	} else {
-		uc.kafkaService.SendJobStatus(jobID, string(job.Status), job.Error)
+		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), job.Error)
 	}
 }
 
