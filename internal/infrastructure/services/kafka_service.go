@@ -85,7 +85,7 @@ func (k *KafkaService) createTopicsIfNotExist() {
 
 	for _, topic := range topics {
 		if err := k.createTopic(topic); err != nil {
-			log.Printf("Warning: Failed to create topic %s: %v", topic, err)
+			log.Printf("Warning: Failed to create topic %s: %v (topics will be auto-created on first message if enabled)", topic, err)
 		} else {
 			log.Printf("Topic %s is ready", topic)
 		}
@@ -165,6 +165,7 @@ func (k *KafkaService) SendJobStatus(jobID string, status string, errorMsg strin
 func (k *KafkaService) sendMessage(topic string, message interface{}) error {
 	jsonData, err := json.Marshal(message)
 	if err != nil {
+		log.Printf("ERROR: Failed to marshal Kafka message for topic %s: %v", topic, err)
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
@@ -181,6 +182,7 @@ func (k *KafkaService) sendMessage(topic string, message interface{}) error {
 
 	partition, offset, err := k.producer.SendMessage(kafkaMessage)
 	if err != nil {
+		log.Printf("ERROR: Failed to send message to Kafka topic %s: %v", topic, err)
 		return fmt.Errorf("failed to send message: %w", err)
 	}
 

@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -328,7 +329,9 @@ func (uc *AsyncPositionTrackingUseCase) StartAsyncWordstatTracking(
 func (uc *AsyncPositionTrackingUseCase) processJob(jobID string, params *taskParams) {
 	job, err := uc.jobRepo.GetByID(jobID)
 	if err != nil {
-		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), err.Error())
+		if kafkaErr := uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), err.Error()); kafkaErr != nil {
+			log.Printf("WARNING: Failed to send job status to Kafka: %v", kafkaErr)
+		}
 		return
 	}
 
@@ -342,7 +345,9 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string, params *taskPar
 
 	job.Status = entities.TaskStatusRunning
 	uc.jobRepo.UpdateStatus(jobID, entities.TaskStatusRunning)
-	uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", 0)
+	if err := uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", 0); err != nil {
+		log.Printf("WARNING: Failed to send job status to Kafka: %v", err)
+	}
 
 	// Получаем keywords напрямую
 	keywords, err := uc.keywordRepo.GetBySiteID(job.SiteID)
@@ -350,7 +355,9 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string, params *taskPar
 		job.Status = entities.TaskStatusFailed
 		job.Error = err.Error()
 		uc.jobRepo.Update(job)
-		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), err.Error())
+		if kafkaErr := uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), err.Error()); kafkaErr != nil {
+			log.Printf("WARNING: Failed to send job status to Kafka: %v", kafkaErr)
+		}
 		return
 	}
 
@@ -359,7 +366,9 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string, params *taskPar
 		job.Status = entities.TaskStatusFailed
 		job.Error = err.Error()
 		uc.jobRepo.Update(job)
-		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), err.Error())
+		if kafkaErr := uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), err.Error()); kafkaErr != nil {
+			log.Printf("WARNING: Failed to send job status to Kafka: %v", kafkaErr)
+		}
 		return
 	}
 
@@ -402,7 +411,9 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string, params *taskPar
 			currentPercent := (completedCount + failedCount) * 100 / job.TotalTasks
 			// Отправляем каждые 5% или при достижении 100%
 			if currentPercent-lastSentPercent >= 5 || (currentPercent == 100 && lastSentPercent < 100) {
-				uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", currentPercent)
+				if err := uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusRunning), "", currentPercent); err != nil {
+					log.Printf("WARNING: Failed to send job progress to Kafka: %v", err)
+				}
 				lastSentPercent = currentPercent
 			}
 		}
@@ -451,12 +462,16 @@ func (uc *AsyncPositionTrackingUseCase) processJob(jobID string, params *taskPar
 
 	// Всегда отправляем финальный статус в Kafka
 	if job.Status == entities.TaskStatusCompleted {
-		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusCompleted), "", 100)
+		if err := uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusCompleted), "", 100); err != nil {
+			log.Printf("WARNING: Failed to send job completion status to Kafka: %v", err)
+		}
 		if job.Source == entities.GoogleSearch || job.Source == entities.YandexSearch {
 			uc.calculateAndUpdateDynamic(job.SiteID, job.Source)
 		}
 	} else {
-		uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), job.Error)
+		if err := uc.kafkaService.SendJobStatus(jobID, string(entities.TaskStatusFailed), job.Error); err != nil {
+			log.Printf("WARNING: Failed to send job failure status to Kafka: %v", err)
+		}
 	}
 }
 
