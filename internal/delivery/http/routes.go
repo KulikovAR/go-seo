@@ -15,6 +15,7 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 	groupHandler := handlers.NewGroupHandler(useCases.Group)
 	positionHandler := handlers.NewPositionHandler(useCases.PositionTracking, useCases.AsyncPositionTracking)
 	trackingJobHandler := handlers.NewTrackingJobHandler(useCases.TrackingJob)
+	debugHandler := handlers.NewDebugHandler(useCases.Debug)
 
 	api := r.Group("/api")
 	{
@@ -56,6 +57,11 @@ func SetupRoutes(r *gin.Engine, useCases *usecases.Container) {
 		trackingJobs := api.Group("/tracking-jobs")
 		{
 			trackingJobs.GET("", trackingJobHandler.GetTrackingJobs)
+		}
+
+		debug := api.Group("/debug")
+		{
+			debug.POST("/kafka/job-status", debugHandler.SendKafkaJobStatus)
 		}
 	}
 

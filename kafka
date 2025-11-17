@@ -1,0 +1,42 @@
+##########################
+# Kafka KRaft single-node
+##########################
+
+# Роли брокера и контроллера
+process.roles=broker,controller
+node.id=1
+
+# Порты для слушателей
+listeners=PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094
+
+# Протоколы для каждого listener-а
+listener.security.protocol.map=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+
+# Какие адреса брокер рекламирует клиентам
+advertised.listeners=PLAINTEXT://127.0.0.1:9092,PLAINTEXT_HOST://host.docker.internal:9093
+
+# Контроллер использует свой listener
+controller.listener.names=CONTROLLER
+
+# Single-node controller quorum
+controller.quorum.voters=1@localhost:9094
+
+# Логи
+log.dirs=/tmp/kraft-combined-logs
+
+# Настройки по умолчанию
+num.network.threads=3
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+
+# Топики и репликация
+num.partitions=1
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+
+# Логирование
+log.retention.hours=168
+log.segment.bytes=1073741824
