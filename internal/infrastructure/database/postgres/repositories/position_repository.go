@@ -839,6 +839,7 @@ func (r *positionRepository) GetPositionsHistoryPaginated(siteID int, keywordID 
 func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, groupID *int, filterGroupID *int, wordstatQueryType *string, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
 	offset := (page - 1) * perPage
 
+	// Получаем все keywords
 	var allKeywords []positionModels.Keyword
 	query := r.db.Where("site_id = ?", siteID)
 
@@ -846,34 +847,69 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 		query = query.Where("group_id = ?", *groupID)
 	}
 
-	var totalKeywords int64
-	if err := query.Model(&positionModels.Keyword{}).Count(&totalKeywords).Error; err != nil {
+	if err := query.Order("id").Find(&allKeywords).Error; err != nil {
 		return nil, 0, err
 	}
 
-	var keywords []positionModels.Keyword
+	if len(allKeywords) == 0 {
+		return []*entities.CombinedPosition{}, 0, nil
+	}
 
-	if wordstatSort {
-		if err := query.Order("id").Find(&allKeywords).Error; err != nil {
-			return nil, 0, err
+	// Вспомогательная функция для проверки наличия позиций с учетом всех фильтров
+	hasPositionsWithFilters := func(keywordID int) bool {
+		positionQuery := r.db.Where("site_id = ? AND keyword_id = ? AND source != ?", siteID, keywordID, "wordstat")
+
+		if source != nil {
+			if *source == "google" {
+				positionQuery = positionQuery.Where("source = ?", "google")
+			} else if *source == "yandex" {
+				positionQuery = positionQuery.Where("source = ?", "yandex")
+			}
 		}
 
-		if len(allKeywords) == 0 {
-			return []*entities.CombinedPosition{}, totalKeywords, nil
+		if dateFrom != nil {
+			positionQuery = positionQuery.Where("date >= ?", *dateFrom)
+		}
+		if dateTo != nil {
+			positionQuery = positionQuery.Where("date <= ?", *dateTo)
 		}
 
-		type keywordWithPosition struct {
-			keyword  positionModels.Keyword
-			position int
+		if rankFrom != nil {
+			positionQuery = positionQuery.Where("rank >= ?", *rankFrom)
+		}
+		if rankTo != nil {
+			positionQuery = positionQuery.Where("rank <= ?", *rankTo)
 		}
 
-		var keywordsWithPositions []keywordWithPosition
+		if filterGroupID != nil {
+			positionQuery = positionQuery.Where("filter_group_id = ?", *filterGroupID)
+		}
 
-		for _, keyword := range allKeywords {
-			keywordID := keyword.ID
+		var count int64
+		positionQuery.Model(&positionModels.Position{}).Count(&count)
+		return count > 0
+	}
 
-			var position int = 0
+	type keywordWithPosition struct {
+		keyword  positionModels.Keyword
+		position int
+	}
 
+	var keywordsWithPositions []keywordWithPosition
+
+	// Фильтруем keywords по наличию позиций с учетом фильтров (включая rank)
+	// и собираем информацию о позициях для сортировки
+	for _, keyword := range allKeywords {
+		keywordID := keyword.ID
+
+		// Проверяем наличие позиций с учетом всех фильтров
+		if !hasPositionsWithFilters(keywordID) {
+			continue
+		}
+
+		var position int = 0
+
+		if wordstatSort {
 			wordstatQuery := r.db.Where("site_id = ? AND keyword_id = ? AND source = ?", siteID, keywordID, "wordstat")
 
 			if dateFrom != nil {
@@ -893,72 +929,7 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 			if err := wordstatQuery.Order("date DESC").First(&wordstatModel).Error; err == nil {
 				position = wordstatModel.Rank
 			}
-
-			keywordsWithPositions = append(keywordsWithPositions, keywordWithPosition{
-				keyword:  keyword,
-				position: position,
-			})
-		}
-
-		sort.Slice(keywordsWithPositions, func(i, j int) bool {
-			posI := keywordsWithPositions[i].position
-			posJ := keywordsWithPositions[j].position
-
-			if posI == 0 && posJ == 0 {
-				return false
-			}
-			if posI == 0 {
-				return false
-			}
-			if posJ == 0 {
-				return true
-			}
-
-			if sortType == "asc" {
-				return posI < posJ
-			} else {
-				return posI > posJ
-			}
-		})
-
-		start := offset
-		end := offset + perPage
-		if start > len(keywordsWithPositions) {
-			start = len(keywordsWithPositions)
-		}
-		if end > len(keywordsWithPositions) {
-			end = len(keywordsWithPositions)
-		}
-
-		if start >= end {
-			return []*entities.CombinedPosition{}, totalKeywords, nil
-		}
-
-		for i := start; i < end; i++ {
-			keywords = append(keywords, keywordsWithPositions[i].keyword)
-		}
-	} else if dateSort != nil {
-		// Получаем все keywords
-		if err := query.Order("id").Find(&allKeywords).Error; err != nil {
-			return nil, 0, err
-		}
-
-		if len(allKeywords) == 0 {
-			return []*entities.CombinedPosition{}, totalKeywords, nil
-		}
-
-		type keywordWithPosition struct {
-			keyword  positionModels.Keyword
-			position int
-		}
-
-		var keywordsWithPositions []keywordWithPosition
-
-		for _, keyword := range allKeywords {
-			keywordID := keyword.ID
-
-			var position int = 0
-
+		} else if dateSort != nil {
 			positionQuery := r.db.Where("site_id = ? AND keyword_id = ? AND source != ? AND DATE(date) = ?",
 				siteID, keywordID, "wordstat", dateSort.Format("2006-01-02"))
 
@@ -986,13 +957,16 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 					}
 				}
 			}
-
-			keywordsWithPositions = append(keywordsWithPositions, keywordWithPosition{
-				keyword:  keyword,
-				position: position,
-			})
 		}
 
+		keywordsWithPositions = append(keywordsWithPositions, keywordWithPosition{
+			keyword:  keyword,
+			position: position,
+		})
+	}
+
+	// Применяем сортировку, если нужно
+	if wordstatSort || dateSort != nil {
 		sort.Slice(keywordsWithPositions, func(i, j int) bool {
 			posI := keywordsWithPositions[i].position
 			posJ := keywordsWithPositions[j].position
@@ -1013,33 +987,30 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 				return posI > posJ
 			}
 		})
+	}
 
-		// Применяем пагинацию к отсортированным keywords
-		start := offset
-		end := offset + perPage
-		if start > len(keywordsWithPositions) {
-			start = len(keywordsWithPositions)
-		}
-		if end > len(keywordsWithPositions) {
-			end = len(keywordsWithPositions)
-		}
+	// Подсчитываем total после фильтрации
+	total := int64(len(keywordsWithPositions))
 
-		if start >= end {
-			return []*entities.CombinedPosition{}, totalKeywords, nil
-		}
+	// Применяем пагинацию к отфильтрованным keywords
+	start := offset
+	end := offset + perPage
+	if start > len(keywordsWithPositions) {
+		start = len(keywordsWithPositions)
+	}
+	if end > len(keywordsWithPositions) {
+		end = len(keywordsWithPositions)
+	}
 
+	var keywords []positionModels.Keyword
+	if start < end {
 		for i := start; i < end; i++ {
 			keywords = append(keywords, keywordsWithPositions[i].keyword)
 		}
-	} else {
-		// Старая логика: просто пагинация по id
-		if err := query.Order("id").Offset(offset).Limit(perPage).Find(&keywords).Error; err != nil {
-			return nil, 0, err
-		}
+	}
 
-		if len(keywords) == 0 {
-			return []*entities.CombinedPosition{}, totalKeywords, nil
-		}
+	if len(keywords) == 0 {
+		return []*entities.CombinedPosition{}, total, nil
 	}
 
 	keywordMap := make(map[int]*entities.Keyword)
@@ -1120,6 +1091,8 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 			}
 		}
 
+		// Теперь эта проверка не должна срабатывать, так как мы уже отфильтровали keywords
+		// Но оставляем для безопасности
 		if len(googleYandexPositions) == 0 {
 			continue
 		}
@@ -1142,7 +1115,7 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 		allCombinedPositions = append(allCombinedPositions, combined)
 	}
 
-	return allCombinedPositions, totalKeywords, nil
+	return allCombinedPositions, total, nil
 }
 
 func (r *positionRepository) GetLastUpdateDateBySiteIDExcludingSource(siteID int, excludeSource string) (*time.Time, error) {

@@ -45,3 +45,4 @@ func (h *DebugHandler) SendKafkaJobStatus(c *gin.Context) {
 		"message": "Kafka job status message sent",
 	})
 }
+
