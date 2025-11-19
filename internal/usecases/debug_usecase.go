@@ -31,3 +31,5 @@ func (uc *DebugUseCase) SendJobStatus(jobID, status, errorMsg string, percent *i
 	return uc.kafkaService.SendJobStatus(jobID, status, errorMsg)
 }
 
+
+

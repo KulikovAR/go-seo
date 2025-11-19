@@ -59,6 +59,10 @@ type AsyncPositionTrackingUseCase struct {
 	batchSize      int
 	xmlRiverSoftID string
 	xmlStockSoftID string
+	// Семафоры для ограничения параллелизма к каждому xmlriver (по baseURL)
+	xmlRiverSemaphores       map[string]chan struct{}
+	xmlRiverSemMu            sync.RWMutex
+	maxConcurrentPerXMLRiver int
 }
 
 func NewAsyncPositionTrackingUseCase(
@@ -80,22 +84,24 @@ func NewAsyncPositionTrackingUseCase(
 	xmlStockSoftID string,
 ) *AsyncPositionTrackingUseCase {
 	return &AsyncPositionTrackingUseCase{
-		siteRepo:       siteRepo,
-		keywordRepo:    keywordRepo,
-		positionRepo:   positionRepo,
-		jobRepo:        jobRepo,
-		taskRepo:       taskRepo,
-		resultRepo:     resultRepo,
-		xmlRiver:       xmlRiver,
-		xmlStock:       xmlStock,
-		wordstat:       wordstat,
-		kafkaService:   kafkaService,
-		idGenerator:    idGenerator,
-		retryService:   retryService,
-		workerPool:     make(chan struct{}, workerCount),
-		batchSize:      batchSize,
-		xmlRiverSoftID: xmlRiverSoftID,
-		xmlStockSoftID: xmlStockSoftID,
+		siteRepo:                 siteRepo,
+		keywordRepo:              keywordRepo,
+		positionRepo:             positionRepo,
+		jobRepo:                  jobRepo,
+		taskRepo:                 taskRepo,
+		resultRepo:               resultRepo,
+		xmlRiver:                 xmlRiver,
+		xmlStock:                 xmlStock,
+		wordstat:                 wordstat,
+		kafkaService:             kafkaService,
+		idGenerator:              idGenerator,
+		retryService:             retryService,
+		workerPool:               make(chan struct{}, workerCount),
+		batchSize:                batchSize,
+		xmlRiverSoftID:           xmlRiverSoftID,
+		xmlStockSoftID:           xmlStockSoftID,
+		xmlRiverSemaphores:       make(map[string]chan struct{}),
+		maxConcurrentPerXMLRiver: 10,
 	}
 }
 
@@ -757,6 +763,7 @@ func (uc *AsyncPositionTrackingUseCase) executeTask(task *entities.TrackingTask)
 func (uc *AsyncPositionTrackingUseCase) executeGoogleTaskWithData(task *entities.TrackingTask, site *entities.Site, keyword *entities.Keyword) error {
 
 	var xmlRiverService *services.XMLRiverService
+	var baseURL string
 	if task.XMLUserID != "" && task.XMLAPIKey != "" && task.XMLBaseURL != "" {
 		var err error
 		softID := uc.getSoftIDByBaseURL(task.XMLBaseURL)
@@ -764,9 +771,16 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTaskWithData(task *entities
 		if err != nil {
 			return err
 		}
+		baseURL = task.XMLBaseURL
 	} else {
 		xmlRiverService = uc.xmlStock
+		baseURL = uc.xmlStock.GetBaseURL()
 	}
+
+	// Получаем семафор для этого xmlriver и ограничиваем параллелизм
+	sem := uc.getXMLRiverSemaphore(baseURL)
+	sem <- struct{}{}        // Захватываем семафор
+	defer func() { <-sem }() // Освобождаем семафор
 
 	// Для Google используем organic=false и groupBy=0
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
@@ -823,6 +837,7 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTaskWithData(task *entities
 
 func (uc *AsyncPositionTrackingUseCase) executeGoogleWorkItem(item workItem, job *entities.TrackingJob, site *entities.Site, params *taskParams) error {
 	var xmlRiverService *services.XMLRiverService
+	var baseURL string
 	if params.XMLUserID != "" && params.XMLAPIKey != "" && params.XMLBaseURL != "" {
 		var err error
 		softID := uc.getSoftIDByBaseURL(params.XMLBaseURL)
@@ -830,9 +845,16 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleWorkItem(item workItem, job
 		if err != nil {
 			return err
 		}
+		baseURL = params.XMLBaseURL
 	} else {
 		xmlRiverService = uc.xmlStock
+		baseURL = uc.xmlStock.GetBaseURL()
 	}
+
+	// Получаем семафор для этого xmlriver и ограничиваем параллелизм
+	sem := uc.getXMLRiverSemaphore(baseURL)
+	sem <- struct{}{}        // Захватываем семафор
+	defer func() { <-sem }() // Освобождаем семафор
 
 	// Для Google используем organic=false и groupBy=0
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
@@ -889,6 +911,7 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleWorkItem(item workItem, job
 
 func (uc *AsyncPositionTrackingUseCase) executeYandexWorkItem(item workItem, job *entities.TrackingJob, site *entities.Site, params *taskParams) error {
 	var xmlRiverService *services.XMLRiverService
+	var baseURL string
 	if params.XMLUserID != "" && params.XMLAPIKey != "" && params.XMLBaseURL != "" {
 		var err error
 		softID := uc.getSoftIDByBaseURL(params.XMLBaseURL)
@@ -896,9 +919,16 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexWorkItem(item workItem, job
 		if err != nil {
 			return err
 		}
+		baseURL = params.XMLBaseURL
 	} else {
 		xmlRiverService = uc.xmlStock
+		baseURL = uc.xmlStock.GetBaseURL()
 	}
+
+	// Получаем семафор для этого xmlriver и ограничиваем параллелизм
+	sem := uc.getXMLRiverSemaphore(baseURL)
+	sem <- struct{}{}        // Захватываем семафор
+	defer func() { <-sem }() // Освобождаем семафор
 
 	// Если organic=false, используем groupby=pages*10 для получения всех результатов сразу
 	var groupBy int
@@ -1037,6 +1067,21 @@ func (uc *AsyncPositionTrackingUseCase) getSoftIDByBaseURL(baseURL string) strin
 	return uc.xmlRiverSoftID
 }
 
+// getXMLRiverSemaphore возвращает семафор для конкретного baseURL
+// Каждый xmlriver имеет свой семафор с лимитом maxConcurrentPerXMLRiver одновременных запросов
+func (uc *AsyncPositionTrackingUseCase) getXMLRiverSemaphore(baseURL string) chan struct{} {
+	uc.xmlRiverSemMu.Lock()
+	defer uc.xmlRiverSemMu.Unlock()
+
+	sem, exists := uc.xmlRiverSemaphores[baseURL]
+	if !exists {
+		// Создаем новый семафор для этого baseURL
+		sem = make(chan struct{}, uc.maxConcurrentPerXMLRiver)
+		uc.xmlRiverSemaphores[baseURL] = sem
+	}
+	return sem
+}
+
 func (uc *AsyncPositionTrackingUseCase) executeGoogleTask(task *entities.TrackingTask) error {
 	site, err := uc.siteRepo.GetByID(task.SiteID)
 	if err != nil {
@@ -1049,6 +1094,7 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTask(task *entities.Trackin
 	}
 
 	var xmlRiverService *services.XMLRiverService
+	var baseURL string
 	if task.XMLUserID != "" && task.XMLAPIKey != "" && task.XMLBaseURL != "" {
 		var err error
 		softID := uc.getSoftIDByBaseURL(task.XMLBaseURL)
@@ -1056,9 +1102,16 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTask(task *entities.Trackin
 		if err != nil {
 			return err
 		}
+		baseURL = task.XMLBaseURL
 	} else {
 		xmlRiverService = uc.xmlStock
+		baseURL = uc.xmlStock.GetBaseURL()
 	}
+
+	// Получаем семафор для этого xmlriver и ограничиваем параллелизм
+	sem := uc.getXMLRiverSemaphore(baseURL)
+	sem <- struct{}{}        // Захватываем семафор
+	defer func() { <-sem }() // Освобождаем семафор
 
 	// Для Google используем organic=false и groupBy=0
 	position, url, title, err := xmlRiverService.FindSitePositionWithSubdomains(
@@ -1114,6 +1167,7 @@ func (uc *AsyncPositionTrackingUseCase) executeGoogleTask(task *entities.Trackin
 
 func (uc *AsyncPositionTrackingUseCase) executeYandexTaskWithData(task *entities.TrackingTask, site *entities.Site, keyword *entities.Keyword) error {
 	var xmlRiverService *services.XMLRiverService
+	var baseURL string
 	if task.XMLUserID != "" && task.XMLAPIKey != "" && task.XMLBaseURL != "" {
 		var err error
 		softID := uc.getSoftIDByBaseURL(task.XMLBaseURL)
@@ -1121,9 +1175,16 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTaskWithData(task *entities
 		if err != nil {
 			return err
 		}
+		baseURL = task.XMLBaseURL
 	} else {
 		xmlRiverService = uc.xmlStock
+		baseURL = uc.xmlStock.GetBaseURL()
 	}
+
+	// Получаем семафор для этого xmlriver и ограничиваем параллелизм
+	sem := uc.getXMLRiverSemaphore(baseURL)
+	sem <- struct{}{}        // Захватываем семафор
+	defer func() { <-sem }() // Освобождаем семафор
 
 	// Если organic=false, используем groupby=pages*10 для получения всех результатов сразу
 	var groupBy int
@@ -1263,6 +1324,7 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTask(task *entities.Trackin
 	}
 
 	var xmlRiverService *services.XMLRiverService
+	var baseURL string
 	if task.XMLUserID != "" && task.XMLAPIKey != "" && task.XMLBaseURL != "" {
 		var err error
 		softID := uc.getSoftIDByBaseURL(task.XMLBaseURL)
@@ -1270,9 +1332,16 @@ func (uc *AsyncPositionTrackingUseCase) executeYandexTask(task *entities.Trackin
 		if err != nil {
 			return err
 		}
+		baseURL = task.XMLBaseURL
 	} else {
 		xmlRiverService = uc.xmlStock
+		baseURL = uc.xmlStock.GetBaseURL()
 	}
+
+	// Получаем семафор для этого xmlriver и ограничиваем параллелизм
+	sem := uc.getXMLRiverSemaphore(baseURL)
+	sem <- struct{}{}        // Захватываем семафор
+	defer func() { <-sem }() // Освобождаем семафор
 
 	// Если organic=false, используем groupby=pages*10 для получения всех результатов сразу
 	var groupBy int

@@ -19,39 +19,24 @@ func NewRetryService(maxRetries int, baseDelay time.Duration) *RetryService {
 	}
 }
 
-// RetryConfig represents retry configuration
-type RetryConfig struct {
-	MaxRetries int
-	BaseDelay  time.Duration
-}
-
-// DefaultRetryConfig returns default retry configuration
-func DefaultRetryConfig() *RetryConfig {
-	return &RetryConfig{
-		MaxRetries: 5,
-		BaseDelay:  10 * time.Second,
-	}
-}
-
 // ExecuteWithRetry executes a function with retry logic
 func (r *RetryService) ExecuteWithRetry(fn func() error) error {
 	var lastErr error
-	
+
 	for attempt := 0; attempt <= r.maxRetries; attempt++ {
 		if attempt > 0 {
-			// Calculate delay with exponential backoff
 			delay := r.calculateDelay(attempt)
 			time.Sleep(delay)
 		}
-		
+
 		err := fn()
 		if err == nil {
 			return nil
 		}
-		
+
 		lastErr = err
 	}
-	
+
 	return fmt.Errorf("operation failed after %d attempts, last error: %w", r.maxRetries+1, lastErr)
 }
 
@@ -63,7 +48,7 @@ func (r *RetryService) calculateDelay(attempt int) time.Duration {
 	// Attempt 3: baseDelay * 4
 	// Attempt 4: baseDelay * 8
 	// Attempt 5: baseDelay * 16
-	
+
 	multiplier := 1 << (attempt - 1) // 2^(attempt-1)
 	return r.baseDelay * time.Duration(multiplier)
 }
@@ -75,4 +60,3 @@ func (r *RetryService) GetRetryDelay(attempt int) time.Duration {
 	}
 	return r.calculateDelay(attempt)
 }
-

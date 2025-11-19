@@ -105,15 +105,15 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	params := url.Values{}
 	params.Set("user", s.userID)
 	params.Set("key", s.apiKey)
+	params.Set("query", req.Query)
+
 	if s.softID != "" {
 		params.Set("soft_id", s.softID)
 	}
-	params.Set("query", req.Query)
 
 	if req.Page > 0 {
 		params.Set("page", strconv.Itoa(req.Page))
 	}
-
 	if req.Device != "" {
 		params.Set("device", req.Device)
 	}
@@ -141,15 +141,7 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 
 	var endpoint string
 
-	if source == entities.YandexSearch {
-		if req.Organic {
-			endpoint = "/yandexlive/xml"
-		} else {
-			endpoint = "/yandex/xml"
-		}
-	} else {
-		endpoint = "/google/xml"
-	}
+	endpoint = s.getSearchUrl(req, source, endpoint)
 
 	requestURL := fmt.Sprintf("%s%s?%s", s.baseURL, endpoint, params.Encode())
 
@@ -193,11 +185,24 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 	return &searchResp, nil
 }
 
+func (s *XMLRiverService) getSearchUrl(req SearchRequest, source string, endpoint string) string {
+	if source == entities.YandexSearch {
+		if req.Organic {
+			endpoint = "/yandexlive/xml"
+		} else {
+			endpoint = "/yandex/xml"
+		}
+	} else {
+		endpoint = "/google/xml"
+	}
+	return endpoint
+}
+
 func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchRequest, siteDomain string, source string, maxPages int, subdomains bool) (int, string, string, error) {
-	// Если organic=false для Yandex, используем groupby для получения всех результатов сразу
 	if source == entities.YandexSearch && !req.Organic && req.GroupBy > 0 {
 		req.Page = 0
 		resp, err := s.Search(req, source)
+
 		if err != nil {
 			errStr := err.Error()
 			if strings.Contains(errStr, "error 18") {
@@ -218,7 +223,6 @@ func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchReque
 		return 0, "", "", nil
 	}
 
-	// Для organic=true или других случаев парсим постранично
 	for page := 0; page <= maxPages-1; page++ {
 		req.Page = page
 
@@ -369,4 +373,8 @@ func (s *XMLRiverService) IsSiteMatch(resultURL, siteDomain string) bool {
 
 func (s *XMLRiverService) IsSiteMatchWithSubdomains(resultURL, siteDomain string, subdomains bool) bool {
 	return s.isSiteMatchWithSubdomains(resultURL, siteDomain, subdomains)
+}
+
+func (s *XMLRiverService) GetBaseURL() string {
+	return s.baseURL
 }
