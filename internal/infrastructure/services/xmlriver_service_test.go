@@ -3,6 +3,8 @@ package services
 import (
 	"encoding/xml"
 	"testing"
+
+	"go-seo/internal/domain/entities"
 )
 
 func TestSearchResponseErrorHandling(t *testing.T) {
@@ -81,5 +83,65 @@ func TestSearchResponseSuccessHandling(t *testing.T) {
 
 	if len(searchResp.Response.Results.Grouping.Groups) != 1 {
 		t.Errorf("Expected 1 group, got %d", len(searchResp.Response.Results.Grouping.Groups))
+	}
+}
+
+func TestGetSearchURLByBaseDomain(t *testing.T) {
+	tests := []struct {
+		name        string
+		baseURL     string
+		source      string
+		organic     bool
+		expectedURL string
+	}{
+		{
+			name:        "XMLStock Google",
+			baseURL:     "https://xmlstock.com",
+			source:      entities.GoogleSearch,
+			expectedURL: "/google/xml",
+		},
+		{
+			name:        "XMLStock Yandex organic",
+			baseURL:     "https://xmlstock.com/api",
+			source:      entities.YandexSearch,
+			organic:     true,
+			expectedURL: "/yandexlive/xml",
+		},
+		{
+			name:        "XMLStock Yandex regular",
+			baseURL:     "https://xmlstock.com",
+			source:      entities.YandexSearch,
+			expectedURL: "/yandex/xml",
+		},
+		{
+			name:        "XMLRiver Google",
+			baseURL:     "https://xmlriver.com",
+			source:      entities.GoogleSearch,
+			expectedURL: "/search/xml",
+		},
+		{
+			name:        "XMLRiver Yandex regular",
+			baseURL:     "https://xmlriver.com",
+			source:      entities.YandexSearch,
+			expectedURL: "/search_yandex/xml",
+		},
+		{
+			name:        "XMLRiver Yandex organic",
+			baseURL:     "https://xmlriver.com",
+			source:      entities.YandexSearch,
+			organic:     true,
+			expectedURL: "/yandex/xml",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &XMLRiverService{baseURL: tt.baseURL}
+			req := SearchRequest{Organic: tt.organic}
+			result := service.getSearchUrl(req, tt.source, "")
+			if result != tt.expectedURL {
+				t.Fatalf("expected %s, got %s", tt.expectedURL, result)
+			}
+		})
 	}
 }

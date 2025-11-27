@@ -186,16 +186,27 @@ func (s *XMLRiverService) Search(req SearchRequest, source string) (*SearchRespo
 }
 
 func (s *XMLRiverService) getSearchUrl(req SearchRequest, source string, endpoint string) string {
+	baseURL := strings.ToLower(s.baseURL)
+	useXMLRiverRoutes := strings.Contains(baseURL, "xmlriver")
+
 	if source == entities.YandexSearch {
 		if req.Organic {
-			endpoint = "/yandexlive/xml"
-		} else {
-			endpoint = "/yandex/xml"
+			if useXMLRiverRoutes {
+				return "/yandex/xml"
+			}
+			return "/yandexlive/xml"
 		}
-	} else {
-		endpoint = "/google/xml"
+
+		if useXMLRiverRoutes {
+			return "/search_yandex/xml"
+		}
+		return "/yandex/xml"
 	}
-	return endpoint
+
+	if useXMLRiverRoutes {
+		return "/search/xml"
+	}
+	return "/google/xml"
 }
 
 func (s *XMLRiverService) findSitePositionInternalWithSubdomains(req SearchRequest, siteDomain string, source string, maxPages int, subdomains bool) (int, string, string, error) {

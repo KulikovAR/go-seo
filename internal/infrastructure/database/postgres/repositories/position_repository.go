@@ -839,7 +839,6 @@ func (r *positionRepository) GetPositionsHistoryPaginated(siteID int, keywordID 
 func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *string, includeWordstat bool, wordstatSort bool, dateFrom, dateTo, dateSort *time.Time, sortType string, rankFrom, rankTo *int, groupID *int, filterGroupID *int, wordstatQueryType *string, page, perPage int) ([]*entities.CombinedPosition, int64, error) {
 	offset := (page - 1) * perPage
 
-	// Получаем все keywords
 	var allKeywords []positionModels.Keyword
 	query := r.db.Where("site_id = ?", siteID)
 
@@ -855,7 +854,6 @@ func (r *positionRepository) GetCombinedPositionsPaginated(siteID int, source *s
 		return []*entities.CombinedPosition{}, 0, nil
 	}
 
-	// Вспомогательная функция для проверки наличия позиций с учетом всех фильтров
 	hasPositionsWithFilters := func(keywordID int) bool {
 		positionQuery := r.db.Where("site_id = ? AND keyword_id = ? AND source != ?", siteID, keywordID, "wordstat")
 
