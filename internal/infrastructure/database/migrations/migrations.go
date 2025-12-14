@@ -219,6 +219,46 @@ func CreateTables(db *gorm.DB) error {
 		return err
 	}
 
+	// Удаляем уникальное ограничение на поле domain в таблице sites, если оно существует
+	// Это позволяет создавать сайты с одинаковыми доменами
+	var constraintName string
+	if err := db.Raw(`
+		SELECT conname 
+		FROM pg_constraint 
+		WHERE conrelid = 'sites'::regclass 
+		AND contype = 'u'
+		AND pg_get_constraintdef(oid) LIKE '%domain%'
+		LIMIT 1
+	`).Scan(&constraintName).Error; err != nil {
+		// Игнорируем ошибку, если таблица еще не существует или ограничение не найдено
+	}
+
+	if constraintName != "" {
+		if err := db.Exec(`ALTER TABLE sites DROP CONSTRAINT IF EXISTS ` + constraintName).Error; err != nil {
+			return err
+		}
+	}
+
+	// Также удаляем уникальные индексы на domain, если они существуют
+	var indexName string
+	if err := db.Raw(`
+		SELECT indexname 
+		FROM pg_indexes 
+		WHERE schemaname = 'public'
+		AND tablename = 'sites' 
+		AND indexdef LIKE '%UNIQUE%'
+		AND indexdef LIKE '%domain%'
+		LIMIT 1
+	`).Scan(&indexName).Error; err != nil {
+		// Игнорируем ошибку, если индекс не найден
+	}
+
+	if indexName != "" {
+		if err := db.Exec(`DROP INDEX IF EXISTS ` + indexName).Error; err != nil {
+			return err
+		}
+	}
+
 	//if err := db.Exec(`
 	//	CREATE INDEX IF NOT EXISTS idx_positions_trends
 	//	ON positions (keyword_id, date DESC, rank)
